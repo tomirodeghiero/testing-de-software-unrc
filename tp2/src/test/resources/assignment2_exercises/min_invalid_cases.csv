@@ -1,0 +1,4 @@
+valores,excepcion
+"EMPTY",IllegalArgumentException
+"null;2;3",NullPointerException
+"1;null;3",NullPointerException

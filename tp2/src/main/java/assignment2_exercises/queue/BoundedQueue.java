@@ -87,6 +87,45 @@ public class BoundedQueue
      * false otherwise
      */	
 	public boolean repOK() {
+		if (elements == null) {
+			return false;
+		}
+
+		if (capacity < 0 || elements.length != capacity) {
+			return false;
+		}
+
+		if (size < 0 || size > capacity) {
+			return false;
+		}
+
+		if (capacity == 0) {
+			return size == 0 && front == 0 && back == 0;
+		}
+
+		if (front < 0 || front >= capacity || back < 0 || back >= capacity) {
+			return false;
+		}
+
+		if (back != (front + size) % capacity) {
+			return false;
+		}
+
+		boolean[] occupied = new boolean[capacity];
+		for (int i = 0; i < size; i++) {
+			int idx = (front + i) % capacity;
+			occupied[idx] = true;
+			if (elements[idx] == null) {
+				return false;
+			}
+		}
+
+		for (int i = 0; i < capacity; i++) {
+			if (!occupied[i] && elements[i] != null) {
+				return false;
+			}
+		}
+
 	    return true;
 	}
 }

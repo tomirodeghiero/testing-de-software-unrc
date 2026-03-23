@@ -28,17 +28,14 @@ public class ZuneBug {
 	@*/
 	public static int currentYear (int days) {
 		int year = 1980;
-		while (days > 365) {
-			if (isLeapYear(year)) {
-				if (days > 366) {
-					days -= 366;
-					year += 1;
-				}	
-				
+		while (true) {
+			int daysInYear = isLeapYear(year) ? 366 : 365;
+			if (days >= daysInYear) {
+				days -= daysInYear;
+				year += 1;
 			} else {
-					days -= 365;
-					year += 1;
-			}				
+				break;
+			}
 		}					
 		return year;
 	}	

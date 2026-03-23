@@ -66,6 +66,9 @@ public class StackAr extends Stack {
 		if (isFull()) {
 			throw new IllegalStateException();
 		}
+		if (o == null) {
+			throw new IllegalArgumentException();
+		}
 		this.sp++;
 		this.elems[sp] = o;
 	}
@@ -92,8 +95,9 @@ public class StackAr extends Stack {
 		if (isEmpty()) {
 			throw new IllegalStateException();
 		}
+		Object rv = this.elems[sp];
+		this.elems[sp] = null;
 		sp--;
-		Object rv = this.top();
 		return rv;
 	}
 
@@ -161,6 +165,23 @@ public class StackAr extends Stack {
      * false otherwise
      */
 	public boolean repOk(){
+		if (elems == null) {
+			return false;
+		}
+
+		if (sp < -1 || sp >= elems.length) {
+			return false;
+		}
+
+		for (int i = 0; i < elems.length; i++) {
+			if (i > sp && elems[i] != null) {
+				return false;
+			}
+			if (i <= sp && elems[i] == null) {
+				return false;
+			}
+		}
+
 		return true;
 	}
 
