@@ -27,7 +27,11 @@ replay_pid*
 .classpath
 .project
 .settings/
+*.swp
+*.swo
 
 # Mac OS
 .DS_Store
 /target/
+target/
+.m2/
