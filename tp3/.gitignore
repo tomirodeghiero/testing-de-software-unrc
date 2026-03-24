@@ -1,0 +1,18 @@
+# Artefactos de build/reportes
+**/target/
+**/jacoco.exec
+**/*.class
+**/.m2/
+
+# IDE / editor
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+**/*.swp
+**/*.swo
+
+# SO
+**/.DS_Store
