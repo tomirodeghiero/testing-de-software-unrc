@@ -21,6 +21,7 @@ class PatternIndexTest {
 
 	@BeforeEach
 	void setUp() {
+		// Datos base reutilizados por los casos parametrizados.
 		nullString = null;
 		emptyString = "";
 		shortText = "abc";
@@ -29,6 +30,7 @@ class PatternIndexTest {
 
 	@AfterEach
 	void tearDown() {
+		// Limpieza explicita para evitar dependencias accidentales entre tests.
 		nullString = null;
 		emptyString = null;
 		shortText = null;
@@ -48,6 +50,7 @@ class PatternIndexTest {
 			String subject,
 			String pattern,
 			String requirementsCovered) {
+		// Cuando subject o pattern es null, la precondicion se viola.
 		assertThrows(IllegalArgumentException.class,
 				() -> PatternIndex.patternIndex(subject, pattern),
 				testCaseId + " must throw IllegalArgumentException");
@@ -76,11 +79,14 @@ class PatternIndexTest {
 			String pattern,
 			int expectedIndex,
 			String requirementsCovered) {
+		// Act: se ejecuta la busqueda del patron.
 		int actualIndex = PatternIndex.patternIndex(subject, pattern);
+		// Assert: indice exacto esperado para cubrir cada requisito del diseno.
 		assertEquals(expectedIndex, actualIndex, testCaseId + " returned an unexpected index");
 	}
 
 	private Stream<Arguments> invalidCases() {
+		// Casos donde al menos una entrada es null.
 		return Stream.of(
 				Arguments.of("TC1", nullString, nullString, "R01"),
 				Arguments.of("TC2", nullString, "a", "R02"),
@@ -88,6 +94,11 @@ class PatternIndexTest {
 	}
 
 	private Stream<Arguments> validCases() {
+		// Casos validos que cubren:
+		// - patron vacio
+		// - subject vacio
+		// - coincidencias al inicio/medio/fin
+		// - patron inexistente
 		return Stream.of(
 				Arguments.of("TC4", emptyString, emptyString, 0, "R04,R05,R11"),
 				Arguments.of("TC5", shortText, emptyString, 0, "R04,R06,R12"),

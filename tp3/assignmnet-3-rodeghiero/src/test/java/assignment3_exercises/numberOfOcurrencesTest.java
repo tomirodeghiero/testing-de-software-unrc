@@ -29,6 +29,7 @@ class numberOfOcurrencesTest {
 
 	@BeforeEach
 	void setUp() {
+		// Se preparan listas representativas para los distintos escenarios de prueba.
 		emptyList = new ArrayList<>();
 		nonEmptyNoTargetList = new ArrayList<>(Arrays.asList(1, 2, 3));
 		nonEmptyOneTargetList = new ArrayList<>(Arrays.asList(1, 2, 3));
@@ -37,6 +38,7 @@ class numberOfOcurrencesTest {
 
 	@AfterEach
 	void tearDown() {
+		// Limpieza para evitar contaminar estado entre casos.
 		emptyList = null;
 		nonEmptyNoTargetList = null;
 		nonEmptyOneTargetList = null;
@@ -63,8 +65,10 @@ class numberOfOcurrencesTest {
 			String listScenario,
 			Integer element,
 			String requirementsCovered) {
+		// arrange: resolvemos el escenario textual hacia una lista concreta.
 		List<Integer> list = listForScenario(listScenario);
 
+		// act + assert: entradas invalidas deben disparar IllegalArgumentException.
 		assertThrows(IllegalArgumentException.class,
 				() -> ListUtils.numberOfOcurrences(list, element),
 				testCaseId + " must throw IllegalArgumentException");
@@ -85,10 +89,13 @@ class numberOfOcurrencesTest {
 			Integer element,
 			int expectedCount,
 			String requirementsCovered) {
+		// arrange: lista de entrada segun escenario (vacia, sin target, uno o multiples targets).
 		List<Integer> list = listForScenario(listScenario);
 
+		// act: calculo de ocurrencias del elemento buscado.
 		int actualCount = ListUtils.numberOfOcurrences(list, element);
 
+		// assert: cantidad exacta segun el caso.
 		assertEquals(expectedCount, actualCount,
 				testCaseId + " returned an unexpected occurrence count");
 	}
@@ -98,12 +105,15 @@ class numberOfOcurrencesTest {
 		// Requisito adicional de robustez: la rutina no debe mutar la lista recibida.
 		List<Integer> original = new ArrayList<>(nonEmptyMultipleTargetList);
 
+		// Ejecutamos la rutina solo por su efecto de lectura.
 		ListUtils.numberOfOcurrences(nonEmptyMultipleTargetList, 4);
 
+		// La lista de entrada debe quedar exactamente igual.
 		assertEquals(original, nonEmptyMultipleTargetList);
 	}
 
 	private List<Integer> listForScenario(String listScenario) {
+		// Mapea nombres de escenario a las estructuras creadas en setUp().
 		switch (listScenario) {
 		case NULL_LIST:
 			return null;
@@ -121,6 +131,7 @@ class numberOfOcurrencesTest {
 	}
 
 	private static Stream<Arguments> invalidInputCases() {
+		// Combinaciones invalidas: lista null o elemento null.
 		return Stream.of(
 				Arguments.of("TC1", NULL_LIST, (Integer) null, "R01"),
 				Arguments.of("TC2", NULL_LIST, 7, "R02"),
@@ -129,6 +140,7 @@ class numberOfOcurrencesTest {
 	}
 
 	private static Stream<Arguments> validInputCases() {
+		// Combinaciones validas con resultado esperado 0, 1 o multiples ocurrencias.
 		return Stream.of(
 				Arguments.of("TC5", EMPTY_LIST, 5, 0, "R04,R05,R07,R12,R14,R17"),
 				Arguments.of("TC6", NON_EMPTY_NO_TARGET, 9, 0, "R04,R06,R07,R13,R14,R18"),

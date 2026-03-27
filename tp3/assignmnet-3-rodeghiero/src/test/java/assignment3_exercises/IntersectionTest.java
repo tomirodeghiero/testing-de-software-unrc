@@ -36,6 +36,7 @@ class IntersectionTest {
 
 	@BeforeEach
 	void setUp() {
+		// Se construyen escenarios canonicos para reutilizar en los casos parametrizados.
 		baseSet = setOf(1, 2, 3);
 		equalSet = setOf(1, 2, 3);
 		emptySet = setOf();
@@ -47,6 +48,7 @@ class IntersectionTest {
 
 	@AfterEach
 	void tearDown() {
+		// Limpieza explicita de referencias.
 		baseSet = null;
 		equalSet = null;
 		emptySet = null;
@@ -68,9 +70,11 @@ class IntersectionTest {
 			String set1Scenario,
 			String set2Scenario,
 			String requirementCovered) {
+		// arrange: resolvemos cada etiqueta de escenario a su Set real.
 		Set<Integer> set1 = setForScenario(set1Scenario);
 		Set<Integer> set2 = setForScenario(set2Scenario);
 
+		// act + assert: cualquier entrada null debe disparar NullPointerException.
 		assertThrows(NullPointerException.class, () -> SetUtils.intersection(set1, set2));
 	}
 
@@ -92,14 +96,18 @@ class IntersectionTest {
 			String set2Scenario,
 			Set<Integer> expectedIntersection,
 			String requirementCovered) {
+		// arrange: sets de entrada para el escenario en curso.
 		Set<Integer> set1 = setForScenario(set1Scenario);
 		Set<Integer> set2 = setForScenario(set2Scenario);
 
+		// Copias defensivas para verificar que no haya mutaciones colaterales.
 		Set<Integer> beforeSet1 = new HashSet<>(set1);
 		Set<Integer> beforeSet2 = new HashSet<>(set2);
 
+		// act: calculamos interseccion.
 		Set<Integer> result = SetUtils.intersection(set1, set2);
 
+		// assert: contenido correcto + no mutacion + nueva instancia.
 		assertEquals(expectedIntersection, result, testCaseId + " returned incorrect intersection");
 		assertEquals(beforeSet1, set1, testCaseId + " must not modify set1");
 		assertEquals(beforeSet2, set2, testCaseId + " must not modify set2");
@@ -111,16 +119,19 @@ class IntersectionTest {
 	void intersection_shouldReturnEmptySet_whenBothSetsAreEmpty() {
 		// Cobertura adicional de borde: C1.b2 + C2.b2 + C3.b1 (igualdad vacia).
 		Set<Integer> result = SetUtils.intersection(emptySet, emptySet);
+		// Si ambos son vacios, el resultado tambien debe ser vacio.
 		assertEquals(Collections.emptySet(), result);
 	}
 
 	private static Stream<Arguments> invalidCases() {
+		// Casos invalidos centrados en entradas nulas.
 		return Stream.of(
 				Arguments.of("TC2", NULL_SET, BASE_SET, "TR-BC2"),
 				Arguments.of("TC4", BASE_SET, NULL_SET, "TR-BC4"));
 	}
 
 	private static Stream<Arguments> validCases() {
+		// Casos validos de igualdad, subconjunto, superconjunto, disjuntos y solapamiento parcial.
 		return Stream.of(
 				Arguments.of("TC1", BASE_SET, EQUAL_SET, setOf(1, 2, 3), "TR-BC1"),
 				Arguments.of("TC3", EMPTY_SET, BASE_SET, setOf(), "TR-BC3"),
@@ -132,6 +143,8 @@ class IntersectionTest {
 	}
 
 	private Set<Integer> setForScenario(String scenario) {
+		// Traduce nombres de escenario a copias independientes.
+		// Copiar evita que un test afecte a otro por mutaciones involuntarias.
 		switch (scenario) {
 		case NULL_SET:
 			return null;
@@ -155,10 +168,12 @@ class IntersectionTest {
 	}
 
 	private static Set<Integer> setOf(Integer... values) {
+		// Helper corto para escribir literales de Set en los casos.
 		return new HashSet<>(Arrays.asList(values));
 	}
 
 	private static Set<Integer> copy(Set<Integer> source) {
+		// Si source es null, se conserva null; si no, se clona.
 		return source == null ? null : new HashSet<>(source);
 	}
 }

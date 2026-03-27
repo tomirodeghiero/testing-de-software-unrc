@@ -21,16 +21,23 @@ class BoundedQueueParameterizedTest {
         String expectedQueue,
         String expectedDequeued
     ) {
+        // arrange: cola acotada para el escenario actual y registro de elementos desencolados.
         BoundedQueue queue = new BoundedQueue(capacity);
         List<String> dequeued = new ArrayList<>();
 
+        // La representacion debe ser valida desde el estado inicial.
         assertTrue(queue.repOK());
 
+        // act: aplicamos la secuencia textual de operaciones una por una.
         for (String op : splitOperations(operations)) {
             apply(queue, op, dequeued);
+            // Cada paso debe preservar invariantes internas.
             assertTrue(queue.repOK(), "repOK no se cumple luego de: " + op);
         }
 
+        // assert final:
+        // 1) contenido remanente de la cola
+        // 2) historial de elementos extraidos
         assertEquals(expectedQueue, queue.toString());
         assertEquals(expectedDequeued, String.join(",", dequeued));
     }
@@ -43,18 +50,23 @@ class BoundedQueueParameterizedTest {
         String failingOperation,
         Class<? extends Throwable> expectedException
     ) {
+        // arrange: preparamos cola y la llevamos a un estado previo controlado.
         BoundedQueue queue = new BoundedQueue(capacity);
 
+        // Ejecutamos operaciones validas de setup, verificando repOK en cada transicion.
         for (String op : splitOperations(setupOperations)) {
             apply(queue, op, new ArrayList<>());
             assertTrue(queue.repOK());
         }
 
+        // act + assert: la operacion invalida debe fallar con la excepcion esperada...
         assertThrows(expectedException, () -> apply(queue, failingOperation, new ArrayList<>()));
+        // ...y aun asi la cola debe permanecer en estado consistente.
         assertTrue(queue.repOK());
     }
 
     private static Stream<Arguments> validScenarios() {
+        // Escenarios de uso correcto: mezcla de enqueues/dequeues con distintos tamanos de capacidad.
         return Stream.of(
             Arguments.of(3, "E:a;E:b;D;E:c", "[b, c]", "a"),
             Arguments.of(3, "E:x;E:y;D;E:z;E:w", "[y, z, w]", "x"),
@@ -65,6 +77,10 @@ class BoundedQueueParameterizedTest {
     }
 
     private static Stream<Arguments> invalidScenarios() {
+        // Escenarios con falla esperada:
+        // 1) dequeue en vacio
+        // 2) enqueue de null
+        // 3) enqueue cuando la cola ya esta llena
         return Stream.of(
             Arguments.of(2, "", "D", IllegalStateException.class),
             Arguments.of(2, "", "E:null", NullPointerException.class),
@@ -73,6 +89,7 @@ class BoundedQueueParameterizedTest {
     }
 
     private static List<String> splitOperations(String operations) {
+        // Convierte "E:a;D;E:b" en ["E:a", "D", "E:b"].
         List<String> result = new ArrayList<>();
         if (operations == null || operations.trim().isEmpty()) {
             return result;
@@ -88,19 +105,23 @@ class BoundedQueueParameterizedTest {
     }
 
     private static void apply(BoundedQueue queue, String operation, List<String> dequeued) {
+        // "D" representa deQueue.
         if ("D".equals(operation)) {
             Object value = queue.deQueue();
             dequeued.add(String.valueOf(value));
             return;
         }
 
+        // "E:valor" representa enQueue(valor).
         if (operation.startsWith("E:")) {
             String rawValue = operation.substring(2);
+            // Permite simular nulos en escenarios invalidos.
             Object value = "null".equals(rawValue) ? null : rawValue;
             queue.enQueue(value);
             return;
         }
 
+        // Cualquier otra codificacion se considera error del caso de prueba.
         throw new IllegalArgumentException("Operacion no soportada: " + operation);
     }
 }

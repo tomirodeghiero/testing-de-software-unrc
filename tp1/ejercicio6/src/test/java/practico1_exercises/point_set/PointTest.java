@@ -11,57 +11,58 @@ import org.junit.jupiter.api.Test;
 class PointTest {
     @Test
     void dosPuntosConLasMismasCoordenadasDebenSerIguales() {
-        // arrange
+        // arrange: creamos dos instancias distintas con los mismos valores x,y.
         Point p1 = new Point(1, 2);
         Point p2 = new Point(1, 2);
 
-        // act
+        // act: evaluamos la igualdad semantica entre ambos puntos.
         boolean result = p1.equals(p2);
 
-        // assert
+        // assert: deben considerarse iguales por estado, no por referencia.
         assertTrue(result);
     }
 
     @Test
     void dosPuntosConDistintasCoordenadasNoDebenSerIguales() {
-        // arrange
+        // arrange: solo cambiamos el orden de coordenadas para romper la igualdad.
         Point p1 = new Point(1, 2);
         Point p2 = new Point(2, 1);
 
-        // act
+        // act: comparamos ambos puntos.
         boolean result = p1.equals(p2);
 
-        // assert
+        // assert: al no tener mismo estado interno, equals debe devolver false.
         assertFalse(result);
     }
 
     @Test
     void unHashSetNoDebeGuardarDuplicadosSiLosPuntosSonIguales() {
-        // arrange
+        // arrange: preparamos un Set y dos objetos equivalentes.
+        // Si equals/hashCode estan bien implementados, ambos representan el mismo elemento logico.
         Set<Point> points = new HashSet<>();
         Point p1 = new Point(1, 2);
         Point p2 = new Point(1, 2);
 
-        // act
+        // act: intentamos agregar ambos puntos.
         points.add(p1);
         points.add(p2);
 
-        // assert
+        // assert: el set debe conservar un unico elemento, sin duplicados.
         assertEquals(1, points.size());
     }
 
     @Test
     void unHashSetDebeReconocerUnPuntoEquivalente() {
-        // arrange
+        // arrange: guardamos un punto y luego buscamos otro punto equivalente.
         Set<Point> points = new HashSet<>();
         Point stored = new Point(3, 4);
         Point searched = new Point(3, 4);
         points.add(stored);
 
-        // act
+        // act: contains usa equals/hashCode para determinar pertenencia.
         boolean result = points.contains(searched);
 
-        // assert
+        // assert: aunque sea otra instancia, debe ser reconocido como presente.
         assertTrue(result);
     }
 }
