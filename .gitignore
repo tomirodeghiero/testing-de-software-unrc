@@ -35,3 +35,18 @@ replay_pid*
 /target/
 target/
 .m2/
+
+# Artefactos de build/reportes (todos los TPs)
+**/target/
+**/jacoco.exec
+**/*.class
+**/.m2/
+
+# IDE / editor
+**/.idea/
+**/.vscode/
+**/*.iml
+
+# Evita subir metadatos de repositorio embebido
+tp4/assignmnet-4-rodeghiero/.git
+tp4/assignmnet-4-rodeghiero/.git/**
