@@ -50,3 +50,10 @@ target/
 # Evita subir metadatos de repositorio embebido
 tp4/assignmnet-4-rodeghiero/.git
 tp4/assignmnet-4-rodeghiero/.git/**
+tp5/assignment-5-rodeghiero/.git
+tp5/assignment-5-rodeghiero/.git/**
+
+# Archivos locales de apoyo (no parte de la entrega)
+Introduction-to-Software-Testing-3.pdf
+Introduction-to-Software-Testing-3.txt
+solucion_practico5_ej1.md
