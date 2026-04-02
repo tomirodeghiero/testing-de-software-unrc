@@ -57,3 +57,8 @@ tp5/assignment-5-rodeghiero/.git/**
 Introduction-to-Software-Testing-3.pdf
 Introduction-to-Software-Testing-3.txt
 solucion_practico5_ej1.md
+
+# Docusaurus / Node
+node_modules/
+build/
+.docusaurus/
