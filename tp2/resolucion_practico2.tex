@@ -1,0 +1,276 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resolución del Práctico 2 - Testing de Software 2024},
+  pdfauthor={}
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\title{\textbf{Resolución del Práctico 2}\\Testing de Software 2024}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introducción}
+\addcontentsline{toc}{section}{Introducción}
+Este documento presenta la resolución integral del \textit{Práctico 2}. Se mantiene el contenido técnico original y se mejora su presentación con una estructura académica uniforme, redacción formal y organización por ejercicio.
+
+\section{Ejercicio 1}
+Se realizó la lectura del capítulo 3 del libro \textit{Introduction to Software Testing} (Ammann y Offutt, segunda edición), conforme a la consigna.
+
+Material de referencia utilizado en el repositorio:
+\begin{itemize}
+  \item \texttt{material/Introduction to Software Testing.pdf}
+\end{itemize}
+
+\section{Ejercicio 2}
+Se migraron a tests parametrizados los casos desarrollados en el ejercicio 3 del Práctico 1, ejecutándolos sobre la implementación provista por cátedra:
+\begin{itemize}
+  \item \texttt{src/main/java/assignment2\_exercises/SimpleRoutines.java}
+\end{itemize}
+
+\subsection{Métodos cubiertos}
+\begin{itemize}
+  \item \texttt{findLast(int[] x, int y)}
+  \item \texttt{lastZero(int[] x)}
+  \item \texttt{countPositive(int[] x)}
+  \item \texttt{oddOrPos(int[] x)}
+\end{itemize}
+
+\subsection{Archivos agregados}
+\begin{itemize}
+  \item \texttt{src/test/java/assignment2\_exercises/SimpleRoutinesParameterizedTest.java}
+  \item \texttt{src/test/resources/assignment2\_exercises/odd\_or\_pos\_cases.csv}
+\end{itemize}
+
+\subsection{Estrategia de parametrización}
+\begin{itemize}
+  \item \texttt{@MethodSource} en \texttt{lastZero} y \texttt{countPositive}.
+  \item \texttt{@CsvSource} en \texttt{findLast}.
+  \item \texttt{@CsvFileSource} en \texttt{oddOrPos}.
+\end{itemize}
+
+Con esta combinación se satisface lo solicitado: utilizar métodos proveedores y parámetros en formato CSV.
+
+\subsection{Ejecución}
+\begin{lstlisting}[style=codestyle]
+mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=SimpleRoutinesParameterizedTest test
+\end{lstlisting}
+
+Se utilizó \texttt{-Djacoco.skip=true} debido a incompatibilidades de la versión JaCoCo del template (0.8.2) con JDK actuales.
+
+\subsection{Resultado esperado}
+La suite ejecuta 10 casos. Sobre la versión defectuosa de \texttt{SimpleRoutines} fallan los 4 casos que exponen los defectos conocidos:
+\begin{itemize}
+  \item \texttt{findLast}: no evalúa el índice \texttt{0}.
+  \item \texttt{lastZero}: retorna el primer cero en lugar del último.
+  \item \texttt{countPositive}: cuenta \texttt{0} como positivo.
+  \item \texttt{oddOrPos}: no contabiliza impares negativos.
+\end{itemize}
+
+\section{Ejercicio 3}
+Se desarrolló una suite de tests para todos los métodos de \texttt{StackAr} con JUnit 5, utilizando fixture compartido con \texttt{@BeforeEach} e identificando explícitamente las fases \textit{arrange}, \textit{act} y \textit{assert}.
+
+\subsection{Archivos trabajados}
+\begin{itemize}
+  \item \texttt{src/main/java/assignment2\_exercises/stack/StackAr.java}
+  \item \texttt{src/test/java/assignment2\_exercises/stack/StackArTest.java}
+\end{itemize}
+
+\subsection{Cobertura de pruebas}
+Se incluyeron pruebas para:
+\begin{itemize}
+  \item constructor con capacidad inválida,
+  \item \texttt{size},
+  \item \texttt{isEmpty},
+  \item \texttt{isFull},
+  \item \texttt{push},
+  \item \texttt{pop},
+  \item \texttt{top},
+  \item \texttt{makeEmpty},
+  \item \texttt{equals},
+  \item \texttt{hashCode},
+  \item \texttt{toString},
+  \item \texttt{repOk}.
+\end{itemize}
+
+Además, se agregaron tests negativos adicionales, por ejemplo:
+\begin{itemize}
+  \item \texttt{push} en pila llena,
+  \item \texttt{push(null)},
+  \item \texttt{pop} en pila vacía,
+  \item \texttt{top} en pila vacía.
+\end{itemize}
+
+\subsection{Cambios en la implementación}
+\begin{enumerate}
+  \item Se completó \texttt{repOk()} con las condiciones de validez pedidas.
+  \item Se corrigió \texttt{pop()} para que:
+  \begin{itemize}
+    \item devuelva el elemento removido del tope,
+    \item limpie la celda desapilada (\texttt{elems[sp] = null}).
+  \end{itemize}
+  \item Se incorporó validación en \texttt{push} para rechazar \texttt{null}, en consistencia con el invariante.
+\end{enumerate}
+
+\subsection{Inconvenientes encontrados}
+\begin{itemize}
+  \item Para validar estados internos inválidos de \texttt{repOk} (por ejemplo, \texttt{sp} fuera de rango o huecos internos), la API pública no fue suficiente y se utilizó reflexión en los tests.
+  \item Al implementar \texttt{repOk} se detectó una inconsistencia adicional en \texttt{pop}: no limpiaba la posición desapilada y devolvía el nuevo tope en vez del elemento removido.
+\end{itemize}
+
+\subsection{Ejecución}
+\begin{lstlisting}[style=codestyle]
+mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test
+\end{lstlisting}
+
+\section{Ejercicio 4}
+Se implementaron tests parametrizados en CSV para el método:
+\begin{itemize}
+  \item \texttt{Min.min(List<? extends T>)}
+\end{itemize}
+
+\subsection{Archivos}
+\begin{itemize}
+  \item \texttt{src/test/java/assignment2\_exercises/MinCsvParameterizedTest.java}
+  \item \texttt{src/test/resources/assignment2\_exercises/min\_valid\_cases.csv}
+  \item \texttt{src/test/resources/assignment2\_exercises/min\_invalid\_cases.csv}
+\end{itemize}
+
+\subsection{Cobertura de casos}
+\begin{itemize}
+  \item Casos válidos con enteros: mínimo al inicio, al medio, al final, repetidos, negativos y listas unitarias.
+  \item Casos inválidos desde CSV:
+  \begin{itemize}
+    \item lista vacía (\texttt{IllegalArgumentException}),
+    \item lista con \texttt{null} en primera posición (\texttt{NullPointerException}),
+    \item lista con \texttt{null} en otra posición (\texttt{NullPointerException}).
+  \end{itemize}
+  \item Casos negativos adicionales:
+  \begin{itemize}
+    \item lista \texttt{null} (\texttt{NullPointerException}),
+    \item elementos no mutuamente comparables (\texttt{ClassCastException}).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Ejecución}
+\begin{lstlisting}[style=codestyle]
+mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=MinCsvParameterizedTest test
+\end{lstlisting}
+
+\section{Ejercicio 5}
+Se construyeron tests parametrizados para \texttt{ZuneBug.currentYear(int days)} y, a partir de los fallos observados, se realizó debugging y corrección del método.
+
+\subsection{Archivos}
+\begin{itemize}
+  \item \texttt{src/test/java/assignment2\_exercises/ZuneBugParameterizedTest.java}
+  \item \texttt{src/main/java/assignment2\_exercises/ZuneBug.java}
+  \item \texttt{ejercicio5/currentYear\_original.java.txt} (versión previa a la corrección)
+\end{itemize}
+
+\subsection{Cobertura de pruebas}
+Se agregaron dos grupos parametrizados:
+\begin{itemize}
+  \item casos de borde (por ejemplo, \texttt{365}, \texttt{366}, \texttt{367}, \texttt{731}, \texttt{1461}),
+  \item múltiples valores para comparar \texttt{currentYear} con una función \textit{oracle}.
+\end{itemize}
+
+También se utilizó \texttt{assertTimeoutPreemptively} para detectar cuelgues.
+
+\subsection{Fallas detectadas antes de corregir}
+\begin{itemize}
+  \item Con \texttt{days = 366}, el método podía entrar en bucle infinito.
+  \item En cambios exactos de año (por ejemplo, \texttt{731} y \texttt{1461}), devolvía un año menos.
+\end{itemize}
+
+\subsection{Causa del defecto}
+La lógica original mezclaba condiciones \texttt{> 365} y \texttt{> 366}, con tratamiento incorrecto de límites exactos.
+
+\subsection{Corrección aplicada}
+Se reescribió el bucle utilizando \texttt{daysInYear} del año actual:
+\begin{itemize}
+  \item si \texttt{days >= daysInYear}, se descuenta ese año y se avanza al siguiente,
+  \item en caso contrario, se finaliza y se retorna el año actual.
+\end{itemize}
+
+Esta corrección elimina tanto el bucle infinito como el error \textit{off-by-one} en los bordes.
+
+\subsection{Ejecución y resultado}
+\begin{lstlisting}[style=codestyle]
+mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=ZuneBugParameterizedTest test
+\end{lstlisting}
+
+Resultado reportado luego de corregir:
+\begin{itemize}
+  \item \texttt{Tests run: 21, Failures: 0, Errors: 0}
+  \item \texttt{BUILD SUCCESS}
+\end{itemize}
+
+\section{Ejercicio 6}
+Se implementó \texttt{repOK()} en \texttt{BoundedQueue} y se diseñaron tests parametrizados para verificar que el invariante de representación se mantenga luego de operaciones fundamentales de cola.
+
+\subsection{Archivos}
+\begin{itemize}
+  \item \texttt{src/main/java/assignment2\_exercises/queue/BoundedQueue.java}
+  \item \texttt{src/test/java/assignment2\_exercises/queue/BoundedQueueParameterizedTest.java}
+\end{itemize}
+
+\subsection{Invariante validado por \texttt{repOK}}
+La implementación verifica, entre otros aspectos:
+\begin{itemize}
+  \item consistencia estructural básica (\texttt{elements}, \texttt{capacity}, \texttt{size}),
+  \item rangos válidos de \texttt{front} y \texttt{back},
+  \item relación de cola circular: \texttt{back == (front + size) \% capacity},
+  \item ausencia de \texttt{null} en la zona ocupada,
+  \item ausencia de basura fuera de la zona ocupada (celdas en \texttt{null}).
+\end{itemize}
+
+\subsection{Tests parametrizados}
+Se utilizó \texttt{@MethodSource} con dos grupos:
+\begin{itemize}
+  \item escenarios válidos: secuencias de \texttt{enQueue/deQueue} (incluyendo \textit{wrap-around}) y chequeo de \texttt{repOK} tras cada operación,
+  \item escenarios inválidos: operaciones que deben lanzar excepción (\texttt{deQueue} en vacía, \texttt{enQueue(null)}, \texttt{enQueue} en llena) y verificación de que \texttt{repOK} permanezca en \texttt{true} después del error.
+\end{itemize}
+
+\subsection{Ejecución}
+\begin{lstlisting}[style=codestyle]
+mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=BoundedQueueParameterizedTest test
+\end{lstlisting}
+
+\section*{Conclusiones}
+\addcontentsline{toc}{section}{Conclusiones}
+La resolución del Práctico 2 consolidó el uso de pruebas parametrizadas, análisis de invariantes de representación y depuración de defectos reales. Los ejercicios permitieron integrar técnicas de diseño de tests con verificación de comportamiento funcional, validación estructural y corrección de implementaciones en Java.
+
+\end{document}
