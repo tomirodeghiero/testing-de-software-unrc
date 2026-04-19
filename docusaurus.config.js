@@ -51,11 +51,6 @@ const config = {
       },
       items: [
         {
-          to: '/',
-          label: 'Portada',
-          position: 'left'
-        },
-        {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
