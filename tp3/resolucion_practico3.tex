@@ -48,55 +48,7 @@
 Este documento presenta la resolución integral del \textit{Práctico 3}. Se mantiene la línea de trabajo de los prácticos anteriores: redacción formal, organización por ejercicio y fundamentación de diseño de pruebas a partir de modelos del dominio de entradas y criterios de cobertura.
 
 \section{Ejercicio 1}
-Se realizó la lectura del capítulo 6 del libro \textit{Introduction to Software Testing} (Ammann y Offutt, segunda edición), centrado en \textit{Input Space Partitioning}.
-
-\subsection{Material trabajado}
-\begin{itemize}
-  \item \texttt{material/Introduction-to-Software-Testing-3.pdf}
-\end{itemize}
-
-\subsection{Síntesis conceptual}
-La idea central del capítulo es modelar explícitamente el dominio de entradas antes de definir tests concretos. En lugar de seleccionar casos de manera intuitiva, se construyen requisitos de test medibles.
-
-\subsubsection*{1) Modelo del dominio de entradas}
-El dominio se describe con \textbf{características} y \textbf{bloques} (particiones):
-\begin{itemize}
-  \item cada característica representa un aspecto relevante de la entrada,
-  \item cada bloque agrupa valores equivalentes para testing.
-\end{itemize}
-
-Un modelo de buena calidad debe cumplir:
-\begin{itemize}
-  \item \textbf{Completitud:} toda entrada válida queda representada por algún bloque.
-  \item \textbf{Disyunción:} una entrada no puede pertenecer a dos bloques de la misma característica.
-\end{itemize}
-
-\subsubsection*{2) Criterios de cobertura}
-Sobre el modelo, el capítulo propone criterios para derivar requisitos de test:
-\begin{itemize}
-  \item \textbf{Each Choice (EC):} cada bloque aparece al menos una vez.
-  \item \textbf{Pairwise Coverage (PWC):} toda pareja de bloques entre dos características aparece al menos una vez.
-  \item \textbf{All Combinations (AC):} se cubren todas las combinaciones posibles.
-  \item \textbf{Base Choice (BC):} se define un caso base y se varía una característica por vez.
-\end{itemize}
-
-En términos prácticos, \textit{PWC} suele ofrecer una relación costo/beneficio favorable respecto de \textit{AC}, ya que muchas fallas emergen por interacción entre pares de factores.
-
-\subsubsection*{3) Restricciones e infeasibilidad}
-No todas las combinaciones de bloques son válidas. Por eso, el modelo debe incorporar restricciones que excluyan combinaciones imposibles o fuera de especificación.
-
-\subsubsection*{4) Flujo de trabajo recomendado}
-\begin{enumerate}
-  \item Identificar parámetros de entrada.
-  \item Definir características relevantes.
-  \item Particionar cada característica en bloques.
-  \item Declarar restricciones entre bloques.
-  \item Seleccionar criterio de cobertura.
-  \item Derivar requisitos de test e instanciar casos concretos.
-\end{enumerate}
-
-\subsection{Aplicación al práctico}
-Este enfoque se aplica directamente al método \texttt{numberOfOcurrences(List<Integer> l, Integer element)}, donde deben modelarse situaciones como: lista nula/no nula, elemento nulo/no nulo, lista vacía/no vacía y cantidad de ocurrencias.
+Lectura del capítulo 6 (\textit{Input Space Partitioning}) del libro \textit{Introduction to Software Testing}.
 
 \section{Ejercicio 2}
 Se diseñó y ejecutó una batería de pruebas para \texttt{numberOfOcurrences(List<Integer> l, Integer element)} utilizando \textit{Input Space Partitioning} y cobertura \textit{pairwise}.
