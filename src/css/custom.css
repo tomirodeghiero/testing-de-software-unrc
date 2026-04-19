@@ -113,15 +113,17 @@ body {
 }
 
 .theme-doc-markdown h1 {
-  margin-top: 0.45rem;
+  margin-top: 0.6rem;
+  margin-bottom: 1.35rem;
   font-size: clamp(1.95rem, 4.1vw, 2.65rem);
-  padding-bottom: 0.6rem;
+  padding-bottom: 0.82rem;
   border-bottom: 1px solid #d6dce5;
 }
 
 .theme-doc-markdown h2 {
-  margin-top: 2.15rem;
-  padding-bottom: 0.38rem;
+  margin-top: 2.4rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.58rem;
   border-bottom: 1px solid #e2e5eb;
   font-size: clamp(1.42rem, 2.5vw, 1.75rem);
 }
