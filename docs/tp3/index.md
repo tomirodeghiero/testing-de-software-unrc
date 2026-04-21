@@ -28,3 +28,4 @@ Resolucion del practico 3 de Testing de Software.
 ## Material PDF
 
 - [practico3.pdf](/pdfs/tp3/practico3.pdf)
+- [resolucion_practico3.pdf](/pdfs/tp3/resolucion_practico3.pdf)

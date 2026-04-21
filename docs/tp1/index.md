@@ -24,3 +24,4 @@ Este practico no tenia un README general en la raiz.
 
 - [Capitulos 1 y 2 - Introduction to Software Testing.pdf](/pdfs/tp1/Capitulos 1 y 2 - Introduction to Software Testing.pdf)
 - [practico1.pdf](/pdfs/tp1/practico1.pdf)
+- [resolucion_practico1.pdf](/pdfs/tp1/resolucion_practico1.pdf)

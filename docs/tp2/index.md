@@ -57,3 +57,4 @@ Para el ejercicio 6 agregue:
 ## Material PDF
 
 - [practico2.pdf](/pdfs/tp2/practico2.pdf)
+- [resolucion_practico2.pdf](/pdfs/tp2/resolucion_practico2.pdf)
