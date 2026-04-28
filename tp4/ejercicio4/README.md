@@ -1,77 +1,77 @@
 # Ejercicio 4
 
-Se trabajo sobre:
+Se trabajó sobre el método ubicado en:
 
 - `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndex.java`
 
-### Instrumentacion agregada
+### Instrumentación agregada
 
-Se agrego una instrumentacion de nodos CFG dentro de `patternIndex()` para registrar el camino ejecutado por cada invocacion.
+Para poder analizar los caminos ejecutados, se agregó una instrumentación a nivel de nodos del CFG dentro del método `patternIndex()`. Esta instrumentación registra, en cada invocación, la secuencia exacta de nodos por la que pasa la ejecución.
 
-Nodos instrumentados:
+Los nodos instrumentados son los siguientes:
 
-- `S` (inicio)
-- `W` (condicion del while)
-- `I` (if del primer caracter)
-- `M` (se detecta match inicial y se setean variables)
-- `FT` (for cond true)
-- `IFM` (if de mismatch dentro del for)
-- `MIS` (bloque de mismatch + break)
-- `FI` (paso de iteracion del for sin mismatch)
-- `FF` (for finaliza sin break)
-- `INC` (`iSub++`)
-- `R` (return)
+- `S` (inicio del método).
+- `W` (condición del `while` principal).
+- `I` (`if` que compara el primer carácter del patrón).
+- `M` (bloque que se ejecuta cuando se detecta un match inicial y se inicializan las variables auxiliares).
+- `FT` (condición verdadera del `for` interno).
+- `IFM` (`if` de mismatch dentro del `for`).
+- `MIS` (bloque de mismatch seguido de `break`).
+- `FI` (paso de iteración del `for` cuando no hubo mismatch).
+- `FF` (finalización del `for` sin haber ejecutado un `break`).
+- `INC` (incremento `iSub++`).
+- `R` (sentencia `return`).
 
-Archivo nuevo para tracking:
+El registro de los caminos ejecutados se delega a una clase auxiliar creada específicamente para este ejercicio:
 
 - `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndexPathTracker.java`
 
-### Suite JUnit pedida por la tabla
+### Suite JUnit pedida por la tabla del enunciado
 
-Se implemento en:
+La suite se implementó en:
 
 - `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/PatternIndexInstrumentationCoverageTest.java`
 
-La suite ejecuta exactamente estos 10 casos:
+Esta suite ejecuta exactamente los 10 casos indicados por la tabla del enunciado, junto con su valor esperado:
 
-1. `("a", "bc") -> -1`
-2. `("ab", "a") -> 0`
-3. `("ab", "ab") -> 0`
+1. `("a", "bc")  -> -1`
+2. `("ab", "a")  ->  0`
+3. `("ab", "ab") ->  0`
 4. `("ab", "ac") -> -1`
-5. `("ab", "b") -> 1`
-6. `("ab", "c") -> -1`
-7. `("abc", "abc") -> 0`
+5. `("ab", "b")  ->  1`
+6. `("ab", "c")  -> -1`
+7. `("abc", "abc") ->  0`
 8. `("abc", "abd") -> -1`
-9. `("abc", "ba") -> -1`
-10. `("abc", "bc") -> 1`
+9. `("abc", "ba")  -> -1`
+10. `("abc", "bc")  ->  1`
 
 ### Reporte de caminos ejecutados
 
-La misma suite genera automaticamente un reporte con:
+La misma suite genera automáticamente un reporte de salida que contiene:
 
-- caminos ejecutados por cada caso de test,
-- cobertura de arcos del CFG instrumentado,
-- cobertura de caminos principales (prime paths),
-- lista de requisitos cubiertos/faltantes.
+- la secuencia de nodos ejecutada por cada caso de test,
+- la cobertura de arcos sobre el CFG instrumentado,
+- la cobertura de caminos principales (prime paths),
+- y la lista de requisitos cubiertos y faltantes para cada criterio.
 
-Ubicacion del reporte:
+Ubicación del reporte generado:
 
 - `tp4/assignmnet-4-rodeghiero/target/patternindex-path-report.txt`
 
-### Ejecucion
+### Ejecución
 
-Comando usado:
+Comando utilizado para correr la suite:
 
 - `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=PatternIndexInstrumentationCoverageTest test`
 
-### Resultado de cobertura (con la suite de la tabla)
+### Resultados de cobertura
 
-Sobre el CFG instrumentado de `patternIndex`:
+Sobre el CFG instrumentado de `patternIndex`, la suite de la tabla obtiene:
 
-- Cobertura de arcos: `15 / 15` (100%)
-- Cobertura de caminos principales: `22 / 39`
+- **Cobertura de arcos:** `15 / 15` (100%).
+- **Cobertura de caminos principales:** `22 / 39`.
 
-Interpretacion:
+**Interpretación de los resultados:**
 
-- La suite de la tabla alcanza cobertura completa de arcos.
-- No alcanza cobertura completa de caminos principales (quedan requisitos faltantes), lo cual es esperable porque PPC es mas fuerte que EC.
+- La suite alcanza cobertura completa de arcos, lo que indica que los 10 casos de la tabla son suficientes para ejercitar todas las decisiones del método.
+- En cambio, no se logra cobertura completa de caminos principales, lo cual era esperable: PPC es un criterio estrictamente más fuerte que EC, así que una suite que satura EC no necesariamente cubre todos los prime paths. Los requisitos faltantes corresponden a combinaciones de iteraciones del bucle externo y del `for` interno que esos diez casos puntuales no llegan a ejercitar.

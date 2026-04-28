@@ -1,126 +1,126 @@
 # Ejercicio 2
 
-Para el grafo:
+Se considera el siguiente grafo dirigido:
 
-- `N = {1,2,3,4,5,6,7}`
-- `N0 = {1}`
-- `Nf = {7}`
+- `N = {1, 2, 3, 4, 5, 6, 7}`
+- `N0 = {1}` (nodo inicial)
+- `Nf = {7}` (nodo final)
 - `E = {(1,2), (1,7), (2,3), (2,4), (3,2), (4,5), (4,6), (5,6), (6,1)}`
 
-Caminos candidatos dados:
+Caminos candidatos dados por el enunciado:
 
-- `p1 = [1,2,4,5,6,1,7]`
-- `p2 = [1,2,3,2,4,6,1,7]`
-- `p3 = [1,2,3,2,4,5,6,1,7]`
+- `p1 = [1, 2, 4, 5, 6, 1, 7]`
+- `p2 = [1, 2, 3, 2, 4, 6, 1, 7]`
+- `p3 = [1, 2, 3, 2, 4, 5, 6, 1, 7]`
 
-### (a) Requisitos de test para cobertura de pares de aristas (12)
+### (a) Requisitos de test para cobertura de pares de aristas
 
-Los pares de aristas alcanzables (caminos de longitud 2) son:
+Los pares de aristas alcanzables (caminos de longitud 2 dentro del grafo) son los siguientes 12:
 
-1. `[1,2,3]`
-2. `[1,2,4]`
-3. `[2,3,2]`
-4. `[2,4,5]`
-5. `[2,4,6]`
-6. `[3,2,3]`
-7. `[3,2,4]`
-8. `[4,5,6]`
-9. `[4,6,1]`
-10. `[5,6,1]`
-11. `[6,1,2]`
-12. `[6,1,7]`
+1. `[1, 2, 3]`
+2. `[1, 2, 4]`
+3. `[2, 3, 2]`
+4. `[2, 4, 5]`
+5. `[2, 4, 6]`
+6. `[3, 2, 3]`
+7. `[3, 2, 4]`
+8. `[4, 5, 6]`
+9. `[4, 6, 1]`
+10. `[5, 6, 1]`
+11. `[6, 1, 2]`
+12. `[6, 1, 7]`
 
-### (b) El conjunto candidato satisface cobertura de pares?
+### (b) ¿El conjunto candidato satisface cobertura de pares?
 
-No, no la satisface.
+**No**, el conjunto `{p1, p2, p3}` no satisface la cobertura de pares de aristas.
 
-Pares que cubre cada camino:
+Para justificarlo, analizamos los pares cubiertos por cada uno de los caminos:
 
-- `p1` cubre: `[1,2,4]`, `[2,4,5]`, `[4,5,6]`, `[5,6,1]`, `[6,1,7]`
-- `p2` cubre: `[1,2,3]`, `[2,3,2]`, `[3,2,4]`, `[2,4,6]`, `[4,6,1]`, `[6,1,7]`
-- `p3` cubre: `[1,2,3]`, `[2,3,2]`, `[3,2,4]`, `[2,4,5]`, `[4,5,6]`, `[5,6,1]`, `[6,1,7]`
+- `p1 = [1, 2, 4, 5, 6, 1, 7]` cubre: `[1, 2, 4]`, `[2, 4, 5]`, `[4, 5, 6]`, `[5, 6, 1]` y `[6, 1, 7]`.
+- `p2 = [1, 2, 3, 2, 4, 6, 1, 7]` cubre: `[1, 2, 3]`, `[2, 3, 2]`, `[3, 2, 4]`, `[2, 4, 6]`, `[4, 6, 1]` y `[6, 1, 7]`.
+- `p3 = [1, 2, 3, 2, 4, 5, 6, 1, 7]` cubre: `[1, 2, 3]`, `[2, 3, 2]`, `[3, 2, 4]`, `[2, 4, 5]`, `[4, 5, 6]`, `[5, 6, 1]` y `[6, 1, 7]`.
 
-Union total cubierta por `p1 U p2 U p3`:
+La unión `p1 ∪ p2 ∪ p3` cubre los siguientes pares:
 
-- `[1,2,3]`, `[1,2,4]`, `[2,3,2]`, `[2,4,5]`, `[2,4,6]`, `[3,2,4]`, `[4,5,6]`, `[4,6,1]`, `[5,6,1]`, `[6,1,7]`
+- `[1, 2, 3]`, `[1, 2, 4]`, `[2, 3, 2]`, `[2, 4, 5]`, `[2, 4, 6]`, `[3, 2, 4]`, `[4, 5, 6]`, `[4, 6, 1]`, `[5, 6, 1]` y `[6, 1, 7]`.
 
-Requisitos faltantes:
+Quedan sin cubrir dos pares de aristas:
 
-- `[3,2,3]`
-- `[6,1,2]`
+- `[3, 2, 3]`
+- `[6, 1, 2]`
+
+Por lo tanto, el conjunto candidato no satisface la cobertura de pares.
 
 ### (c) Tour directo o con sidetrips
 
-Camino simple:
+Se propone el siguiente camino simple:
 
-- `q = [3,2,4,5,6]`
+- `q = [3, 2, 4, 5, 6]`
 
-Camino de test:
+Y el camino de test:
 
-- `t = [1,2,3,2,4,6,1,2,4,5,6,1,7]`
+- `t = [1, 2, 3, 2, 4, 6, 1, 2, 4, 5, 6, 1, 7]`
 
-Resultado:
+Análisis:
 
-1. `t` **no** recorre `q` directamente, porque al llegar a `4` hace `4 -> 6` y no `4 -> 5`.
-2. `t` **si** recorre `q` con sidetrip.
+1. `t` **no** recorre `q` de manera directa, ya que cuando `t` llega al nodo `4` por primera vez toma la rama `4 -> 6` en lugar de `4 -> 5`, mientras que `q` exige el paso `4 -> 5`.
+2. `t` **sí** recorre `q` mediante un sidetrip.
 
-Sidetrip:
+Detalle del sidetrip:
 
-- Desde el nodo `4`, el desvio es `[4,6,1,2,4]`, y luego continua con `4 -> 5 -> 6`.
-- Ese desvio sale de `4` y vuelve al mismo `4`, por eso cumple la idea de sidetrip.
+- Desde el nodo `4`, el camino se desvía recorriendo `[4, 6, 1, 2, 4]` y luego retoma con `4 -> 5 -> 6`, completando así la secuencia exigida por `q`.
+- Como ese desvío sale del nodo `4` y vuelve al mismo nodo `4`, se cumple exactamente la definición de sidetrip.
 
 ### (d) Requisitos para NC, EC y PPC
 
-NC (Cobertura de Nodos):
+**NC (Cobertura de Nodos):**
 
-- `{1,2,3,4,5,6,7}`
+- `{1, 2, 3, 4, 5, 6, 7}`
 
-EC (Cobertura de Arcos):
+**EC (Cobertura de Arcos):**
 
 - `(1,2)`, `(1,7)`, `(2,3)`, `(2,4)`, `(3,2)`, `(4,5)`, `(4,6)`, `(5,6)`, `(6,1)`
 
-PPC (Cobertura de Caminos Principales / Prime Paths):
+**PPC (Cobertura de Caminos Principales o Prime Paths):**
 
-1. `[1,2,4,6,1]`
-2. `[1,2,4,5,6,1]`
-3. `[2,3,2]`
-4. `[2,4,6,1,2]`
-5. `[2,4,5,6,1,2]`
-6. `[3,2,3]`
-7. `[3,2,4,6,1,7]`
-8. `[3,2,4,5,6,1,7]`
-9. `[4,6,1,2,3]`
-10. `[4,6,1,2,4]`
-11. `[4,5,6,1,2,3]`
-12. `[4,5,6,1,2,4]`
-13. `[5,6,1,2,4,5]`
-14. `[6,1,2,4,6]`
-15. `[6,1,2,4,5,6]`
+1. `[1, 2, 4, 6, 1]`
+2. `[1, 2, 4, 5, 6, 1]`
+3. `[2, 3, 2]`
+4. `[2, 4, 6, 1, 2]`
+5. `[2, 4, 5, 6, 1, 2]`
+6. `[3, 2, 3]`
+7. `[3, 2, 4, 6, 1, 7]`
+8. `[3, 2, 4, 5, 6, 1, 7]`
+9. `[4, 6, 1, 2, 3]`
+10. `[4, 6, 1, 2, 4]`
+11. `[4, 5, 6, 1, 2, 3]`
+12. `[4, 5, 6, 1, 2, 4]`
+13. `[5, 6, 1, 2, 4, 5]`
+14. `[6, 1, 2, 4, 6]`
+15. `[6, 1, 2, 4, 5, 6]`
 
-### (e) Proveer caminos que satisfagan NC pero no EC
+### (e) Caminos que satisfacen NC pero no EC
 
-Si es posible.
+**Sí es posible** construir un conjunto de tests que cumpla NC sin cumplir EC.
 
-Un ejemplo:
+Un ejemplo es:
 
-- `t = [1,2,3,2,4,5,6,1,7]`
+- `t = [1, 2, 3, 2, 4, 5, 6, 1, 7]`
 
-Este test visita todos los nodos `1..7`, por lo tanto satisface NC.  
-Pero no recorre el arco `(4,6)`, asi que no satisface EC.
+Este test pasa por todos los nodos del grafo (`1`, `2`, `3`, `4`, `5`, `6` y `7`), por lo que satisface NC. Sin embargo, no recorre el arco `(4, 6)`, ya que al llegar a `4` toma la rama hacia `5`. Como ese arco pertenece a EC y no aparece en el camino, EC no queda satisfecha.
 
-### (f) Proveer caminos que satisfagan EC pero no PPC
+### (f) Caminos que satisfacen EC pero no PPC
 
-Si es posible.
+**Sí es posible** encontrar un conjunto que satisfaga EC sin satisfacer PPC.
 
-Un ejemplo:
+Un ejemplo es:
 
-- `t1 = [1,2,4,5,6,1,7]`
-- `t2 = [1,2,3,2,4,6,1,7]`
+- `t1 = [1, 2, 4, 5, 6, 1, 7]`
+- `t2 = [1, 2, 3, 2, 4, 6, 1, 7]`
 
-Verificacion rapida:
+Verificación:
 
-- `t1 U t2` cubre todos los arcos de EC.
-- Pero no cubre todos los caminos principales (por ejemplo, no cubre el prime path `[3,2,3]`).
+- La unión `t1 ∪ t2` recorre los nueve arcos del grafo: `(1,2)`, `(1,7)`, `(2,3)`, `(2,4)`, `(3,2)`, `(4,5)`, `(4,6)`, `(5,6)` y `(6,1)`. Por lo tanto, EC queda satisfecha.
+- Sin embargo, no se recorren todos los caminos principales: por ejemplo, el prime path `[3, 2, 3]` no aparece en ninguno de los dos tests, ya que ninguno toma dos veces seguidas el ciclo `2 -> 3 -> 2`.
 
-Entonces cumple EC pero no PPC.
-
+Como queda al menos un prime path sin cubrir, el conjunto propuesto satisface EC pero no PPC.
