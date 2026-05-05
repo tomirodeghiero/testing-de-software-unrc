@@ -55,30 +55,29 @@
 
 \section*{Introducción}
 \addcontentsline{toc}{section}{Introducción}
-El presente documento unifica la resolución del \textit{Práctico 1} de la materia \textit{Testing de Software 2024}. Se preserva el contenido técnico original de cada ejercicio y se mejora su presentación mediante una redacción académica, una estructura homogénea y una notación consistente.
+Este documento reúne la resolución del \textit{Práctico 1} de \textit{Testing de Software 2024}. La consigna combina lecturas del libro de Ammann y Offutt con ejercicios de análisis de defectos, reparación de programas y diseño de pruebas unitarias en JUnit. A lo largo del práctico se trabajan los conceptos de \textit{fault}, \textit{error} y \textit{failure}, el modelo RIPR como herramienta para razonar sobre la detectabilidad de un defecto, y un caso clásico del libro de Bloch sobre el contrato de \texttt{equals} en jerarquías por herencia.
 
 \section{Ejercicio 1}
 Lectura de los capítulos 1 y 2 del libro \textit{Introduction to Software Testing}.
 
 \section{Ejercicio 2}
 \subsection{Diferencia entre \textit{fault} y \textit{failure}}
-La diferencia central es la siguiente:
+Aunque suelen usarse como sinónimos en el lenguaje informal, la teoría del testing los distingue con cuidado:
 \begin{itemize}
-  \item \textbf{Fault (defecto):} problema interno en el software (código, diseño o especificación).
-  \item \textbf{Failure (falla):} comportamiento externo incorrecto, observable durante la ejecución.
+  \item \textbf{Fault (defecto):} es un problema estático que vive en el software, ya sea en el código, en el diseño o en la especificación. Existe se ejecute o no el programa.
+  \item \textbf{Failure (falla):} es un comportamiento externo incorrecto, observable durante la ejecución, frente al comportamiento esperado.
 \end{itemize}
 
-Además, entre ambos conceptos aparece \textbf{error}, entendido como un estado interno incorrecto que surge al ejecutar un defecto.
-
-En términos causales:
+Entre uno y otro aparece un tercer concepto, el \textbf{error}, entendido como un estado interno incorrecto que surge cuando el defecto efectivamente se ejecuta. La cadena causal habitual se resume así:
 \[
-\textit{fault} \rightarrow \textit{error} \rightarrow \textit{failure}
+\textit{fault} \;\rightarrow\; \textit{error} \;\rightarrow\; \textit{failure}
 \]
 
-Por lo tanto, un defecto puede existir incluso sin generar una falla visible en toda ejecución: para que la falla ocurra, el estado erróneo debe propagarse hasta una salida observable.
+La consecuencia práctica es importante: un defecto puede convivir con un programa durante mucho tiempo sin manifestarse, porque para que la falla ocurra el estado erróneo tiene que llegar hasta una salida observable. Diseñar tests significa, en el fondo, construir entradas que recorran ese camino completo.
 
+\newpage
 \section{Ejercicio 3}
-Se analizaron cuatro programas defectuosos. Para cada caso se identifica el defecto, una corrección posible y los casos pedidos en los incisos b), c) y d).
+El enunciado presenta cuatro programas defectuosos junto con un caso de test que produce falla en cada uno. Para cada programa identificamos el defecto, proponemos una reparación y construimos los casos pedidos en los incisos b), c) y d). El criterio para esos casos sigue directamente la cadena RIPR: en (b) buscamos una entrada que ni siquiera ejecute la línea defectuosa; en (c), una entrada que la ejecute pero cuyo resultado siga coincidiendo con el esperado; y en (d), una entrada en la que el estado erróneo se propague hasta producir una falla observable.
 
 \subsection{Programa 1: \texttt{findLast(int[] x, int y)}}
 \subsubsection*{a) Defecto y corrección}
@@ -86,23 +85,23 @@ El defecto está en la condición del ciclo:
 \begin{lstlisting}[style=javastyle]
 for (int i = x.length - 1; i > 0; i--)
 \end{lstlisting}
-De esta forma nunca se evalúa el índice \texttt{0}. La corrección es:
+Como la guarda es \texttt{i > 0}, el índice \texttt{0} nunca llega a inspeccionarse y un valor ubicado al inicio del arreglo queda fuera del recorrido. La corrección consiste en relajar la condición:
 \begin{lstlisting}[style=javastyle]
 for (int i = x.length - 1; i >= 0; i--)
 \end{lstlisting}
 
 \subsubsection*{b) Caso que no ejecute el defecto}
-No es posible con entradas válidas: la condición defectuosa del \texttt{for} se evalúa en toda invocación del método.
+No es posible con entradas no nulas: la condición defectuosa pertenece al \texttt{for} principal, por lo que toda invocación que recorra el arreglo la atraviesa.
 
 \subsubsection*{c) Caso que ejecute el defecto y no produzca falla}
-\texttt{x = [5,2,3], y = 2} \hspace{0.5cm} Resultado esperado: \texttt{1}.
+\texttt{x = [5,2,3], y = 2} \hspace{0.5cm} Resultado esperado: \texttt{1}. El \texttt{2} aparece en una posición distinta de \texttt{0}, por lo que la omisión del primer índice no altera el resultado.
 
 \subsubsection*{d) Caso que ejecute el defecto y produzca falla}
-\texttt{x = [2,3,5], y = 2} \hspace{0.5cm} Esperado: \texttt{0}. Resultado defectuoso: \texttt{-1}.
+\texttt{x = [2,3,5], y = 2} \hspace{0.5cm} Esperado: \texttt{0}. Resultado defectuoso: \texttt{-1}, ya que el único \texttt{2} se encuentra precisamente en la posición que el ciclo nunca visita.
 
 \subsection{Programa 2: \texttt{lastZero(int[] x)}}
 \subsubsection*{a) Defecto y corrección}
-El método debe devolver el \textit{último} índice con valor cero, pero recorre de izquierda a derecha y retorna el primer cero encontrado. La corrección consiste en recorrer desde el final.
+El método debe devolver el \textit{último} índice cuyo valor es cero, pero recorre de izquierda a derecha y retorna el primero que encuentra. La corrección natural es invertir el sentido del recorrido:
 \begin{lstlisting}[style=javastyle]
 for (int i = x.length - 1; i >= 0; i--) {
     if (x[i] == 0) {
@@ -112,17 +111,17 @@ for (int i = x.length - 1; i >= 0; i--) {
 \end{lstlisting}
 
 \subsubsection*{b) Caso que no ejecute el defecto}
-No es posible para arreglos no nulos, ya que la estrategia defectuosa forma parte del recorrido principal.
+No es posible con arreglos no nulos: la estrategia incorrecta de recorrido constituye el cuerpo principal del método.
 
 \subsubsection*{c) Caso que ejecute el defecto y no produzca falla}
-\texttt{x = [1,0,2]} \hspace{0.5cm} Resultado esperado: \texttt{1}.
+\texttt{x = [1,0,2]} \hspace{0.5cm} Resultado esperado: \texttt{1}. Como hay un único cero, el primero y el último coinciden.
 
 \subsubsection*{d) Caso que ejecute el defecto y produzca falla}
-\texttt{x = [0,1,0]} \hspace{0.5cm} Esperado: \texttt{2}. Resultado defectuoso: \texttt{0}.
+\texttt{x = [0,1,0]} \hspace{0.5cm} Esperado: \texttt{2}. Resultado defectuoso: \texttt{0}, porque la implementación se queda con el primer cero que aparece y nunca llega al final del arreglo.
 
 \subsection{Programa 3: \texttt{countPositive(int[] x)}}
 \subsubsection*{a) Defecto y corrección}
-Se cuenta \texttt{x[i] >= 0}, lo que incluye al cero como positivo. La condición correcta es:
+La condición usada es \texttt{x[i] >= 0}, lo que provoca que el cero también se contabilice como positivo. La condición correcta debe ser estricta:
 \begin{lstlisting}[style=javastyle]
 if (x[i] > 0) {
     count++;
@@ -130,19 +129,17 @@ if (x[i] > 0) {
 \end{lstlisting}
 
 \subsubsection*{b) Caso que no ejecute el defecto}
-\texttt{x = []}. El cuerpo del \texttt{for} no se ejecuta.
+\texttt{x = []}. Con un arreglo vacío el cuerpo del \texttt{for} no se ejecuta y la comparación defectuosa nunca se evalúa.
 
 \subsubsection*{c) Caso que ejecute el defecto y no produzca falla}
-\texttt{x = [-4,2,2]} \hspace{0.5cm} Resultado esperado: \texttt{2}.
+\texttt{x = [-4,2,2]} \hspace{0.5cm} Resultado esperado: \texttt{2}. La condición se evalúa para cada elemento, pero al no haber ningún cero el resultado coincide con el correcto.
 
 \subsubsection*{d) Caso que ejecute el defecto y produzca falla}
-\texttt{x = [-4,2,0,2]} \hspace{0.5cm} Esperado: \texttt{2}. Resultado defectuoso: \texttt{3}.
+\texttt{x = [-4,2,0,2]} \hspace{0.5cm} Esperado: \texttt{2}. Resultado defectuoso: \texttt{3}, ya que el cero se cuenta indebidamente.
 
 \subsection{Programa 4: \texttt{oddOrPos(int[] x)}}
 \subsubsection*{a) Defecto y corrección}
-La implementación defectuosa usa \texttt{x[i] \% 2 == 1}. En Java, los impares negativos no satisfacen esa condición (por ejemplo, \texttt{-3 \% 2 == -1}).
-
-La corrección es:
+La implementación usa \texttt{x[i] \% 2 == 1} para detectar impares. El problema es que en Java el operador \texttt{\%} preserva el signo del dividendo, así que \texttt{-3 \% 2} vale \texttt{-1} y los impares negativos se pierden. La condición correcta verifica explícitamente que el resto sea distinto de cero:
 \begin{lstlisting}[style=javastyle]
 if (x[i] % 2 != 0 || x[i] > 0) {
     count++;
@@ -150,35 +147,37 @@ if (x[i] % 2 != 0 || x[i] > 0) {
 \end{lstlisting}
 
 \subsubsection*{b) Caso que no ejecute el defecto}
-\texttt{x = []}. El cuerpo del \texttt{for} no se ejecuta.
+\texttt{x = []}. Sin elementos, la condición lógica no se evalúa.
 
 \subsubsection*{c) Caso que ejecute el defecto y no produzca falla}
-\texttt{x = [2,4,-2]} \hspace{0.5cm} Resultado esperado: \texttt{2}.
+\texttt{x = [2,4,-2]} \hspace{0.5cm} Resultado esperado: \texttt{2}. Aunque la condición defectuosa se evalúa en cada iteración, ningún elemento es un impar negativo, así que el resultado no se ve afectado.
 
 \subsubsection*{d) Caso que ejecute el defecto y produzca falla}
-\texttt{x = [-3,-2,0,1,4]} \hspace{0.5cm} Esperado: \texttt{3}. Resultado defectuoso: \texttt{2}.
+\texttt{x = [-3,-2,0,1,4]} \hspace{0.5cm} Esperado: \texttt{3}. Resultado defectuoso: \texttt{2}: el \texttt{-3} debería contarse como impar y queda fuera.
 
 \subsection{Síntesis del ejercicio}
+Los cuatro defectos comparten un patrón habitual: errores de borde u omisiones en la condición lógica que rige al ciclo o al filtro. En particular,
 \begin{itemize}
-  \item \texttt{findLast}: no evalúa el índice \texttt{0}.
-  \item \texttt{lastZero}: devuelve el primer cero en vez del último.
-  \item \texttt{countPositive}: contabiliza el \texttt{0} como positivo.
-  \item \texttt{oddOrPos}: no reconoce impares negativos.
+  \item \texttt{findLast} no evalúa el índice \texttt{0};
+  \item \texttt{lastZero} devuelve el primer cero en lugar del último;
+  \item \texttt{countPositive} contabiliza el \texttt{0} como positivo;
+  \item \texttt{oddOrPos} no reconoce impares negativos por la semántica de \texttt{\%} en Java.
 \end{itemize}
 
 \section{Ejercicio 4}
-Se implementaron las reparaciones del ejercicio anterior y se incorporaron casos de prueba JUnit para verificar el comportamiento corregido.
+A partir del análisis del ejercicio anterior se implementaron las cuatro reparaciones y se trasladaron los casos de prueba a JUnit, de modo de verificar empíricamente que las correcciones efectivamente eliminan las fallas observadas.
 
 \subsection{Reparaciones implementadas}
+Cada reparación es mínima e interviene únicamente sobre la condición que provocaba el comportamiento incorrecto:
 \begin{itemize}
-  \item \texttt{findLast}: cambio de condición de recorrido de \texttt{i > 0} a \texttt{i >= 0}.
-  \item \texttt{lastZero}: recorrido desde el final del arreglo.
-  \item \texttt{countPositive}: reemplazo de \texttt{>= 0} por \texttt{> 0}.
-  \item \texttt{oddOrPos}: reemplazo de \texttt{\% 2 == 1} por \texttt{\% 2 != 0}.
+  \item \texttt{findLast}: la guarda del ciclo pasa de \texttt{i > 0} a \texttt{i >= 0}, incluyendo el índice \texttt{0} en el recorrido.
+  \item \texttt{lastZero}: se invierte el sentido del recorrido para que el primer cero hallado sea, esta vez, el último del arreglo.
+  \item \texttt{countPositive}: se reemplaza \texttt{>= 0} por \texttt{> 0}, dejando al cero fuera del conteo.
+  \item \texttt{oddOrPos}: se sustituye \texttt{\% 2 == 1} por \texttt{\% 2 != 0}, captando también a los impares negativos.
 \end{itemize}
 
 \subsection{Casos de prueba JUnit}
-Se implementaron los mismos casos del enunciado que evidenciaban fallas en las versiones defectuosas:
+Se reutilizaron los casos del enunciado, dado que justamente eran los que evidenciaban las fallas en las versiones defectuosas:
 \begin{itemize}
   \item \texttt{findLast([2,3,5], 2) = 0}
   \item \texttt{lastZero([0,1,0]) = 2}
@@ -187,115 +186,118 @@ Se implementaron los mismos casos del enunciado que evidenciaban fallas en las v
 \end{itemize}
 
 \subsection{Detección de falla usando el modelo RIPR}
+El modelo RIPR (\textit{Reachability, Infection, Propagation, Revealability}) describe las cuatro condiciones que debe satisfacer un test para revelar un defecto: alcanzarlo, infectar el estado, propagar ese estado erróneo hasta una salida observable y, por último, exponerlo a través de una aserción. Para cada uno de los programas analizados, los casos de prueba elegidos las cumplen como sigue.
+
 \subsubsection*{1) \texttt{findLast}}
 \begin{itemize}
-  \item \textbf{Reachability:} el test alcanza la condición defectuosa del \texttt{for}.
-  \item \textbf{Infection:} se omite la revisión de \texttt{x[0]}.
-  \item \textbf{Propagation:} se retorna un índice incorrecto.
-  \item \textbf{Revealability:} la aserción muestra diferencia entre esperado y obtenido.
+  \item \textbf{Reachability:} el test \texttt{(\{2,3,5\}, 2)} entra al ciclo, que es donde vive el defecto.
+  \item \textbf{Infection:} la guarda \texttt{i > 0} omite la iteración correspondiente al índice \texttt{0}, justamente la posición donde está el valor buscado.
+  \item \textbf{Propagation:} al no encontrar coincidencia, el método retorna \texttt{-1} en lugar de \texttt{0}; el estado erróneo llega íntegro a la salida.
+  \item \textbf{Revealability:} la aserción \texttt{assertEquals(0, ...)} compara con el valor correcto y deja en evidencia la divergencia.
 \end{itemize}
 
 \subsubsection*{2) \texttt{lastZero}}
 \begin{itemize}
-  \item \textbf{Reachability:} se ejecuta el recorrido de izquierda a derecha.
-  \item \textbf{Infection:} se selecciona un candidato incorrecto (primer cero).
-  \item \textbf{Propagation:} ese índice se retorna como resultado final.
-  \item \textbf{Revealability:} la aserción detecta \texttt{0} en lugar de \texttt{2}.
+  \item \textbf{Reachability:} con \texttt{x = [0,1,0]} el bucle se ejecuta y la condición se evalúa sobre cada posición.
+  \item \textbf{Infection:} al recorrer de izquierda a derecha, el primer cero seleccionado es el de la posición \texttt{0}, no el último.
+  \item \textbf{Propagation:} ese índice se retorna inmediatamente, sin oportunidad de corrección posterior.
+  \item \textbf{Revealability:} la aserción detecta \texttt{0} cuando se esperaba \texttt{2}.
 \end{itemize}
 
 \subsubsection*{3) \texttt{countPositive}}
 \begin{itemize}
-  \item \textbf{Reachability:} se evalúa \texttt{x[i] >= 0}.
-  \item \textbf{Infection:} el contador se incrementa indebidamente para \texttt{0}.
-  \item \textbf{Propagation:} el total final queda sobreestimado.
-  \item \textbf{Revealability:} la aserción muestra \texttt{3} en lugar de \texttt{2}.
+  \item \textbf{Reachability:} cada elemento de \texttt{[-4,2,0,2]} pasa por la comparación.
+  \item \textbf{Infection:} la condición \texttt{x[i] >= 0} hace que el cero contribuya al contador, contaminando el estado interno.
+  \item \textbf{Propagation:} ese incremento espurio se acumula en la variable que finalmente se retorna.
+  \item \textbf{Revealability:} la aserción muestra un total de \texttt{3} en lugar de \texttt{2}.
 \end{itemize}
 
 \subsubsection*{4) \texttt{oddOrPos}}
 \begin{itemize}
-  \item \textbf{Reachability:} se ejecuta la condición lógica del método.
-  \item \textbf{Infection:} los impares negativos no se contabilizan.
-  \item \textbf{Propagation:} el conteo final queda una unidad por debajo.
+  \item \textbf{Reachability:} con \texttt{x = [-3,-2,0,1,4]} la condición lógica se evalúa para todos los elementos.
+  \item \textbf{Infection:} \texttt{-3 \% 2} vale \texttt{-1}, no \texttt{1}, y por eso el impar negativo queda fuera del conteo.
+  \item \textbf{Propagation:} el contador acumula una unidad menos de las debidas.
   \item \textbf{Revealability:} la aserción detecta \texttt{2} en lugar de \texttt{3}.
 \end{itemize}
 
 \subsection{Ejecución de pruebas}
-Desde la carpeta del ejercicio:
+La suite se ejecuta desde la carpeta del ejercicio con:
 \begin{center}
 \texttt{mvn -Dmaven.repo.local=.m2 test}
 \end{center}
 
 \section{Ejercicio 5}
-Se analizaron las clases \texttt{Point} y \texttt{ColorPoint} del paquete \texttt{practico1\_exercises.color\_points}, en el contexto del problema clásico de \texttt{equals} en jerarquías por herencia.
+Se analizan las clases \texttt{Point} y \texttt{ColorPoint} del paquete \texttt{practico1\_exercises.color\_points}. Se trata del ejemplo clásico de Bloch (\textit{Effective Java}, capítulo 3) sobre el contrato de \texttt{equals} en jerarquías por herencia: cuando una subclase agrega estado de valor, mantener simultáneamente las propiedades de reflexividad, simetría y transitividad de \texttt{equals} se vuelve, en general, imposible.
 
 \subsection{Análisis de \texttt{Point}}
 \subsubsection*{a) Problema y modificación propuesta}
-\texttt{Point} define igualdad por valor y permite que subclases también sean tratadas como \texttt{Point} (uso de \texttt{instanceof Point}). Esto habilita inconsistencias cuando una subclase agrega estado adicional (por ejemplo, color).
+\texttt{Point} define la igualdad por valor y, mediante \texttt{instanceof Point}, acepta como contrapartes válidas también a las instancias de cualquier subclase. Eso introduce una asimetría latente: una \texttt{ColorPoint} con las mismas coordenadas que un \texttt{Point} será considerada igual desde el lado de \texttt{Point}, aunque su \texttt{equals} sea más estricto y no acepte la comparación inversa.
 
-La solución recomendada es evitar extender \texttt{Point} para agregar estado de valor: usar composición (o, alternativamente, declarar \texttt{Point} como \texttt{final}).
+La salida recomendada por Bloch es no extender \texttt{Point} para agregar estado de valor. En su lugar conviene usar composición --- mantener un \texttt{Point} interno --- o, si se prefiere prevenir la herencia, declarar \texttt{Point} como \texttt{final}.
 
 \subsubsection*{b) Test que no ejecute la falla}
-Comparación entre dos instancias de \texttt{Point} con mismas coordenadas.
+La comparación entre dos \texttt{Point} con las mismas coordenadas no involucra subclases, por lo que el escenario problemático ni siquiera se ejecuta.
 
 \subsubsection*{c) Test que ejecute la falla sin error observable}
-Comparación \texttt{Point(1,2)} con \texttt{ColorPoint(2,3,RED)}. Aunque se ejecuta la lógica problemática de comparación entre tipos, el resultado sigue siendo correcto (\texttt{false}) por diferencia de coordenadas.
+Comparación de \texttt{Point(1,2)} con \texttt{ColorPoint(2,3,RED)}. La rama conflictiva (un \texttt{Point} aceptando una subclase como contraparte) se recorre, pero como las coordenadas difieren el resultado coincide con el esperado (\texttt{false}).
 
 \subsubsection*{d) Test con error pero sin falla}
-No se considera posible en este caso: cuando aparece el error lógico en \texttt{equals}, se manifiesta directamente como comportamiento observable incorrecto.
+No identificamos un caso de este tipo: dada la simplicidad de \texttt{equals}, en cuanto el estado interno se infecta el resultado retornado coincide directamente con la salida observable, por lo que el error y la falla se manifiestan en el mismo momento.
 
 \subsection{Análisis de \texttt{ColorPoint}}
 \subsubsection*{a) Problema y modificación propuesta}
-\texttt{ColorPoint} redefine \texttt{equals} exigiendo \texttt{instanceof ColorPoint}, lo que rompe simetría con \texttt{Point}. Por ejemplo, puede ocurrir:
+\texttt{ColorPoint} redefine \texttt{equals} exigiendo \texttt{instanceof ColorPoint}. Combinado con la implementación heredada de \texttt{Point}, eso rompe la simetría del contrato: para \texttt{p = Point(1,2)} y \texttt{cp = ColorPoint(1,2,RED)} se cumple
 \begin{center}
-\texttt{p.equals(cp) == true} y \texttt{cp.equals(p) == false}
+\texttt{p.equals(cp) == true} \hspace{0.5cm}y\hspace{0.5cm} \texttt{cp.equals(p) == false}.
 \end{center}
-
-La corrección aplicada consiste en usar composición en lugar de herencia (implementada en \texttt{ColorPointFixed}).
+La corrección utilizada es la versión por composición \texttt{ColorPointFixed}, que ya no extiende \texttt{Point} y por lo tanto no entra en conflicto con su \texttt{equals}.
 
 \subsubsection*{b) Test que no ejecute la falla}
-Comparación entre dos \texttt{ColorPoint} con mismas coordenadas y color.
+Comparación entre dos \texttt{ColorPoint} con mismas coordenadas y mismo color: el problema sólo aparece al cruzar tipos.
 
 \subsubsection*{c) Test que ejecute la falla sin error observable}
-Comparación \texttt{ColorPoint(1,2,RED)} con \texttt{Point(4,5)}. Se ejecuta la rama conflictiva, pero el resultado esperado sigue siendo \texttt{false}.
+Comparación \texttt{ColorPoint(1,2,RED)} con \texttt{Point(4,5)}. Se transita la rama crítica, pero como las coordenadas son distintas el resultado correcto sigue siendo \texttt{false}.
 
 \subsubsection*{d) Test con error pero sin falla}
-No se considera posible, por la misma razón conceptual indicada para \texttt{Point}.
+No se identifica un caso, por la misma razón conceptual señalada para \texttt{Point}: el resultado de \texttt{equals} es a la vez el estado interno y la salida observable.
 
 \refstepcounter{section}
 \section*{Ejercicio \thesection}
 \addcontentsline{toc}{section}{Ejercicio \thesection}
 \subsection{Aclaración sobre el material provisto}
-En el material disponible no estaban provistas la clase \texttt{PointTest} ni el paquete \texttt{practico1\_exercises.point\_set}. Por ello se crearon:
+El material no incluía la clase \texttt{PointTest} ni el paquete \texttt{practico1\_exercises.point\_set}. Para poder resolver el ejercicio se reconstruyeron los artefactos faltantes:
 \begin{itemize}
-  \item una implementación de \texttt{Point},
-  \item una clase de pruebas \texttt{PointTest},
-  \item tests adicionales para cubrir comportamiento en \texttt{HashSet}.
+  \item una implementación propia de \texttt{Point};
+  \item una clase de pruebas \texttt{PointTest};
+  \item tests adicionales para cubrir el comportamiento de \texttt{Point} dentro de un \texttt{HashSet}.
 \end{itemize}
 
 \subsection{a) Nuevos tests, falla detectada y corrección}
-Se incorporaron pruebas para:
+Los casos diseñados apuntan a verificar tanto la semántica de igualdad por valor como su correcto funcionamiento en estructuras basadas en hashing:
 \begin{itemize}
-  \item igualdad entre puntos equivalentes,
-  \item desigualdad entre puntos distintos,
-  \item tratamiento de duplicados en \texttt{HashSet},
-  \item búsqueda de elementos equivalentes en \texttt{HashSet}.
+  \item igualdad entre dos puntos con las mismas coordenadas;
+  \item desigualdad cuando alguna coordenada cambia;
+  \item ausencia de duplicados al insertar puntos equivalentes en un \texttt{HashSet};
+  \item reconocimiento de un punto equivalente mediante \texttt{contains}.
 \end{itemize}
 
-La falla detectada fue la inconsistencia entre \texttt{equals} y \texttt{hashCode}. La corrección aplicada fue:
+La falla detectada fue la inconsistencia entre \texttt{equals} y \texttt{hashCode}: dos puntos considerados iguales por \texttt{equals} podían producir códigos de hash distintos, lo que rompía la promesa de \texttt{HashSet} y \texttt{HashMap}. La reparación es la canónica:
 \begin{lstlisting}[style=javastyle]
 @Override
 public int hashCode() {
     return Objects.hash(x, y);
 }
 \end{lstlisting}
+Con \texttt{hashCode} consistente, los tests sobre \texttt{HashSet} pasan a comportarse como se espera.
 
 \subsection{b) Identificación de Arrange--Act--Assert}
-En cada test se dejaron explícitas las tres fases:
+Cada test se redactó dejando explícitas las tres fases del patrón AAA:
 \begin{itemize}
-  \item \textbf{Arrange:} preparación del escenario y datos.
-  \item \textbf{Act:} ejecución de la operación bajo prueba.
-  \item \textbf{Assert:} verificación de resultados esperados.
+  \item \textbf{Arrange:} preparación del escenario y los datos;
+  \item \textbf{Act:} ejecución de la operación bajo prueba;
+  \item \textbf{Assert:} verificación del resultado esperado.
 \end{itemize}
+La división se mantiene también con comentarios en el código para que la intención de cada bloque quede a la vista.
 
 \subsection{Ejecución de pruebas}
 \begin{center}
@@ -304,33 +306,34 @@ En cada test se dejaron explícitas las tres fases:
 
 \section{Ejercicio 7}
 \subsection{Aclaración sobre el material provisto}
-No se encontraron implementaciones dadas de \texttt{PointSet} ni \texttt{PointSetTest}. Para resolver el ejercicio se crearon ambas clases y se diseñaron pruebas adicionales.
+Tampoco se contaba con una implementación dada de \texttt{PointSet} ni con la clase de tests asociada. Como continuación natural del ejercicio anterior, se construyeron ambas y se incorporaron pruebas adicionales centradas en la semántica del conjunto.
 
 \subsection{Tests implementados}
-Se incorporaron casos para verificar:
+Los casos cubren las situaciones más representativas del comportamiento de un conjunto de puntos:
 \begin{itemize}
-  \item estado inicial vacío,
-  \item no inserción de duplicados equivalentes,
-  \item reconocimiento de equivalencia en \texttt{contains},
-  \item eliminación de equivalentes en \texttt{remove},
-  \item respuesta negativa de \texttt{contains} ante ausencias reales.
+  \item estado inicial vacío;
+  \item no inserción de duplicados cuando se agregan puntos equivalentes;
+  \item reconocimiento de equivalencia en \texttt{contains};
+  \item eliminación de un punto a partir de otra instancia equivalente con \texttt{remove};
+  \item respuesta negativa de \texttt{contains} cuando el punto no fue agregado.
 \end{itemize}
 
 \subsection{Resultado y análisis}
-Los tests pasan sobre la implementación actual. No se detectaron fallas adicionales en \texttt{PointSet}. Este resultado es consistente con la corrección previa de \texttt{Point} (coherencia entre \texttt{equals} y \texttt{hashCode}), dado que \texttt{PointSet} se apoya en un \texttt{HashSet<Point>}.
+La suite pasa sin fallas sobre la implementación actual de \texttt{PointSet}, que se apoya internamente en un \texttt{HashSet<Point>}. Este resultado es coherente con la corrección aplicada en el ejercicio anterior: una vez que \texttt{equals} y \texttt{hashCode} de \texttt{Point} son consistentes entre sí, las operaciones del \texttt{HashSet} se comportan correctamente y \texttt{PointSet} hereda ese buen comportamiento sin necesidad de ajustes propios.
 
 \subsection{Identificación de Arrange--Act--Assert}
-Al igual que en el ejercicio 6, todos los tests se estructuraron con fases explícitas de \textit{arrange}, \textit{act} y \textit{assert}.
+Como en el ejercicio anterior, todos los tests se estructuraron con las tres fases explícitamente delimitadas, manteniendo el mismo estilo de comentarios.
 
+\newpage
 \section*{Conclusiones}
 \addcontentsline{toc}{section}{Conclusiones}
-La resolución del Práctico 1 permitió:
+El Práctico 1 funcionó como una primera puesta en práctica del vocabulario y las herramientas que se siguen usando a lo largo del cuatrimestre. En particular, permitió:
 \begin{itemize}
-  \item distinguir formalmente los conceptos de \textit{fault}, \textit{error} y \textit{failure};
-  \item analizar defectos concretos en programas imperativos y su reparación;
-  \item aplicar el modelo RIPR para explicar detección de fallas;
-  \item abordar un problema clásico de diseño orientado a objetos en el contrato de \texttt{equals};
-  \item reforzar diseño de pruebas unitarias y consistencia semántica en estructuras de datos basadas en hashing.
+  \item distinguir con precisión los conceptos de \textit{fault}, \textit{error} y \textit{failure}, y entender por qué un defecto puede pasar desapercibido aunque el código se ejecute con frecuencia;
+  \item analizar y reparar defectos concretos en programas imperativos pequeños, prestando atención a sus condiciones de borde;
+  \item aplicar el modelo RIPR para argumentar por qué cada test efectivamente detecta o no un defecto;
+  \item revisar un problema clásico de diseño orientado a objetos --- la dificultad de mantener simétrica y transitiva la igualdad de \texttt{Point} y \texttt{ColorPoint} --- y resolverlo mediante composición;
+  \item afianzar el diseño de pruebas JUnit con el patrón \textit{arrange-act-assert} y la consistencia entre \texttt{equals} y \texttt{hashCode} en estructuras basadas en hashing.
 \end{itemize}
 
 \end{document}
