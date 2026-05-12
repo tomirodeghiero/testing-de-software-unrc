@@ -9,6 +9,7 @@
 \usepackage{setspace}
 \usepackage{parskip}
 \usepackage{enumitem}
+\usepackage{booktabs}
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{hyperref}
@@ -17,6 +18,8 @@
 \onehalfspacing
 \setlist[itemize]{leftmargin=*,itemsep=0.2em}
 \setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+\emergencystretch=3em
+\hyphenpenalty=1000
 
 \hypersetup{
   colorlinks=true,
@@ -26,10 +29,27 @@
   pdfauthor={}
 }
 
-\lstdefinestyle{codestyle}{
+\lstdefinestyle{javastyle}{
+  language=Java,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{orange!50!black},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  tabsize=2,
+  showstringspaces=false
+}
+
+\lstdefinestyle{plain}{
   basicstyle=\ttfamily\small,
   frame=single,
   breaklines=true,
+  tabsize=2,
   showstringspaces=false
 }
 
@@ -45,230 +65,436 @@
 
 \section*{Introducción}
 \addcontentsline{toc}{section}{Introducción}
-Este documento contiene la resolución del \textit{Práctico 2} de \textit{Testing de Software 2024}. El práctico se concentra en el material del capítulo 3 del libro de Ammann y Offutt, en particular en pruebas parametrizadas con JUnit~5 y en el diseño de invariantes de representación (\texttt{repOk}). En esa línea, se reescriben como tests parametrizados los casos del Práctico 1, se cubren con pruebas las clases \texttt{StackAr}, \texttt{Min}, \texttt{ZuneBug} y \texttt{BoundedQueue}, y se completan los \texttt{repOk} pedidos. La continuidad con el práctico anterior es deliberada: muchos de los ejercicios consolidan ideas ya introducidas (como el modelo RIPR) y las extienden hacia formas más sistemáticas de testear.
+Este documento reúne la resolución del \textit{Práctico 2} de \textit{Testing de Software 2024}. La consigna profundiza en testing automatizado con JUnit 5, en particular en el enfoque \textit{data-driven} a través de la anotación \texttt{@ParameterizedTest} y sus distintas fuentes (\texttt{@CsvSource}, \texttt{@MethodSource}, \texttt{@CsvFileSource}). También introduce la idea de \textit{invariante de representación} y el método \texttt{repOK()} como oráculo interno, aplicado a dos tipos de datos abstractos clásicos: una pila acotada (\texttt{StackAr}) y una cola circular acotada (\texttt{BoundedQueue}). Por último, se rescata un caso real de defecto, el \textit{Zune bug}, como excusa para practicar debugging guiado por tests.
+
+El práctico se apoya en los conceptos del capítulo 3 del libro de Ammann y Offutt, en particular en el patrón \textit{arrange-act-assert} y en la idea de definir criterios de cobertura y oráculos de manera explícita. Para acompañar el estudio, se incluye un resumen teórico separado (\texttt{resumen\_teorico\_tp2.tex}) basado en la carpeta \texttt{material/}.
+
+A lo largo del documento se asume que el lector está familiarizado con los conceptos básicos vistos en el TP1: \textit{fault}, \textit{error}, \textit{failure} y el modelo RIPR.
 
 \section{Ejercicio 1}
-Lectura del capítulo 3 del libro \textit{Introduction to Software Testing}.
+\subsection{Lectura}
+Lectura del capítulo 3 de \textit{Introduction to Software Testing} (Ammann y Offutt, 2da edición), titulado \textit{Test Automation}. Las ideas más relevantes para el resto del práctico son:
+\begin{itemize}
+  \item Distinción entre \textbf{Test Requirement} (TR) y \textbf{Test Coverage Criterion} (TCC). Un TR es una propiedad que un test debe satisfacer; un TCC es una regla que, dado un artefacto bajo prueba, genera el conjunto de TRs a cubrir.
+  \item Noción de \textbf{subsumption} entre criterios: $C_1$ subsume a $C_2$ si todo test set que cubre $C_1$ también cubre $C_2$.
+  \item Patrón \textbf{arrange / act / assert} para tests automatizados, separación de \textit{fixtures}, drivers y stubs.
+  \item Idea de \textit{Test-Driven Development} como técnica de diseño.
+  \item Marco \textbf{Model-Driven Test Design (MDTD)}: aplicar los mismos criterios a cuatro modelos --- control flow, data flow, logic, input space --- usando una capa de abstracción intermedia.
+\end{itemize}
+El resumen teórico que acompaña este informe (sección final del repositorio) reorganiza estas ideas con más detalle.
 
 \section{Ejercicio 2}
-El ejercicio pide reescribir como tests parametrizados los casos del ejercicio 3 del Práctico 1. La implementación bajo prueba es la versión defectuosa provista por la cátedra en
-\begin{itemize}
-  \item \texttt{src/main/java/assignment2\_exercises/SimpleRoutines.java},
-\end{itemize}
-de modo que los tests deben fallar exactamente en los casos que exponen cada defecto, replicando el resultado del Práctico 1 pero ahora con una infraestructura más concisa y reutilizable.
-
-\subsection{Métodos cubiertos}
-\begin{itemize}
-  \item \texttt{findLast(int[] x, int y)}
-  \item \texttt{lastZero(int[] x)}
-  \item \texttt{countPositive(int[] x)}
-  \item \texttt{oddOrPos(int[] x)}
-\end{itemize}
-
-\subsection{Archivos agregados}
-\begin{itemize}
-  \item \texttt{src/test/java/assignment2\_exercises/SimpleRoutinesParameterizedTest.java}
-  \item \texttt{src/test/resources/assignment2\_exercises/odd\_or\_pos\_cases.csv}
-\end{itemize}
+\subsection{Objetivo}
+Reescribir los tests del ejercicio 3 del Práctico 1 como tests parametrizados sobre la clase
+\begin{center}
+\texttt{assignment2\_exercises.SimpleRoutines}
+\end{center}
+La consigna exige usar al menos un \texttt{@MethodSource} y al menos un caso en formato CSV (\texttt{@CsvSource} o \texttt{@CsvFileSource}).
 
 \subsection{Estrategia de parametrización}
-Para cumplir con el requisito de usar tanto un método proveedor como entradas en formato CSV, se eligió una fuente distinta para cada método de manera de mostrar las cuatro variantes principales:
+Cada método se prueba con una fuente distinta, lo que permite ilustrar las tres alternativas principales que provee JUnit~5:
 \begin{itemize}
-  \item \texttt{@CsvSource} en \texttt{findLast}, con los pares \texttt{(arreglo, objetivo, esperado)} embebidos en la anotación;
-  \item \texttt{@MethodSource} en \texttt{lastZero} y \texttt{countPositive}, donde un proveedor devuelve un \texttt{Stream<Arguments>} con arreglos ya tipados;
-  \item \texttt{@CsvFileSource} en \texttt{oddOrPos}, leyendo los casos desde un archivo externo (\texttt{odd\_or\_pos\_cases.csv}).
+  \item \texttt{findLast}: \texttt{@CsvSource} \textit{inline} en el código.
+  \item \texttt{lastZero}, \texttt{countPositive}: \texttt{@MethodSource}, porque conviene devolver \texttt{int[]} directamente.
+  \item \texttt{oddOrPos}: \texttt{@CsvFileSource}, leyendo el archivo \texttt{odd\_or\_pos\_cases.csv} desde \texttt{src/test/}\allowbreak\texttt{resources}.
 \end{itemize}
-La combinación elegida satisface lo pedido y deja en claro el costo-beneficio de cada estrategia: \texttt{CsvSource} es liviano para casos simples, \texttt{MethodSource} es necesario apenas la entrada deja de ser representable como texto, y \texttt{CsvFileSource} se vuelve cómodo cuando los casos crecen en cantidad o se quieren mantener separados del código.
 
-\subsection{Ejecución}
-\begin{lstlisting}[style=codestyle]
-mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=SimpleRoutinesParameterizedTest test
+\subsection{Casos elegidos y modelo RIPR}
+La selección de casos sigue el análisis del TP1. Para cada uno de los cuatro programas se incluyen tanto un caso (c) --- ejecuta el defecto pero no produce falla --- como un caso (d) --- ejecuta el defecto y produce falla observable. Para \texttt{countPositive} y \texttt{oddOrPos} se incluye también el caso (b) (arreglo vacío), donde el defecto ni siquiera se alcanza.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Programa & Caso (c) (pasa) & Caso (d) (revela el defecto) \\
+\midrule
+\texttt{findLast}      & \texttt{[5,2,3],2 → 1}  & \texttt{[2,3,5],2 → 0}        \\
+\texttt{lastZero}      & \texttt{[1,0,2] → 1}    & \texttt{[0,1,0] → 2}          \\
+\texttt{countPositive} & \texttt{[-4,2,2] → 2}   & \texttt{[-4,2,0,2] → 2}       \\
+\texttt{oddOrPos}      & \texttt{[2,4,-2] → 2}   & \texttt{[-3,-2,0,1,4] → 3}    \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Implementación abreviada}
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest(name = "findLast({0}, {1}) -> {2}")
+@CsvSource({
+    "'5,2,3', 2, 1",
+    "'2,3,5', 2, 0"
+})
+void findLast_casosDelEjercicio3(String valores, int objetivo, int esperado) {
+    assertEquals(esperado, SimpleRoutines.findLast(parseArray(valores), objetivo));
+}
+
+@ParameterizedTest(name = "lastZero({0}) -> {1}")
+@MethodSource("lastZeroCases")
+void lastZero_casosDelEjercicio3(int[] entrada, int esperado) {
+    assertEquals(esperado, SimpleRoutines.lastZero(entrada));
+}
+
+@ParameterizedTest(name = "oddOrPos({0}) -> {1}")
+@CsvFileSource(resources = "/assignment2_exercises/odd_or_pos_cases.csv", numLinesToSkip = 1)
+void oddOrPos_casosDelEjercicio3(String valores, int esperado) {
+    assertEquals(esperado, SimpleRoutines.oddOrPos(parseArray(valores)));
+}
 \end{lstlisting}
 
-Se incluye \texttt{-Djacoco.skip=true} porque la versión de JaCoCo del template (0.8.2) presenta incompatibilidades con las JDK actuales; deshabilitar la cobertura permite que la suite corra sin tocar la configuración del \texttt{pom.xml}.
-
-\subsection{Resultado esperado}
-La suite ejecuta 10 casos. Sobre la versión defectuosa de \texttt{SimpleRoutines} fallan los cuatro que exponen los defectos ya analizados en el Práctico 1:
+\subsection{Resultado sobre la versión defectuosa}
+La clase \texttt{SimpleRoutines} provista por la cátedra para este práctico es la versión \textit{con} los cuatro defectos del TP1. Cuando se ejecuta la suite parametrizada se obtienen exactamente cuatro \textit{failures}, uno por programa, correspondientes a los casos (d):
 \begin{itemize}
-  \item \texttt{findLast}: no evalúa el índice \texttt{0};
-  \item \texttt{lastZero}: retorna el primer cero en vez del último;
-  \item \texttt{countPositive}: cuenta el \texttt{0} como positivo;
-  \item \texttt{oddOrPos}: no contabiliza los impares negativos por el comportamiento de \texttt{\%} en Java.
+  \item \texttt{findLast([2,3,5], 2)} devuelve \texttt{-1} en lugar de \texttt{0} (la guarda \texttt{i > 0} omite el índice cero).
+  \item \texttt{lastZero([0,1,0])} devuelve \texttt{0} en lugar de \texttt{2} (recorre de izquierda a derecha y se queda con el primer cero).
+  \item \texttt{countPositive([-4,2,0,2])} devuelve \texttt{3} en lugar de \texttt{2} (la condición \texttt{>= 0} cuenta el cero como positivo).
+  \item \texttt{oddOrPos([-3,-2,0,1,4])} devuelve \texttt{2} en lugar de \texttt{3} (la condición \texttt{\% 2 == 1} no detecta impares negativos en Java).
 \end{itemize}
-Los casos restantes pasan, lo que confirma que el conjunto de tests es selectivo: revela los defectos sin generar falsos positivos.
+
+Esto demuestra que la nueva suite parametrizada preserva la capacidad de detección que ya tenía el conjunto de tests no parametrizado del TP1.
+
+\subsection{Cómo ejecutar}
+\begin{center}
+\texttt{mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=SimpleRoutinesParameterizedTest test}
+\end{center}
 
 \section{Ejercicio 3}
-Se construyó con JUnit 5 una suite de tests que ejercita todos los métodos públicos de \texttt{StackAr}, junto con la implementación del método \texttt{repOk()}. Los tests utilizan un \textit{fixture} compartido con \texttt{@BeforeEach} (una pila de capacidad 3 reinicializada antes de cada caso) y mantienen visibles las fases \textit{arrange}, \textit{act} y \textit{assert}.
+\subsection{Objetivo}
+Construir una suite completa para \texttt{StackAr}, con fixture compartido vía \texttt{@BeforeEach}, marcando explícitamente las secciones \textit{arrange}, \textit{act} y \textit{assert} y agregando al menos dos tests negativos. Completar \texttt{repOk()} con el invariante de representación pedido y testearlo.
 
-\subsection{Archivos trabajados}
+\subsection{Modelo de la clase}
+\texttt{StackAr} es una pila acotada implementada sobre un arreglo \texttt{elems} con un puntero \texttt{sp} al tope, donde:
 \begin{itemize}
-  \item \texttt{src/main/java/assignment2\_exercises/stack/StackAr.java}
-  \item \texttt{src/test/java/assignment2\_exercises/stack/StackArTest.java}
+  \item $sp = -1$ representa la pila vacía;
+  \item las posiciones $0, 1, \dots, sp$ contienen elementos válidos;
+  \item las posiciones $sp+1, \dots, \texttt{elems.length} - 1$ deben estar libres (\texttt{null}).
 \end{itemize}
 
-\subsection{Cobertura de pruebas}
-Se cubre el contrato completo de la clase, incluyendo los métodos heredados de \texttt{Object}:
-\begin{itemize}
-  \item constructor con capacidad inválida (negativa);
-  \item \texttt{size}, \texttt{isEmpty}, \texttt{isFull};
-  \item \texttt{push}, \texttt{pop}, \texttt{top};
-  \item \texttt{makeEmpty};
-  \item \texttt{equals}, \texttt{hashCode}, \texttt{toString};
-  \item \texttt{repOk}, tanto en estados válidos como en estados corruptos.
-\end{itemize}
+\subsection{Implementación de \texttt{repOk}}
+El invariante pedido se traduce naturalmente en cuatro chequeos:
+\begin{lstlisting}[style=javastyle]
+public boolean repOk(){
+    if (elems == null) {
+        return false;
+    }
+    if (sp < -1 || sp >= elems.length) {
+        return false;
+    }
+    for (int i = 0; i < elems.length; i++) {
+        if (i > sp && elems[i] != null) {
+            return false;
+        }
+        if (i <= sp && elems[i] == null) {
+            return false;
+        }
+    }
+    return true;
+}
+\end{lstlisting}
 
-Adicionalmente se incorporaron varios tests negativos para verificar que las precondiciones de la API se respeten:
-\begin{itemize}
-  \item \texttt{push} sobre pila llena (debe lanzar \texttt{IllegalStateException});
-  \item \texttt{push(null)} (debe lanzar \texttt{IllegalArgumentException}, en consistencia con el invariante);
-  \item \texttt{pop} sobre pila vacía;
-  \item \texttt{top} sobre pila vacía.
-\end{itemize}
-
-\subsection{Cambios en la implementación}
-A medida que se completaba el \texttt{repOk}, los propios tests revelaron incoherencias que era razonable corregir:
+\subsection{Correcciones sobre la implementación}
+La construcción del invariante puso al descubierto dos problemas en el código provisto:
 \begin{enumerate}
-  \item Se completó \texttt{repOk()} con las condiciones del enunciado: \texttt{elems != null}, \texttt{sp} dentro del rango \texttt{[-1, elems.length)}, ausencia de \texttt{null} en la zona ocupada y ausencia de basura por encima de \texttt{sp}.
-  \item Se corrigió \texttt{pop()}, que originalmente no devolvía el elemento removido y dejaba la celda desapilada apuntando al objeto. Tras la corrección, \texttt{pop} guarda el valor del tope, asigna \texttt{null} a \texttt{elems[sp]} y recién entonces decrementa \texttt{sp}, manteniendo el invariante intacto.
-  \item Se agregó la validación de \texttt{null} en \texttt{push}, ya que el invariante exige que la zona ocupada no contenga referencias nulas.
+  \item \textbf{\texttt{pop()} no respetaba LIFO}. La versión original devolvía el nuevo tope (es decir, el elemento que quedaba después de decrementar \texttt{sp}) en lugar del elemento desapilado, y además no limpiaba la celda liberada. Esto, además de ser semánticamente incorrecto, violaba la cláusula ``$\forall i > sp: \texttt{elems}[i] = \texttt{null}$''. La versión corregida guarda el tope, lo limpia y decrementa el puntero:
+\begin{lstlisting}[style=javastyle]
+public Object pop() throws IllegalStateException {
+    if (isEmpty()) throw new IllegalStateException();
+    Object rv = this.elems[sp];
+    this.elems[sp] = null;
+    sp--;
+    return rv;
+}
+\end{lstlisting}
+  \item \textbf{\texttt{push} aceptaba \texttt{null}}. La cláusula ``$\forall i \le sp: \texttt{elems}[i] \neq \texttt{null}$'' es incompatible con permitirlo. Se agregó una validación que rechaza \texttt{null} con \texttt{IllegalArgumentException}.
 \end{enumerate}
+
+\subsection{Suite de tests}
+Se cubren todos los métodos públicos. Cada test marca con comentarios el patrón \textit{arrange / act / assert}. Algunos ejemplos representativos:
+
+\begin{lstlisting}[style=javastyle]
+@BeforeEach
+void setUp() {
+    // Todas las pruebas parten de una pila acotada de capacidad 3.
+    stack = new StackAr(3);
+}
+
+@Test
+void popDebeRetornarUltimoElementoYReducirSize() {
+    // arrange
+    stack.push("A");
+    stack.push("B");
+    // act
+    Object valor = stack.pop();
+    // assert
+    assertEquals("B", valor);
+    assertEquals(1, stack.size());
+    assertEquals("A", stack.top());
+}
+
+@Test
+void pushConNull_debeLanzarExcepcion() {
+    assertThrows(IllegalArgumentException.class, () -> stack.push(null));
+}
+\end{lstlisting}
+
+Los tests negativos cubren al menos cuatro escenarios: \texttt{push} en pila llena, \texttt{push(null)}, \texttt{pop} en pila vacía y \texttt{top} en pila vacía.
+
+\subsection{Tests de \texttt{repOk} y uso de reflexión}
+Para probar las ramas \texttt{false} de \texttt{repOk} no alcanza la API pública: la clase no permite, por ejemplo, dejar \texttt{sp} con un valor imposible o un hueco en la zona activa. Se usó \texttt{java.lang.reflect.Field} para corromper el estado interno de forma controlada. Esta es una técnica que el libro discute al hablar de \textit{controllability}: cuando el código bajo prueba esconde su estado, hace falta un mecanismo adicional para forzar las situaciones que queremos verificar.
+
+\begin{lstlisting}[style=javastyle]
+@Test
+void repOkConHuecoEnZonaActiva_debeRetornarFalse() throws Exception {
+    stack.push("A");
+    stack.push("B");
+    Object[] elems = getElems(stack);
+    elems[1] = null; // creamos un hueco
+    assertFalse(stack.repOk());
+}
+\end{lstlisting}
 
 \subsection{Inconvenientes encontrados}
 \begin{itemize}
-  \item Probar que \texttt{repOk} retorna \texttt{false} ante estados internos corruptos (\texttt{sp} fuera de rango, huecos en la zona activa, basura más allá del tope) no era posible usando solo la API pública, ya que esa misma API garantiza el invariante. Para forzar esos escenarios se recurrió a \textit{reflection} sobre los campos privados \texttt{sp} y \texttt{elems}, encapsulando la maniobra en dos \textit{helpers} (\texttt{setPrivateIntField} y \texttt{getElems}) para que el ruido no se notara en el cuerpo de cada test.
-  \item Implementar \texttt{repOk} también ayudó a detectar el bug de \texttt{pop} mencionado más arriba: el método rompía el invariante después de cada desapilado, y el chequeo lo dejó en evidencia inmediatamente.
+  \item No se puede romper el invariante desde la API pública sin recurrir a reflexión: para algunos casos negativos hizo falta tocar campos privados.
+  \item Implementar \texttt{repOk} expuso el problema de \texttt{pop}, que no era visible mientras los tests sólo miraban el resultado del método aislado.
+  \item \texttt{equals} usa la longitud del arreglo completo, así que dos pilas con misma capacidad y mismos elementos son iguales, pero dos pilas con distinta capacidad y mismos elementos no lo son. Es coherente con el modelo de pila acotada, pero conviene tenerlo presente al diseñar tests.
 \end{itemize}
 
-\subsection{Ejecución}
-\begin{lstlisting}[style=codestyle]
-mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test
-\end{lstlisting}
+\subsection{Cómo ejecutar}
+\begin{center}
+\texttt{mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test}
+\end{center}
 
 \section{Ejercicio 4}
-Para \texttt{Min.min(List<? extends T>)} se diseñó una suite parametrizada que utiliza dos archivos CSV separados: uno con casos válidos y otro con casos esperados de excepción. La elección permite mantener bien identificados los dos tipos de comportamiento sin recargar un único archivo con columnas heterogéneas.
+\subsection{Objetivo}
+Proveer tests parametrizados en formato CSV para el método \texttt{Min.min(List<? extends T>)}. Agregar tests negativos para las tres excepciones documentadas en el Javadoc: \texttt{IllegalArgumentException}, \texttt{NullPointerException} y \texttt{ClassCastException}.
 
-\subsection{Archivos}
-\begin{itemize}
-  \item \texttt{src/test/java/assignment2\_exercises/MinCsvParameterizedTest.java}
-  \item \texttt{src/test/resources/assignment2\_exercises/min\_valid\_cases.csv}
-  \item \texttt{src/test/resources/assignment2\_exercises/min\_invalid\_cases.csv}
-\end{itemize}
+\subsection{Estructura de los archivos CSV}
+Se eligió codificar cada lista como un único string con elementos separados por punto y coma. Esto permite tener una sola columna ``valores'' por caso y mantener el CSV legible:
 
-\subsection{Cobertura de casos}
-\begin{itemize}
-  \item Casos válidos con enteros, contemplando que el mínimo aparezca al inicio, al medio o al final de la lista, e incluyendo entradas con repetidos, valores negativos y listas unitarias.
-  \item Casos inválidos leídos desde CSV, donde el archivo asocia cada lista de entrada con la excepción esperada:
-  \begin{itemize}
-    \item lista vacía $\rightarrow$ \texttt{IllegalArgumentException};
-    \item lista con \texttt{null} en la primera posición $\rightarrow$ \texttt{NullPointerException} (lo arroja el chequeo explícito tras el primer \texttt{next});
-    \item lista con \texttt{null} en una posición posterior $\rightarrow$ \texttt{NullPointerException} (al invocar \texttt{compareTo} sobre \texttt{null}).
-  \end{itemize}
-  \item Casos negativos adicionales que no caben naturalmente en CSV y se escribieron como tests no parametrizados:
-  \begin{itemize}
-    \item lista \texttt{null} $\rightarrow$ \texttt{NullPointerException} (al consultar \texttt{size});
-    \item elementos no mutuamente comparables (mezcla de \texttt{Integer} y \texttt{String}) $\rightarrow$ \texttt{ClassCastException}.
-  \end{itemize}
-\end{itemize}
-
-Para que el CSV pueda expresar listas con \texttt{null} y listas vacías se introdujeron dos convenciones: el literal \texttt{null} se traduce a \texttt{null} en la lista resultante y la palabra clave \texttt{EMPTY} representa una lista sin elementos. La conversión de texto a clase de excepción queda concentrada en un único método auxiliar (\texttt{exceptionType}), evitando acoplar el archivo CSV al código Java.
-
-\subsection{Ejecución}
-\begin{lstlisting}[style=codestyle]
-mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=MinCsvParameterizedTest test
+\begin{lstlisting}[style=plain]
+# min_valid_cases.csv
+valores,esperado
+"3;2;1",1
+"5",5
+"-2;4;0",-2
+"7;7;9",7
+"10;-1;3;-1",-1
 \end{lstlisting}
 
-\section{Ejercicio 5}
-Se construyó una suite parametrizada para \texttt{ZuneBug.currentYear(int days)} y, a partir de las fallas observadas, se realizó \textit{debugging} y reparación del método. El nombre del ejercicio no es casual: la implementación original reproduce el famoso \textit{Zune bug} del 31 de diciembre de 2008, en el que un manejo incorrecto del año bisiesto dejaba al dispositivo colgado en un bucle.
-
-\subsection{Archivos}
-\begin{itemize}
-  \item \texttt{src/test/java/assignment2\_exercises/ZuneBugParameterizedTest.java}
-  \item \texttt{src/main/java/assignment2\_exercises/ZuneBug.java}
-  \item \texttt{ejercicio5/currentYear\_original.java.txt} (versión previa a la corrección).
-\end{itemize}
-
-\subsection{Cobertura de pruebas}
-La suite se organiza en dos grupos parametrizados que se complementan:
-\begin{itemize}
-  \item un \texttt{@MethodSource} con casos de borde elegidos a mano alrededor de fines de año y cambios bisiestos (\texttt{1}, \texttt{365}, \texttt{366}, \texttt{367}, \texttt{731}, \texttt{1461});
-  \item un \texttt{@ValueSource} amplio que compara \texttt{currentYear} con una función \textit{oracle} basada en \texttt{LocalDate}, lo que actúa como prueba diferencial sin necesidad de calcular a mano cada respuesta esperada.
-\end{itemize}
-
-Cada caso se ejecuta dentro de un \texttt{assertTimeoutPreemptively} de 200~ms para que un eventual bucle infinito sea detectado como un fallo de timeout en lugar de bloquear toda la suite.
-
-\subsection{Fallas detectadas antes de corregir}
-\begin{itemize}
-  \item Con \texttt{days = 366}, el método entraba en bucle infinito (era el síntoma exacto del bug original del Zune).
-  \item En transiciones exactas de año --- por ejemplo, \texttt{731} o \texttt{1461} --- el resultado quedaba un año por debajo del esperado.
-\end{itemize}
-
-\subsection{Causa del defecto}
-La versión original mezclaba dos guardas, \texttt{days > 365} en el \texttt{while} externo y \texttt{days > 366} dentro de la rama bisiesta, sin avanzar el año cuando \texttt{days} caía exactamente en el borde. Eso provocaba dos efectos: en años no bisiestos se \textit{quedaba corto} en una unidad, y en años bisiestos con \texttt{days = 366} ninguna de las dos condiciones permitía progresar, lo que generaba el bucle infinito.
-
-\subsection{Corrección aplicada}
-La idea correcta es decidir, en cada iteración, cuántos días tiene \emph{el año actual} y avanzar sólo si el restante alcanza para cubrirlo entero. La implementación corregida sigue ese esquema:
-\begin{itemize}
-  \item se calcula \texttt{daysInYear} a partir de \texttt{isLeapYear(year)};
-  \item si \texttt{days >= daysInYear}, se descuenta y se incrementa \texttt{year};
-  \item en caso contrario, se rompe el ciclo y se devuelve \texttt{year}.
-\end{itemize}
-Con esta lógica desaparece tanto el bucle infinito como el \textit{off-by-one} en los bordes, y la verificación contra el \textit{oracle} pasa para todos los valores probados.
-
-\subsection{Ejecución y resultado}
-\begin{lstlisting}[style=codestyle]
-mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=ZuneBugParameterizedTest test
+\begin{lstlisting}[style=plain]
+# min_invalid_cases.csv
+valores,excepcion
+"EMPTY",IllegalArgumentException
+"null;2;3",NullPointerException
+"1;null;3",NullPointerException
 \end{lstlisting}
 
-Tras la corrección, la salida reportada es:
+\subsection{Mapeo CSV → ejecución}
 \begin{itemize}
-  \item \texttt{Tests run: 21, Failures: 0, Errors: 0}
-  \item \texttt{BUILD SUCCESS}
+  \item \texttt{EMPTY} representa una lista vacía.
+  \item Un token \texttt{null} dentro de la lista se traduce a un elemento nulo de la \texttt{List<Integer>}.
+  \item El nombre de la excepción esperada se mapea a \texttt{Class<? extends Throwable>} en el propio test, manteniendo el CSV libre de detalles del lenguaje.
 \end{itemize}
-
-\section{Ejercicio 6}
-El último ejercicio pide implementar \texttt{repOK()} en \texttt{BoundedQueue} y verificar, mediante tests parametrizados, que el invariante de representación se mantenga después de las operaciones fundamentales de la cola. La estructura es interesante porque, al ser una cola circular, parte del trabajo del invariante es justamente describir cuándo el arreglo subyacente representa una cola legítima.
-
-\subsection{Archivos}
-\begin{itemize}
-  \item \texttt{src/main/java/assignment2\_exercises/queue/BoundedQueue.java}
-  \item \texttt{src/test/java/assignment2\_exercises/queue/BoundedQueueParameterizedTest.java}
-\end{itemize}
-
-\subsection{Invariante validado por \texttt{repOK}}
-\texttt{repOK} concentra las condiciones que toda instancia bien formada debe satisfacer:
-\begin{itemize}
-  \item consistencia estructural básica: \texttt{elements} no nulo, \texttt{capacity} no negativa y \texttt{elements.length == capacity};
-  \item \texttt{size} dentro del rango \texttt{[0, capacity]}, con el caso especial \texttt{capacity == 0} que exige \texttt{size = front = back = 0};
-  \item \texttt{front} y \texttt{back} dentro de \texttt{[0, capacity)};
-  \item la relación de cola circular: \texttt{back == (front + size) \% capacity};
-  \item ausencia de \texttt{null} en la zona ocupada (las \texttt{size} celdas a partir de \texttt{front});
-  \item ausencia de \emph{basura} fuera de la zona ocupada: las celdas que no representan elementos vivos deben quedar en \texttt{null}.
-\end{itemize}
-
-Las dos últimas condiciones requieren marcar las posiciones ocupadas mediante un arreglo auxiliar \texttt{occupied}, dado que el \textit{wrap-around} hace que la zona viva pueda partirse en dos tramos del arreglo.
 
 \subsection{Tests parametrizados}
-Los casos se distribuyen en dos \texttt{@MethodSource} pensados para cubrir comportamientos contrastantes:
-\begin{itemize}
-  \item \textbf{Escenarios válidos:} cada caso describe una secuencia textual de operaciones (\texttt{E:x} para encolar, \texttt{D} para desencolar) sobre una cola de capacidad fija. Para cada operación se verifica \texttt{repOK} y, al final, se contrastan tanto el contenido remanente como la lista de elementos extraídos. La elección de capacidades pequeñas (1, 2, 3 y 4) y secuencias mixtas obliga a la cola a hacer \textit{wrap-around}, ejercitando justamente la rama del invariante que valida la zona viva partida en dos tramos.
-  \item \textbf{Escenarios inválidos:} agrupan las tres precondiciones explícitas de la API --- \texttt{deQueue} en vacía, \texttt{enQueue(null)} y \texttt{enQueue} en llena --- y, además de chequear que se lance la excepción correcta, vuelven a evaluar \texttt{repOK} para confirmar que el estado interno no se haya corrompido por el error. Esto es importante: una excepción esperada no debería dejar la cola en un estado inconsistente.
-\end{itemize}
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest(name = "min({0}) -> {1}")
+@CsvFileSource(resources = "/assignment2_exercises/min_valid_cases.csv", numLinesToSkip = 1)
+void min_conCasosValidosCsv_debeRetornarMinimo(String valores, int esperado) {
+    List<Integer> lista = parseIntegerList(valores);
+    assertEquals(esperado, Min.min(lista));
+}
 
-La codificación textual de las operaciones (\texttt{"E:a;E:b;D"}) facilita escribir muchos escenarios sin repetir el mismo \textit{boilerplate} y mantiene el cuerpo del test centrado en la verificación.
-
-\subsection{Ejecución}
-\begin{lstlisting}[style=codestyle]
-mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=BoundedQueueParameterizedTest test
+@ParameterizedTest(name = "min({0}) lanza {1}")
+@CsvFileSource(resources = "/assignment2_exercises/min_invalid_cases.csv", numLinesToSkip = 1)
+void min_conCasosInvalidosCsv_debeLanzarExcepcion(String valores, String excepcionEsperada) {
+    List<Integer> lista = parseIntegerList(valores);
+    assertThrows(exceptionType(excepcionEsperada), () -> Min.min(lista));
+}
 \end{lstlisting}
 
+\subsection{Tests negativos adicionales}
+Dos escenarios no se prestan a representación CSV y se codifican como \texttt{@Test} clásicos:
+\begin{itemize}
+  \item Lista \texttt{null} (no es lo mismo que una lista vacía).
+  \item Lista heterogénea con elementos no mutuamente comparables. Se usa un \texttt{raw type} para inyectar la mezcla \texttt{[1, "dos"]} sin que el compilador rechace el código:
+\end{itemize}
+\begin{lstlisting}[style=javastyle]
+@Test
+@SuppressWarnings({"rawtypes", "unchecked"})
+void min_conElementosNoComparables_debeLanzarClassCastException() {
+    List lista = Arrays.asList(1, "dos");
+    assertThrows(ClassCastException.class, () -> Min.min(lista));
+}
+\end{lstlisting}
+
+\subsection{Cómo ejecutar}
+\begin{center}
+\texttt{mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=MinCsvParameterizedTest test}
+\end{center}
+
+\section{Ejercicio 5}
+\subsection{Objetivo}
+Escribir tests parametrizados para \texttt{ZuneBug.currentYear(int days)}. Si los tests revelan alguna falla, hacer debugging y corregir el defecto.
+
+\subsection{Contexto - el Zune bug}
+\texttt{ZuneBug} reproduce un defecto real: el firmware del Zune calculaba el año actual a partir de los días transcurridos desde el 1 de enero de 1980. El 31 de diciembre de 2008 (año bisiesto) todos los dispositivos colgaron al entrar al bucle por la combinación de \texttt{days = 366} y \texttt{year = 2008}. El defecto era una combinación de \textit{off-by-one} en la guarda y una rama bisiesta sin \texttt{else}.
+
+\subsection{Versión original}
+\begin{lstlisting}[style=javastyle]
+public static int currentYear (int days) {
+    int year = 1980;
+    while (days > 365) {
+        if (isLeapYear(year)) {
+            if (days > 366) {
+                days -= 366;
+                year += 1;
+            }
+            // sin else: si cae en este else implicito,
+            // ni days ni year se actualizan -> loop infinito
+        } else {
+            days -= 365;
+            year += 1;
+        }
+    }
+    return year;
+}
+\end{lstlisting}
+
+\subsection{Diseño de los tests parametrizados}
+Se construyeron dos tests complementarios:
+\begin{enumerate}
+  \item \texttt{casosDeBorde} con \texttt{@MethodSource}, cubriendo valores específicos elegidos por análisis de bordes: \texttt{1}, \texttt{365}, \texttt{366}, \texttt{367}, \texttt{731} y \texttt{1461}.
+  \item \texttt{currentYear\_debeCoincidirConOracle} con \texttt{@ValueSource}, que compara la rutina contra \texttt{ZuneBug.oracle}, una implementación de referencia basada en \texttt{LocalDate.plusDays}. Esto introduce la idea de \textit{differential testing} contra un oráculo confiable.
+\end{enumerate}
+
+Ambos tests envuelven la ejecución en una llamada del estilo \texttt{assert\-Timeout\-Preemptively(}\allowbreak\texttt{Duration.ofMillis(200))} para que un eventual loop infinito se traduzca en un \textit{failure} y no en un \textit{hang}.
+
+\subsection{Fallas detectadas}
+\begin{itemize}
+  \item \textbf{Loop infinito} para \texttt{days = 366}: la guarda exterior \texttt{days > 365} se cumple, pero la rama bisiesta solo descuenta cuando \texttt{days > 366}. Como no hay \texttt{else}, el cuerpo del \texttt{while} no progresa.
+  \item \textbf{Off-by-one} en transiciones exactas, por ejemplo \texttt{days = 731} y \texttt{days = 1461}: el método retornaba un año menos del que indica el oráculo.
+\end{itemize}
+
+\subsection{Corrección aplicada}
+Se reescribió el bucle haciendo explícito cuántos días tiene el año que se está consumiendo:
+\begin{lstlisting}[style=javastyle]
+public static int currentYear (int days) {
+    int year = 1980;
+    while (true) {
+        int daysInYear = isLeapYear(year) ? 366 : 365;
+        if (days >= daysInYear) {
+            days -= daysInYear;
+            year += 1;
+        } else {
+            break;
+        }
+    }
+    return year;
+}
+\end{lstlisting}
+Mientras queden días suficientes para completar el año en curso, se descuentan y se avanza. Cuando no, se devuelve el año actual. La condición \texttt{>=} maneja correctamente los bordes y la rama del bucle siempre progresa, lo que elimina el loop infinito.
+
+\subsection{Cómo ejecutar}
+\begin{center}
+\texttt{mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=ZuneBugParameterizedTest test}
+\end{center}
+Luego de la corrección la suite reporta \texttt{Tests run: 21, Failures: 0, Errors: 0}.
+
+\section{Ejercicio 6}
+\subsection{Objetivo}
+Implementar \texttt{repOK()} para \texttt{BoundedQueue} y verificar mediante tests parametrizados que el invariante se mantiene tras secuencias de \texttt{enQueue} y \texttt{deQueue}.
+
+\subsection{Modelo de la clase}
+\texttt{BoundedQueue} es una cola FIFO acotada, implementada como buffer circular. Los atributos son \texttt{elements} (arreglo), \texttt{size}, \texttt{front} (índice del próximo a desencolar), \texttt{back} (índice donde se escribe el próximo \texttt{enQueue}) y \texttt{capacity}.
+
+\subsection{Invariante de representación}
+Las cláusulas que valida \texttt{repOK} son:
+\begin{enumerate}
+  \item \texttt{elements != null} y \texttt{elements.length == capacity}.
+  \item \texttt{capacity >= 0}.
+  \item $0 \le \texttt{size} \le \texttt{capacity}$.
+  \item Caso $\texttt{capacity} = 0$: \texttt{size}, \texttt{front} y \texttt{back} valen cero.
+  \item $0 \le \texttt{front} < \texttt{capacity}$ y $0 \le \texttt{back} < \texttt{capacity}$.
+  \item \textbf{Buffer circular}: \texttt{back == (front + size) \% capacity}.
+  \item Zona ocupada sin huecos: para todo $i \in [0, \texttt{size})$, \texttt{elements[(front+i) \% capacity] != null}.
+  \item Zona libre limpia: el resto de las posiciones son \texttt{null}.
+\end{enumerate}
+
+\subsection{Implementación}
+\begin{lstlisting}[style=javastyle]
+public boolean repOK() {
+    if (elements == null) return false;
+    if (capacity < 0 || elements.length != capacity) return false;
+    if (size < 0 || size > capacity) return false;
+    if (capacity == 0) return size == 0 && front == 0 && back == 0;
+    if (front < 0 || front >= capacity || back < 0 || back >= capacity) return false;
+    if (back != (front + size) % capacity) return false;
+    boolean[] occupied = new boolean[capacity];
+    for (int i = 0; i < size; i++) {
+        int idx = (front + i) % capacity;
+        occupied[idx] = true;
+        if (elements[idx] == null) return false;
+    }
+    for (int i = 0; i < capacity; i++) {
+        if (!occupied[i] && elements[i] != null) return false;
+    }
+    return true;
+}
+\end{lstlisting}
+
+\subsection{Tests parametrizados}
+Para no escribir un test por cada secuencia se utilizó un mini-DSL textual: \texttt{E:valor} representa \texttt{enQueue(valor)} y \texttt{D} representa \texttt{deQueue()}. Una cadena como \texttt{"E:a;E:b;D;E:c"} encadena las operaciones, y un método \texttt{apply} las ejecuta una por una, chequeando \texttt{repOK} en cada paso.
+
+\subsubsection*{Escenarios válidos (\texttt{@MethodSource})}
+Se cubren situaciones representativas: llenado y vaciado completo, wrap-around (cuando \texttt{back} da la vuelta al final del arreglo), capacidades chicas (1 y 2) donde la aritmética modular es más delicada.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Capacidad & Operaciones & Cola final \\
+\midrule
+3 & \texttt{E:a;E:b;D;E:c}           & \texttt{[b, c]}       \\
+3 & \texttt{E:x;E:y;D;E:z;E:w}       & \texttt{[y, z, w]}    \\
+4 & \texttt{E:1;E:2;E:3;D;D;E:4;E:5} & \texttt{[3, 4, 5]}    \\
+2 & \texttt{E:p;E:q;D;E:r}           & \texttt{[q, r]}       \\
+1 & \texttt{E:solo;D}                & \texttt{[]}           \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Escenarios inválidos}
+Las operaciones inválidas (\texttt{deQueue} en vacía, \texttt{enQueue(null)}, \texttt{enQueue} en llena) deben lanzar la excepción documentada y, además, el invariante debe seguir cumpliéndose después del error: una operación que falla no debe corromper la cola.
+
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest(name = "cap={0}, setup={1}, fail={2}, ex={3}")
+@MethodSource("invalidScenarios")
+void repOK_debeMantenerseCuandoUnaOperacionInvalidaLanzaExcepcion(
+    int capacity, String setupOperations,
+    String failingOperation, Class<? extends Throwable> expectedException
+) {
+    BoundedQueue queue = new BoundedQueue(capacity);
+    for (String op : splitOperations(setupOperations)) {
+        apply(queue, op, new ArrayList<>());
+        assertTrue(queue.repOK());
+    }
+    assertThrows(expectedException, () -> apply(queue, failingOperation, new ArrayList<>()));
+    assertTrue(queue.repOK());
+}
+\end{lstlisting}
+
+\subsection{Cómo ejecutar}
+\begin{center}
+\texttt{mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=BoundedQueueParameterizedTest test}
+\end{center}
+
+\newpage
 \section*{Conclusiones}
 \addcontentsline{toc}{section}{Conclusiones}
-El Práctico 2 retoma el diseño de tests del práctico anterior y lo lleva un paso más allá: en vez de duplicar tests cuando cambian los datos, se aprovecha la maquinaria parametrizada de JUnit~5 para describir familias enteras de casos. En particular, el trabajo permitió:
+El práctico 2 consolida las herramientas introducidas en el TP1 y agrega dos ejes nuevos:
 \begin{itemize}
-  \item ejercitar las cuatro estrategias principales de parametrización (\texttt{@CsvSource}, \texttt{@CsvFileSource}, \texttt{@MethodSource} y \texttt{@ValueSource}) y entender cuándo conviene cada una;
-  \item formalizar invariantes de representación en estructuras de datos no triviales --- pila acotada y cola circular --- y verificarlos mediante \texttt{repOk}/\texttt{repOK};
-  \item reproducir y reparar dos defectos reales (el bug de \texttt{pop} en \texttt{StackAr} y el \textit{Zune bug} en \texttt{ZuneBug}), apoyándose en los tests para guiar el \textit{debugging};
-  \item combinar pruebas funcionales con validación estructural, dejando un esquema de \textit{testing} mucho más expresivo que el del Práctico 1.
+  \item \textbf{Data-driven testing} con JUnit 5: separar los datos de los casos del cuerpo del test reduce la duplicación y mejora la legibilidad. \texttt{@CsvSource} es práctico para casos chicos e \textit{inline}, \texttt{@CsvFileSource} permite mantener los datos como recurso externo y \texttt{@MethodSource} es el camino natural cuando los argumentos no son primitivos o cadenas simples.
+  \item \textbf{Invariante de representación como oráculo interno}: implementar \texttt{repOk} para \texttt{StackAr} y \texttt{BoundedQueue} expone defectos que los tests funcionales por sí solos no detectan. Es una técnica especialmente valiosa para clases con estado.
 \end{itemize}
+
+El caso del \textit{Zune bug} ilustra un patrón habitual cuando se hace debugging guiado por tests: los casos elegidos por análisis de bordes (\texttt{days = 366}) y el contraste contra un oráculo confiable (\texttt{LocalDate.plusDays}) bastan para localizar y luego corregir un defecto sutil. Para no quedarse esperando un cuelgue, conviene envolver la ejecución con un timeout preemptivo.
 
 \end{document}

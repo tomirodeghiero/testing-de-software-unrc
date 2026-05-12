@@ -1,0 +1,469 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+\emergencystretch=3em
+\hyphenpenalty=1000
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resumen teórico - Testing de Software (TP2)},
+  pdfauthor={}
+}
+
+\lstdefinestyle{javastyle}{
+  language=Java,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{orange!50!black},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  tabsize=2,
+  showstringspaces=false
+}
+
+\title{\textbf{Resumen teórico}\\Testing de Software --- TP2}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introducción}
+\addcontentsline{toc}{section}{Introducción}
+Este documento es un resumen teórico de los contenidos asociados al \textbf{Práctico 2} de \textit{Testing de Software} de la UNRC. Las fuentes principales son tres y se complementan entre sí:
+\begin{itemize}
+  \item el \textbf{capítulo 3 de \textit{Introduction to Software Testing}} (P.~Ammann y J.~Offutt, 2$^{a}$ edición), titulado \textit{Test Automation};
+  \item las \textbf{notas 03 ``Automatización del testing''} (Valeria Bengolea), que recorren el mismo capítulo enfocándose en JUnit, \textit{fixtures} y tests negativos;
+  \item las \textbf{notas 04 ``Data-Driven Tests''}, que introducen los tests parametrizados de JUnit~5.
+\end{itemize}
+
+La idea del resumen es presentar los conceptos en un hilo claro: por qué automatizamos, qué hace falta para que un test sea automatizable (\textit{testability}, \textit{observability}, \textit{controllability}), cuál es la estructura formal de un test, cómo se traduce a JUnit, cómo se organiza una suite, qué son los tests negativos y, finalmente, cómo se generalizan a tests \textit{data-driven} para evitar duplicación. Cada sección incluye ejemplos breves para que la lectura sea fácil de retener.
+
+\section{Por qué automatizar el testing}
+
+\subsection{Testing \textit{ad hoc} y sus límites}
+La forma más natural de probar software es \textit{ad hoc}: el programador escribe un \texttt{main} que invoca su función y observa la salida en consola. Funciona en aplicaciones con una interfaz directa y muestras chicas, pero deja de escalar muy rápido. Tres limitaciones aparecen casi de inmediato:
+\begin{itemize}
+  \item \textbf{no almacena los tests} para ejecuciones futuras: cada vez que se cambia el código hay que volver a inventarlos;
+  \item para probar funcionalidades \textbf{internas}, que no son invocables desde la línea de comandos, hace falta programar un \textit{arnés} (un \texttt{main} ad hoc que recibe argumentos y llama al método);
+  \item requiere \textbf{inspección humana} para decidir si la salida es correcta: alguien tiene que mirar el resultado y compararlo mentalmente con el valor esperado.
+\end{itemize}
+
+\subsection{Definición de \textit{Test automation}}
+Ammann y Offutt definen la automatización del testing así (Definición 3.9):
+\begin{quote}
+\textit{Test automation:} el uso de software para controlar la ejecución de tests, comparar resultados obtenidos con los esperados, setear las precondiciones del test y otras tareas de control y reporte.
+\end{quote}
+Automatizar trae cuatro beneficios concretos:
+\begin{itemize}
+  \item \textbf{reduce costos}: una vez escrito, un test se ejecuta sin esfuerzo humano adicional;
+  \item \textbf{reduce errores de inspección}: la comparación queda en manos del framework, no de los ojos del programador;
+  \item \textbf{habilita \textit{regression testing}}: el conjunto de tests acumulado se vuelve un seguro contra regresiones cada vez que se modifica el código;
+  \item \textbf{permite correr la misma suite muchas veces} con poco costo marginal: por ejemplo, en cada \textit{push} a un repositorio.
+\end{itemize}
+
+\section{Testeabilidad, observabilidad y controlabilidad}
+
+\subsection{Testeabilidad}
+Definición 3.10:
+\begin{quote}
+\textit{Testability:} el grado en que un sistema o componente facilita el establecimiento de criterios de testing y la ejecución de los tests para determinar si dichos criterios se cumplen.
+\end{quote}
+La testeabilidad de un programa depende, fundamentalmente, de dos preguntas:
+\begin{itemize}
+  \item \textbf{¿cómo se proporcionan valores a la pieza de software bajo prueba?}
+  \item \textbf{¿cómo se observan los resultados de su ejecución?}
+\end{itemize}
+
+\subsection{Observabilidad}
+Definición 3.11: facilidad con la que se observa el comportamiento de un programa en términos de sus salidas, efectos en el entorno y otras componentes. Software que afecta dispositivos hardware, bases de datos remotas o ficheros suele tener \textbf{baja observabilidad}: el efecto está, pero no es directamente visible para el test.
+
+\subsection{Controlabilidad}
+Definición 3.12: facilidad con la que se proveen al programa los \textit{inputs} necesarios, en términos de valores, operaciones y comportamientos. El software que recibe datos por teclado o por un parámetro de método se controla fácilmente; el software que recibe inputs de sensores físicos, en cambio, suele ser muy difícil de poner en un estado específico.
+
+\subsection{Intuición práctica}
+Cuando la observabilidad o la controlabilidad son bajas, una técnica habitual es la \textbf{simulación}: introducir software extra (mocks, drivers, stubs) que reemplaza al componente difícil y le da al test una API más amigable. Es una forma de mejorar la testeabilidad sin modificar el sistema bajo prueba.
+
+\section{Componentes de un test case}
+
+Un test no es sólo \textit{una entrada}: tiene varias piezas. El capítulo 3 las formaliza con definiciones que conviene tener a mano (Definiciones 3.13 a 3.20).
+
+\subsection{Test case values}
+Los \textbf{valores del test} (\textit{test case values}) son los \textit{inputs} que satisfacen los \textit{test requirements}. Son los datos directos que ejercitan la rutina bajo prueba.
+
+\subsection{Prefix values}
+Los \textbf{valores prefijos} son los inputs necesarios para llevar al software al estado apropiado para recibir los valores del test. En términos del modelo RIPR, son los responsables del paso \textit{Reachability}: gracias a ellos, el flujo de ejecución alcanza el código defectuoso. Ejemplo: para testear \texttt{Stack.pop()} hay que primero hacer \texttt{push} de algunos elementos.
+
+\subsection{Postfix values}
+Los \textbf{valores postfijos} son los inputs que hay que enviar al software \textit{después} de los valores del test. Se subdividen en:
+\begin{itemize}
+  \item \textbf{Verification values}: necesarios para \textit{ver} el resultado (p.~ej. consultar el tope de la pila después de un \texttt{push});
+  \item \textbf{Exit values}: comandos para terminar el programa o devolverlo a un estado estable (p.~ej. cerrar una conexión a base de datos).
+\end{itemize}
+
+\subsection{Expected results y test oracle}
+El \textbf{resultado esperado} es el valor que debería producir la rutina si se comporta correctamente. La pieza que decide si el test pasó o falló se llama \textbf{oráculo} y, en frameworks como JUnit, se materializa en aserciones (\texttt{assertEquals}, \texttt{assertThat}, etc.).
+
+\subsection{Test case y test set}
+\begin{itemize}
+  \item Definición 3.19. Un \textbf{test case} es la combinación de valores del test, valores prefijos, valores postfijos y resultados esperados, suficiente para una ejecución y evaluación completa del software bajo prueba.
+  \item Definición 3.20. Un \textbf{test set} (o \textit{test suite}) es un conjunto de test cases.
+\end{itemize}
+
+\subsection{Relación con el modelo RIPR}
+Los componentes del test case son realizaciones concretas del modelo \textbf{RIPR} visto en el TP1:
+\begin{itemize}
+  \item los \textit{prefix values} apuntan a la \textbf{R}eachability,
+  \item los \textit{test case values} apuntan a la \textbf{I}nfection,
+  \item los \textit{postfix values} apuntan a la \textbf{P}ropagation,
+  \item los \textit{expected results} apuntan a la \textbf{R}evealability.
+\end{itemize}
+
+\section{JUnit como framework de automatización}
+
+\subsection{Qué provee JUnit}
+JUnit es el framework estándar de testing automatizado para Java. Sus capacidades principales son:
+\begin{itemize}
+  \item define una \textbf{estructura estándar} de test, basada en anotaciones (\texttt{@Test}, \texttt{@BeforeEach}, etc.);
+  \item permite almacenar los tests como \textbf{scripts ejecutables};
+  \item organiza tests en \textbf{suites};
+  \item provee \textbf{aserciones} para chequear automáticamente los resultados esperados;
+  \item ofrece \textbf{entornos de ejecución} (Maven Surefire, IDE) y \textbf{reportes detallados} de las pruebas que fallan.
+\end{itemize}
+Está orientado a tests \textbf{unitarios} y \textbf{de integración}; no es la herramienta ideal para tests de sistema o de UI. Lenguajes modernos tienen frameworks análogos: pytest para Python, RSpec para Ruby, JUnit para Java/Kotlin.
+
+\subsection{Estructura básica de un test JUnit}
+\begin{lstlisting}[style=javastyle]
+@Test
+public void testMax() {
+    // arrange: preparar los datos de entrada
+    int a = 1;
+    int b = 3;
+    // act: ejecutar la rutina bajo prueba
+    int res = SimpleRoutines.max(a, b);
+    // assert: comparar contra el resultado esperado
+    assertTrue(res == 3);
+}
+\end{lstlisting}
+El patrón \textit{arrange-act-assert} no es una imposición del framework, pero es la convención dominante porque separa de un vistazo las tres responsabilidades del test.
+
+\subsection{Aserciones más usadas}
+JUnit incluye un conjunto rico de aserciones; las más habituales:
+\begin{itemize}
+  \item \texttt{assertTrue(expr)} / \texttt{assertFalse(expr)};
+  \item \texttt{assertEquals(esperado, actual)};
+  \item \texttt{assertArrayEquals(a, b)};
+  \item \texttt{assertNotNull(o)} / \texttt{assertNull(o)};
+  \item \texttt{assertSame(o1, o2)} / \texttt{assertNotSame(o1, o2)};
+  \item \texttt{assertThrows(Exc.class, () -> ...)} para tests negativos;
+  \item \texttt{assertTimeoutPreemptively(d, () -> ...)} para evitar cuelgues.
+\end{itemize}
+
+\subsection{Aserciones agrupadas}
+JUnit~5 permite agrupar varias aserciones con \texttt{assertAll}, de modo que se reporten \textit{todas} las fallas y no sólo la primera:
+\begin{lstlisting}[style=javastyle]
+@Test
+void groupedAssertions() {
+    assertAll("person",
+        () -> assertEquals("Jane", person.getFirstName()),
+        () -> assertEquals("Doe",  person.getLastName())
+    );
+}
+\end{lstlisting}
+
+\subsection{Matchers Hamcrest y \texttt{assertThat}}
+Las versiones recientes proveen una API declarativa basada en \textit{matchers}:
+\begin{lstlisting}[style=javastyle]
+assertThat(1, hasItems(2, 3));
+assertThat(list, everyItem(greaterThan(1)));
+assertThat("HoLa", equalToIgnoringCase("hola"));
+assertThat(obj, instanceOf(Student.class));
+\end{lstlisting}
+Los matchers se agrupan en familias (\textit{logical}, \textit{collections}, \textit{text}, \textit{numbers}, etc.) y permiten escribir aserciones más expresivas que un simple \texttt{equals}. Una alternativa popular en el mismo espacio es AssertJ.
+
+\subsection{Características deseables de un test}
+Independientemente del framework, un buen test debe ser:
+\begin{itemize}
+  \item \textbf{automático}: ejecutable con un solo comando, sin intervención manual;
+  \item \textbf{repetible}: produce el mismo resultado en distintas ejecuciones;
+  \item \textbf{fácil de implementar y de leer};
+  \item \textbf{independiente} de otros tests: no debe asumir orden de ejecución;
+  \item \textbf{rápido} y eficiente en uso de recursos.
+\end{itemize}
+
+\section{Suites, fixtures y ciclo de vida}
+
+\subsection{Test suites}
+Una \textit{test suite} es simplemente un conjunto de test cases. En JUnit~5 se declara con \texttt{@Suite} y \texttt{@SelectClasses}:
+\begin{lstlisting}[style=javastyle]
+@Suite
+@SelectClasses({
+    UnitTests1.class,
+    UnitTests2.class,
+    ModuleTests.class,
+    IntegrationTests.class
+})
+class AllUnitTest { }
+\end{lstlisting}
+
+\subsection{Fixtures}
+Un \textbf{fixture} define el estado inicial de un test. Es útil cuando varios tests comparten datos o necesitan inicializaciones costosas. Se implementa declarando los objetos como atributos de la clase de test e inicializándolos en un método anotado con \texttt{@BeforeEach}.
+
+\begin{lstlisting}[style=javastyle]
+public class MinTest {
+    private List<String> list;          // test fixture
+
+    @BeforeEach                          // setUp -- antes de cada test
+    public void setUp() {
+        list = new ArrayList<String>();
+    }
+
+    @AfterEach                           // tearDown -- despues de cada test
+    public void tearDown() {
+        list = null;
+    }
+}
+\end{lstlisting}
+
+\subsection{\texttt{setUp} y \texttt{tearDown}}
+Las rutinas \texttt{setUp} (\texttt{@BeforeEach}) y \texttt{tearDown} (\texttt{@AfterEach}) ayudan a garantizar la \textbf{independencia} entre tests:
+\begin{itemize}
+  \item \texttt{@BeforeEach} se ejecuta antes de cada test de la suite;
+  \item \texttt{@AfterEach} se ejecuta después de cada test, incluso si el test lanza una excepción.
+\end{itemize}
+Esto es importante porque JUnit no garantiza un orden de ejecución entre tests, y compartir estado mutable lleva a tests \textit{flaky}.
+
+\subsection{Fixtures globales}
+Para operaciones costosas (abrir una conexión a base de datos, levantar un servidor mock) conviene ejecutar el setup una sola vez. JUnit~5 ofrece \texttt{@BeforeAll} y \texttt{@AfterAll}:
+\begin{lstlisting}[style=javastyle]
+@BeforeAll
+public static void openConnection() {
+    connection = DB.open(...);
+}
+
+@AfterAll
+public static void closeConnection() {
+    connection.close();
+}
+\end{lstlisting}
+
+\subsection{Timeouts}
+Algunos tests ejecutan funcionalidades que podrían \textit{no terminar} o demandar demasiado tiempo. Para protegerse, JUnit~5 ofrece la anotación \texttt{@Timeout} y la aserción \texttt{assertTimeoutPreemptively}:
+\begin{lstlisting}[style=javastyle]
+@Test
+@Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
+public void test1() {
+    long res = Fibonacci.fibonacciEfi(45);
+    assertEquals(res, 1134903170);
+}
+\end{lstlisting}
+Esto es especialmente útil para defectos como el \textit{Zune bug}, donde una rama del control de flujo puede entrar en loop infinito.
+
+\section{Tests negativos}
+
+\subsection{Definición}
+Los \textbf{tests negativos} son aquellos que ejercitan al software bajo condiciones que \textbf{violan su precondición} o que están fuera del comportamiento ``feliz''. Suelen verificar que la rutina lanza la excepción correcta:
+\begin{lstlisting}[style=javastyle]
+@Test
+public void test1() {
+    BoundedQueue q = new BoundedQueue();
+    assertThrows(IllegalStateException.class, () -> q.dequeue());
+}
+\end{lstlisting}
+
+\subsection{Por qué importan}
+Son tan importantes como los tests positivos:
+\begin{itemize}
+  \item documentan ejecutablemente las precondiciones del método;
+  \item evitan regresiones cuando se modifica el código de validación;
+  \item se conectan directamente con la noción de \textit{contract} de la programación por contrato.
+\end{itemize}
+
+\subsection{Ejemplo extendido: \texttt{Min.min}}
+El método \texttt{Min.min(List)} admite tres tipos de excepciones, y eso lleva naturalmente a siete tests:
+\begin{enumerate}
+  \item lista \texttt{null} $\rightarrow$ \texttt{NullPointerException}
+  \item lista con \texttt{null} entre varios elementos $\rightarrow$ \texttt{NullPointerException}
+  \item lista con un único elemento \texttt{null} $\rightarrow$ \texttt{NullPointerException}
+  \item elementos no comparables (\texttt{Integer + String}) $\rightarrow$ \texttt{ClassCastException}
+  \item lista vacía $\rightarrow$ \texttt{IllegalArgumentException}
+  \item lista de un solo elemento $\rightarrow$ ese elemento
+  \item lista de dos elementos $\rightarrow$ el menor
+\end{enumerate}
+Los primeros cinco son negativos; los dos últimos son tests del \textit{happy path}. Esta combinación, planeada explícitamente, da una cobertura razonable del contrato del método.
+
+\section{Data-driven testing y tests parametrizados}
+
+\subsection{Motivación}
+Una vez que aprendimos JUnit ``básico'' aparece un problema recurrente: muchos tests \textbf{tienen exactamente la misma estructura} y difieren solamente en los datos. Por ejemplo, para verificar \texttt{isLeapYear} habría que escribir:
+\begin{lstlisting}[style=javastyle]
+@Test void isLeapYear_2000() { assertTrue(isLeapYear(2000)); }
+@Test void isLeapYear_1980() { assertTrue(isLeapYear(1980)); }
+@Test void isLeapYear_1992() { assertTrue(isLeapYear(1992)); }
+@Test void notLeapYear_2001() { assertFalse(isLeapYear(2001)); }
+// ...
+\end{lstlisting}
+La duplicación de código es evidente. La pregunta natural es: ``¿podemos correr el mismo test sobre cada tupla de un conjunto de valores?''. La respuesta es \textbf{sí}: a esa técnica se la llama \textbf{data-driven testing}, y JUnit~5 la soporta con la familia \texttt{@ParameterizedTest}.
+
+\subsection{Idea central}
+Un test parametrizado separa la \textbf{estructura del test} (qué hace) de los \textbf{datos} (con qué valores se lo ejecuta). El framework se encarga de instanciar el test una vez por cada tupla del proveedor.
+
+\subsection{\texttt{@ValueSource}}
+La forma más simple. Recibe un arreglo de valores de un tipo primitivo o \texttt{String} y los pasa de a uno como argumento:
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest
+@ValueSource(ints = {2000, 1980, 1992})
+void isLeapYear_ShouldReturnTrueForLeapYear(int year) {
+    assertTrue(SimpleRoutines.isLeapYear(year));
+}
+\end{lstlisting}
+Limitaciones: sólo permite un argumento y sólo tipos primitivos o \texttt{String}.
+
+\subsection{\texttt{@CsvSource}}
+Permite varios argumentos en cada fila. Es ideal cuando el caso de prueba se puede expresar como ``$x$ produce $y$'':
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest
+@CsvSource({"2000,true", "1980,true", "1992,true",
+            "2001,false", "2023,false", "1994,false"})
+void isLeapYearTest(int year, boolean expected) {
+    assertThat(SimpleRoutines.isLeapYear(year), is(expected));
+}
+\end{lstlisting}
+JUnit hace conversión automática de tipos: \texttt{"true" $\rightarrow$ true}, \texttt{"15" $\rightarrow$ 15}, \texttt{"1.0" $\rightarrow$ 1.0d}, etc.
+
+\subsection{\texttt{@CsvFileSource}}
+Es igual que \texttt{@CsvSource} pero lee los datos de un archivo externo, ubicado dentro de \texttt{src/test/resources}. Resulta útil cuando hay muchos casos o cuando quiere editarlos alguien que no toca el código Java:
+\begin{lstlisting}[style=javastyle]
+@ParameterizedTest
+@CsvFileSource(resources = "leapYear.csv", numLinesToSkip = 1)
+void isLeapYearTest_2(int year, boolean expected) {
+    assertThat(SimpleRoutines.isLeapYear(year), is(expected));
+}
+\end{lstlisting}
+con un archivo \texttt{leapYear.csv}:
+\begin{verbatim}
+Year,Expected
+2000,true
+1980,true
+1992,true
+2001,false
+\end{verbatim}
+
+\subsection{\texttt{@MethodSource}}
+Cuando los argumentos no son tipos simples (por ejemplo, arreglos de enteros u objetos), un CSV resulta poco práctico. \texttt{@MethodSource} apunta a un método estático que devuelve un \texttt{Stream<Arguments>}:
+\begin{lstlisting}[style=javastyle]
+private static Stream<Arguments> arraysProvider() {
+    return Stream.of(
+        Arguments.of(new int[]{7,8,9}, new int[]{7,8,9}),
+        Arguments.of(new int[]{9,8,7}, new int[]{7,8,9}),
+        Arguments.of(new int[]{1},     new int[]{1}),
+        Arguments.of(new int[]{},      new int[]{})
+    );
+}
+
+@ParameterizedTest(name = "{index}: sorting({0}) = {1}")
+@MethodSource("arraysProvider")
+public void testBubbleSort(int[] array, int[] sortedarray) {
+    Sorting.bubbleSort(array);
+    assertArrayEquals("Sorted", sortedarray, array);
+}
+\end{lstlisting}
+Cada tupla de \texttt{Arguments.of(...)} se convierte en un test individual.
+
+\subsection{Qué método elegir}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Situación & Proveedor recomendado \\
+\midrule
+1 argumento, tipo primitivo o String                & \texttt{@ValueSource} \\
+varios argumentos primitivos / String, casos pocos  & \texttt{@CsvSource} \\
+varios argumentos primitivos / String, casos muchos & \texttt{@CsvFileSource} \\
+arreglos, objetos, tipos compuestos                 & \texttt{@MethodSource} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Conversión de tipos en CSV}
+JUnit~5 convierte automáticamente el texto de cada celda al tipo declarado en el parámetro. Las conversiones más importantes son:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Tipo Java                  & Ejemplo \\
+\midrule
+\texttt{Boolean/boolean}   & \texttt{"true"} $\Rightarrow$ \texttt{true} \\
+\texttt{Character/char}    & \texttt{"o"} $\Rightarrow$ \texttt{'o'}  \\
+\texttt{Integer/int}       & \texttt{"15"} $\Rightarrow$ \texttt{15} \\
+\texttt{Float/float}       & \texttt{"1.0"} $\Rightarrow$ \texttt{1.0f} \\
+\texttt{Double/double}     & \texttt{"1.0"} $\Rightarrow$ \texttt{1.0d} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Cuando JUnit no sabe cómo convertir un tipo (por ejemplo, \texttt{int[]}), hay que pasar a \texttt{@MethodSource} o usar un \texttt{ArgumentConverter} a medida.
+
+\subsection{Ventajas del enfoque data-driven}
+\begin{itemize}
+  \item \textbf{Menos código}: una sola declaración del cuerpo del test y todos los datos del lado de afuera.
+  \item \textbf{Reporte por caso}: cada tupla se reporta como un test independiente, así que se ve exactamente qué entrada falló.
+  \item \textbf{Facilita el cubrimiento}: agregar un caso de borde es agregar una fila, no escribir un test nuevo.
+  \item \textbf{Separación de responsabilidades}: los datos de los casos pueden vivir en archivos editables por gente que no es desarrolladora.
+\end{itemize}
+
+\subsection{Riesgo a vigilar}
+La tentación de meter ``muchos casos'' es real. Conviene seguir eligiendo los casos con criterio (clases de equivalencia, valores de borde, RIPR) y no por inercia: un test parametrizado con 200 filas redundantes es tan inútil como un test sin ninguna aserción real.
+
+\section{Cómo se conectan estas ideas con el TP2}
+
+El práctico 2 aterriza la teoría de este resumen en seis ejercicios:
+
+\begin{itemize}
+  \item \textbf{Ejercicio 2} es el caso testigo del \textit{data-driven testing}: los tests del TP1 sobre \texttt{Simple\-Routines} se reescriben con \texttt{@CsvSource}, \texttt{@MethodSource} y \texttt{@CsvFileSource}, mostrando los tres mecanismos en una sola suite.
+  \item \textbf{Ejercicio 3} aplica todo el ciclo de vida JUnit (\texttt{@BeforeEach}, \textit{arrange-act-assert}, aserciones de excepción) sobre \texttt{StackAr} y agrega el invariante de representación (\texttt{repOk}) como oráculo interno.
+  \item \textbf{Ejercicio 4} muestra el patrón ``casos válidos vs.~casos inválidos'' en dos CSV separados, e ilustra el rol de los tests negativos para las tres excepciones de \texttt{Min.min}.
+  \item \textbf{Ejercicio 5} usa tests parametrizados junto con un \textit{oráculo} alternativo, basado en \texttt{LocalDate.plusDays}, para hacer \textit{differential testing} sobre \texttt{Zune\-Bug}, y emplea \texttt{assert\-Timeout\-Preemptively} para protegerse del loop infinito que producía la versión defectuosa.
+  \item \textbf{Ejercicio 6} repite la estructura del Ejercicio 3 pero sobre una cola circular, mostrando que el invariante \texttt{back == (front + size) \% capacity} hace de oráculo barato y muy útil después de cada operación.
+\end{itemize}
+
+\section{Síntesis}
+
+Si tuviera que resumir el capítulo y las notas en una página, diría que en TP2 aprendimos a hacer cinco cosas que antes hacíamos a mano:
+\begin{enumerate}
+  \item \textbf{Automatizar el oráculo} (con aserciones) en lugar de inspeccionar la salida con los ojos.
+  \item \textbf{Aislar el estado} entre tests usando \texttt{@BeforeEach} y, cuando hace falta, \texttt{@BeforeAll}.
+  \item \textbf{Cubrir el contrato} del método, no sólo el \textit{happy path}, escribiendo tests negativos que prueban las precondiciones con \texttt{assertThrows}.
+  \item \textbf{Eliminar la duplicación} en suites repetitivas con \texttt{@ParameterizedTest} y sus distintos proveedores (\texttt{@ValueSource}, \texttt{@CsvSource}, \texttt{@CsvFileSource}, \texttt{@MethodSource}).
+  \item \textbf{Usar el invariante de representación} como oráculo interno: un \texttt{repOk} que se verifica después de cada operación amplifica significativamente la capacidad de detección de la suite.
+\end{enumerate}
+
+Estos cinco gestos son la base sobre la que el resto del cuatrimestre construye: criterios de cobertura, mutation testing y model-based testing serán formas distintas de \textit{generar} los casos, pero la maquinaria de ejecutarlos y evaluarlos sigue siendo la que vimos aquí.
+
+\end{document}
