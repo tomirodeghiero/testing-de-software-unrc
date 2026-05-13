@@ -1,0 +1,645 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resumen teorico TP3 - Testing de Software 2024},
+  pdfauthor={}
+}
+
+\newtcolorbox{definicionbox}[1][]{
+  colback=blue!4!white,
+  colframe=blue!50!black,
+  fonttitle=\bfseries,
+  title=Definicion,
+  #1
+}
+
+\newtcolorbox{ideabox}[1][]{
+  colback=green!4!white,
+  colframe=green!40!black,
+  fonttitle=\bfseries,
+  title=Idea clave,
+  #1
+}
+
+\newtcolorbox{ejemplobox}[1][]{
+  colback=orange!4!white,
+  colframe=orange!50!black,
+  fonttitle=\bfseries,
+  title=Ejemplo,
+  #1
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\title{\textbf{Resumen Teorico -- Practico 3}\\
+Diseno de tests basado en criterios\\
+Particionado del Espacio de Entradas\\
+\textit{Testing de Software 2024}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
+
+Este resumen sintetiza el material de teoria asociado al TP3:
+
+\begin{itemize}
+  \item \textit{Introduction to Software Testing} (Ammann \& Offutt, 2da edicion), Capitulo 6:
+  \textbf{Input Space Partitioning}.
+  \item \textit{Notas 05: Diseno de tests basado en criterios} (V. Bengolea).
+  \item \textit{Notas 06: Particionando el espacio de entrada} (V. Bengolea).
+\end{itemize}
+
+El objetivo del resumen es servir de ``hoja de ruta'' para repasar el practico: definiciones,
+intuiciones, ejemplos minimos y como se relacionan los conceptos entre si. La presentacion va de
+lo general (Model-Driven Test Design) a lo especifico (criterios sobre dominios de entrada como
+ECC, PWC, BCC y ACoC).
+
+\section{Marco general: Diseno de tests basado en criterios}
+
+\subsection{El problema y la idea central}
+
+Para casi cualquier programa, el conjunto de entradas posibles es practicamente infinito. No podemos
+probar todas las entradas. La pregunta operacional del testing es:
+
+\begin{quote}
+\textit{Dado un presupuesto finito de tests, ¿como elegirlos para maximizar la probabilidad de
+detectar fallas?}
+\end{quote}
+
+El enfoque \textbf{Model-Driven Test Design (MDTD)} responde con una idea simple: \emph{modelar} el
+software de alguna forma estructurada y \emph{recorrer} ese modelo siguiendo reglas explicitas. Las
+reglas son los \textbf{criterios de cobertura}.
+
+\begin{ideabox}
+``La tarea del tester es definir un modelo del software y encontrar formas de recorrerlo.''
+\end{ideabox}
+
+\subsection{Requisitos de test y criterios de cobertura}
+
+\begin{definicionbox}
+\textbf{Requisito de test (TR).} Un elemento especifico del artefacto software (o de su modelo)
+que un test debe satisfacer o cubrir.
+
+\textbf{Criterio de cobertura.} Una coleccion de reglas que impone los requisitos de test sobre el
+conjunto de tests.
+
+\textbf{Cobertura.} Dado un conjunto de requisitos de test \(TR\) para un criterio \(C\), un
+conjunto de tests \(T\) satisface \(C\) sii
+\[
+\forall\, tr \in TR,\ \exists\, t \in T \mid t \text{ satisface } tr.
+\]
+\end{definicionbox}
+
+Un mismo modelo se puede recorrer con criterios distintos, y cada criterio produce su propio
+conjunto de TRs. Cambiar el criterio cambia el costo (numero de tests) y la rigurosidad de la
+suite.
+
+\subsection{Flujo MDTD}
+
+El flujo recomendado tiene dos niveles de abstraccion:
+
+\begin{enumerate}
+  \item \textbf{Nivel de diseno.}
+  \begin{enumerate}
+    \item Partir del artefacto software (codigo, especificacion, casos de uso, etc.) y construir un
+    \textbf{modelo / estructura}.
+    \item Aplicar un criterio para derivar \textbf{requisitos de test}.
+    \item Refinarlos hasta tener \textbf{especificaciones de test} (que se va a probar y como).
+  \end{enumerate}
+  \item \textbf{Nivel de implementacion.}
+  \begin{enumerate}
+    \setcounter{enumii}{3}
+    \item Elegir \textbf{valores de inputs} para cada especificacion.
+    \item Codificarlos como \textbf{scripts de test} ejecutables.
+    \item Correr la suite y obtener \textbf{resultados} (pasa / falla).
+  \end{enumerate}
+\end{enumerate}
+
+La separacion entre diseno e implementacion es importante: las decisiones de modelado se toman a
+nivel de especificacion, y solo despues bajamos al codigo.
+
+\subsection{Cuatro estructuras para modelar software}
+
+El libro distingue cuatro formas de modelar el software, cada una con su propio espacio de
+criterios:
+
+\begin{itemize}
+  \item \textbf{Espacio de inputs (conjuntos).} Caracterizar el dominio de las entradas y
+  particionarlo. \emph{Es el tema central del Capitulo 6 y del TP3.}
+  \item \textbf{Grafos.} Modelar flujo de control, flujo de datos, maquinas de estados, etc.
+  \item \textbf{Logica.} Cubrir expresiones booleanas (condiciones en codigo, guardas, FNDs, FSMs).
+  \item \textbf{Sintaxis.} Cubrir gramaticas (codigo, modelos, formatos de entrada, integracion).
+\end{itemize}
+
+\subsection{Cajas coloreadas y MDTD}
+
+La terminologia clasica distingue:
+\begin{itemize}
+  \item \textbf{Black-box testing}: derivar tests de descripciones externas al codigo
+  (especificaciones, requisitos, diseno).
+  \item \textbf{White-box testing}: derivar tests de la estructura interna del codigo (sentencias,
+  condiciones).
+  \item \textbf{Model-based testing}: derivar tests de un modelo abstracto (por ejemplo, un
+  diagrama UML).
+\end{itemize}
+MDTD le resta importancia a esta clasificacion: lo que importa es \emph{que modelo} se usa y
+\emph{como} se recorre, no si la fuente es ``externa'' o ``interna''.
+
+\subsection{Requisitos infeasibles y grado de cobertura}
+
+\begin{definicionbox}
+\textbf{Requisito de test inviable (infeasible).} Aquel para el cual no existen valores de
+entrada que lo satisfagan.
+\end{definicionbox}
+
+Tipico ejemplo: una rama de codigo que es \textit{dead code}. La deteccion automatica de requisitos
+inviables es \textbf{indecidible} en general. Por eso casi nunca se alcanza el 100\,\% de cobertura
+en la practica.
+
+\begin{definicionbox}
+\textbf{Grado de cobertura.} Porcentaje de los requisitos de test satisfechos por un conjunto de
+tests dado.
+\end{definicionbox}
+
+\subsection{Subsumption, conjuntos minimos y minimales}
+
+\begin{definicionbox}
+\textbf{Subsumption.} El criterio \(C_1\) \textit{subsume} a \(C_2\) si y solo si \emph{todo}
+conjunto de tests que satisface \(C_1\) tambien satisface \(C_2\).
+\end{definicionbox}
+
+Es una relacion entre criterios, no entre suites concretas. La intuicion es: ``si paso \(C_1\),
+gratis paso \(C_2\)''. Hay dos formas tipicas de que esto suceda:
+
+\begin{itemize}
+  \item Los TRs de \(C_1\) son un \emph{superconjunto} de los de \(C_2\).
+  \item Existe una correspondencia muchos-a-uno entre TRs de \(C_1\) y de \(C_2\). Si la
+  correspondencia es uno-a-uno, los criterios se subsumen mutuamente.
+\end{itemize}
+
+\begin{ejemplobox}
+\textit{Caramelos.} Si tenemos 6 sabores agrupados en 4 colores, comer un caramelo de cada sabor
+implica haber comido al menos uno de cada color (porque cada color esta cubierto por algun sabor).
+El criterio ``probar todos los sabores'' \textbf{subsume} al criterio ``probar todos los colores''.
+
+En cambio, \(T_2 = \{\text{limon, pistacho, pera, mandarina}\}\) cumple el criterio de color
+(amarillo, verde, blanco, naranja) pero \emph{no} cumple el de sabor (falta damasco y melon). Por
+lo tanto el criterio de color \emph{no} subsume al de sabor.
+\end{ejemplobox}
+
+\begin{definicionbox}
+\textbf{Conjunto de tests minimal.} \(T\) satisface \(TR\) y si se elimina cualquier test, deja
+de satisfacerlo. \\
+\textbf{Conjunto de tests minimo.} \(T\) satisface \(TR\) y no existe otro \(T'\) mas chico que
+tambien lo satisfaga.
+\end{definicionbox}
+
+Todo conjunto minimo es minimal, pero no al reves: puede haber varios conjuntos minimales de
+tamanos distintos.
+
+\subsection{Generadores, reconocedores y herramientas}
+
+\begin{itemize}
+  \item \textbf{Generador}: procedimiento que produce valores que satisfacen un criterio. Es lo
+  que tipicamente uno espera, pero suele ser dificil sin herramientas.
+  \item \textbf{Reconocedor}: procedimiento que decide si un conjunto de tests dado satisface un
+  criterio. Suele ser mas facil.
+\end{itemize}
+
+En la industria es comun escribir tests ``a ojo'' y luego \emph{medir} la cobertura con un
+reconocedor (por ejemplo, JaCoCo para cobertura de codigo).
+
+\subsection{Por que conviene disenar tests basados en criterios}
+
+\begin{itemize}
+  \item Maximiza el beneficio del tiempo invertido en testing: menos tests que son mas efectivos.
+  \item Produce suites amplias con minimo solapamiento.
+  \item \textbf{Trazabilidad}: cada test esta justificado por uno o varios TRs. Esto facilita el
+  testing de regresion y la revision de la suite.
+  \item Da una \textbf{regla de parada} explicita: cuantos tests hace falta tener (o cuanta
+  cobertura).
+\end{itemize}
+
+\subsection{Caracteristicas de un buen criterio de cobertura}
+
+Un buen criterio:
+\begin{enumerate}
+  \item Permite \emph{calcular los TRs automaticamente} (o al menos de forma sistematica).
+  \item Permite \emph{generar valores de test eficientemente}.
+  \item Produce suites con \emph{buena capacidad de deteccion} de defectos.
+\end{enumerate}
+
+\section{Particionado del Espacio de Entradas}
+
+\subsection{Motivacion}
+
+El \textbf{dominio de entradas} de un programa contiene todas las entradas posibles. Incluso para
+programas pequeños es practicamente infinito. La idea del particionado es:
+
+\begin{ideabox}
+Dividir el dominio en \textbf{bloques} mediante \textbf{caracteristicas} relevantes para testing y
+elegir al menos un valor de cada bloque. Dentro de un mismo bloque, los valores se asumen
+``igualmente utiles'' para detectar defectos.
+\end{ideabox}
+
+\subsection{Particiones, propiedades formales}
+
+Para un dominio \(D\), una particion \(q\) define un conjunto de bloques
+\(B_q = \{b_1, b_2, \ldots, b_n\}\) que debe satisfacer:
+
+\begin{enumerate}
+  \item \textbf{Disjointness (no solapamiento).}
+  \[
+  b_i \cap b_j = \emptyset \quad \forall\, i \neq j,\ b_i, b_j \in B_q.
+  \]
+  Ningun valor cae en dos bloques a la vez.
+
+  \item \textbf{Completitud.}
+  \[
+  \bigcup_{b \in B_q} b = D.
+  \]
+  Todo valor del dominio cae en algun bloque.
+\end{enumerate}
+
+\begin{ejemplobox}
+Para \texttt{abs(int n)} la caracteristica natural es ``relacion de \(n\) con cero''. Bloques:
+\(\{n = 0,\ n > 0,\ n < 0\}\). Es completa y disjunta para \texttt{int}.
+\end{ejemplobox}
+
+\subsection{Particiones mal definidas: un caso instructivo}
+
+Un error tipico es elegir bloques que no son ni disjuntos ni completos. Considerese la
+caracteristica ``orden de un archivo \(F\)'' con bloques:
+\begin{itemize}
+  \item \(b_1\): orden creciente,
+  \item \(b_2\): orden decreciente,
+  \item \(b_3\): orden arbitrario.
+\end{itemize}
+
+Si \(F\) tiene \textbf{longitud 1}, el archivo esta simultaneamente en los tres bloques (un
+elemento es ``creciente'', ``decreciente'' y ``arbitrario'' a la vez). Hay solapamiento.
+
+\textbf{Solucion}: dividir en dos caracteristicas independientes, cada una con dos bloques:
+\(C_1\) = ``orden creciente'' \(\in \{\text{true},\text{false}\}\), \(C_2\) = ``orden
+decreciente'' \(\in \{\text{true},\text{false}\}\). Ahora cada particion es disjunta y la
+combinacion de ambas describe correctamente las cuatro situaciones posibles.
+
+\begin{ideabox}
+Regla practica: \emph{una caracteristica debe modelar una sola propiedad}. Si una particion
+parece ``rara'', es mas seguro tener mas caracteristicas con pocos bloques que pocas
+caracteristicas con muchos bloques.
+\end{ideabox}
+
+\subsection{Modelado del dominio de las entradas: los 5 pasos}
+
+Modelar bien es la mitad del trabajo. El proceso canonico tiene 5 pasos:
+
+\begin{enumerate}
+  \item \textbf{Identificar la funcionalidad a testear.}
+  \begin{itemize}
+    \item Testing de unidad: metodos individuales.
+    \item Testing de integracion: metodos de una o varias clases.
+    \item Testing de sistema: el programa completo.
+  \end{itemize}
+
+  \item \textbf{Listar todas las entradas.}
+  \begin{itemize}
+    \item Metodos: parametros y estado (variables no locales).
+    \item Modulo: parametros y variables globales involucradas.
+    \item Sistema: archivos, bases de datos, variables de entorno, etc.
+  \end{itemize}
+
+  \item \textbf{Crear un modelo del dominio de las entradas (MDE).}
+  \begin{itemize}
+    \item Identificar \textbf{caracteristicas} relevantes.
+    \item Particionar cada caracteristica en \textbf{bloques}.
+    \item Verificar completitud y disjointness.
+  \end{itemize}
+
+  \item \textbf{Aplicar un criterio} para generar combinaciones de bloques (ECC, PWC, BCC, ACoC).
+
+  \item \textbf{Obtener entradas concretas} a partir de las combinaciones (valores reales para
+  ejecutar los tests).
+\end{enumerate}
+
+Los pasos 1 y 2 estan en el nivel de abstraccion \emph{concreto} (codigo real, parametros). Los
+pasos 3 y 4 se realizan en el nivel \emph{de diseno} (modelo abstracto). El paso 5 vuelve al nivel
+concreto.
+
+\begin{ideabox}
+Un MDE \textbf{representa el espacio de entradas de un SUT (System Under Test) en forma
+abstracta}. Permite razonar sobre que se prueba sin atarse a valores concretos.
+\end{ideabox}
+
+\subsection{Dos enfoques para construir el MDE}
+
+\subsubsection{Enfoque basado en la interfaz}
+
+\begin{itemize}
+  \item Se generan caracteristicas a partir de cada parametro \emph{aisladamente}.
+  \item Es basado en sintaxis (tipos, presencia de \texttt{null}, etc.).
+  \item Suele ignorar informacion semantica y las relaciones entre parametros.
+  \item Es facil y mecanico, pero limitado.
+\end{itemize}
+
+\subsubsection{Enfoque basado en la funcionalidad}
+
+\begin{itemize}
+  \item Las caracteristicas reflejan el \emph{comportamiento esperado} del programa.
+  \item Permite incorporar informacion semantica y del dominio.
+  \item Captura relaciones entre parametros (por ejemplo, ``\(a+b > c\)'' para un triangulo
+  valido).
+  \item Requiere mas esfuerzo de diseno.
+\end{itemize}
+
+\begin{ideabox}
+\textbf{Heuristica de Ammann \& Offutt}: las \emph{precondiciones} y \emph{poscondiciones} son
+fuentes excelentes de caracteristicas. Separan explicitamente el comportamiento normal del
+excepcional.
+\end{ideabox}
+
+\subsubsection{Ejemplo: \texttt{kindOfTriangle(int side1, int side2, int side3)}}
+
+\textbf{Enfoque por interfaz (refinado)}: una caracteristica por lado con bloques
+\(\{>1,\ =1,\ =0,\ <0\}\). Hay \(4 \times 4 \times 4 = 64\) combinaciones posibles pero solo
+algunas corresponden a triangulos validos.
+
+\textbf{Enfoque por funcionalidad (semantico)}: una caracteristica unica ``clasificacion
+geometrica'' con bloques \(\{\text{escaleno}, \text{isosceles no equilatero}, \text{equilatero},
+\text{invalido}\}\). Notar que se ajusta el bloque ``isosceles'' a ``isosceles no equilatero''
+para que sea \emph{disjunto} de ``equilatero''.
+
+Una alternativa intermedia es usar varias caracteristicas booleanas con \emph{restricciones}:
+\begin{itemize}
+  \item \(q_1 = \text{escaleno},\ q_2 = \text{isosceles},\ q_3 = \text{equilatero},\ q_4 = \text{valido}\).
+  \item Restricciones: \(q_3 = \text{true} \Rightarrow q_2 = \text{true}\);
+  \(q_4 = \text{false} \Rightarrow q_1 = q_2 = q_3 = \text{false}\).
+\end{itemize}
+
+\subsubsection{Ejemplo: \texttt{numberOfOcurrences(List, element)}}
+
+\begin{itemize}
+  \item \textbf{Por interfaz}: dos caracteristicas booleanas, una por parametro (``\texttt{list}
+  es null'', ``\texttt{list} es vacia''). No capta cuantas veces aparece el elemento.
+  \item \textbf{Por funcionalidad}:
+  \begin{itemize}
+    \item ``Numero de ocurrencias'' \(\in \{0, 1, >1\}\),
+    \item ``\texttt{element} esta primero en la lista'' \(\in \{\text{true},\text{false}\}\),
+    \item ``\texttt{element} esta ultimo en la lista'' \(\in \{\text{true},\text{false}\}\).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Valores de test y estrategias}
+
+Una vez fijadas las particiones, hay que elegir valores reales para cada bloque. Recomendaciones:
+
+\begin{itemize}
+  \item Incluir valores que representen \textbf{uso normal}.
+  \item Incluir \textbf{valores invalidos} y \textbf{valores especiales} (\texttt{null}, 0, cadenas
+  vacias, true/false, espacios en blanco).
+  \item Considerar \textbf{valores limite} (borders).
+  \item Re-particionar bloques que sean ``muy gruesos''.
+  \item Balancear el numero de bloques entre caracteristicas.
+  \item Verificar disjointness y completitud antes de generar tests.
+\end{itemize}
+
+\begin{ejemplobox}
+Si la particion para ``relacion con cero'' es \(\{>1, =1, =0, <0\}\), un buen conjunto de valores
+es \(\{2, 1, 0, -1\}\) en lugar de \(\{5, 1, 0, -5\}\), porque incluye los \textbf{bordes}
+\(1\) y \(-1\), que son los que disparan defectos tipicos (errores ``off-by-one'').
+\end{ejemplobox}
+
+\section{Criterios de cobertura sobre el espacio de entradas}
+
+Una vez definidas las caracteristicas y los bloques, hay que decidir como \emph{combinarlos} para
+producir requisitos de test. Los criterios principales son:
+
+\subsection{All Combinations Coverage (ACoC)}
+
+\begin{definicionbox}
+Se generan todos los productos cartesianos posibles de bloques entre caracteristicas.
+
+Si hay \(k\) caracteristicas con \(n_1, \ldots, n_k\) bloques cada una, el numero de tests es
+\(n_1 \times n_2 \times \cdots \times n_k\).
+\end{definicionbox}
+
+Es el criterio mas exhaustivo. En la practica casi nunca se usa porque explota combinatoricamente:
+para \texttt{kindOfTriangle} con tres caracteristicas de 4 bloques son \(4 \times 4 \times 4 = 64\)
+tests, de los cuales solo unos pocos corresponden a triangulos validos.
+
+\subsection{Each Choice Coverage (ECC)}
+
+\begin{definicionbox}
+Cada bloque de cada caracteristica debe aparecer en al menos un test.
+
+El numero de tests es igual al numero de bloques de la \emph{caracteristica con mas bloques}.
+\end{definicionbox}
+
+Es el criterio mas barato pero el menos exigente: no garantiza interacciones entre caracteristicas.
+Suele detectar pocos defectos.
+
+\begin{ejemplobox}
+Para \texttt{kindOfTriangle} con tres caracteristicas de 4 bloques cada una, alcanza con 4 tests:
+por ejemplo \((2,2,2),(1,1,1),(0,0,0),(-1,-1,-1)\). Cada bloque de cada caracteristica aparece al
+menos una vez.
+\end{ejemplobox}
+
+\subsection{Pair-Wise Coverage (PWC) y t-Wise Coverage (TWC)}
+
+\begin{definicionbox}
+\textbf{PWC.} Para cada par de bloques de caracteristicas distintas, debe existir al menos un
+test que los cubra.
+
+\textbf{TWC.} Generalizacion: cada tupla de \(t\) bloques de \(t\) caracteristicas distintas debe
+estar cubierta. PWC es \(t = 2\); ACoC es \(t = k\) (numero total de caracteristicas).
+\end{definicionbox}
+
+El numero de tests para PWC es \emph{al menos} el producto de los bloques de las dos
+caracteristicas con mas bloques.
+
+\textbf{Por que PWC es popular}: la evidencia empirica sugiere que la mayoria de los defectos en
+software se disparan por la interaccion de a lo sumo dos parametros. PWC ofrece una excelente
+relacion costo/beneficio respecto a ACoC.
+
+\begin{ejemplobox}
+Tres particiones con bloques \([A,B]\), \([1,2,3]\) y \([x,y]\) generan
+\(2 \times 3 + 2 \times 2 + 3 \times 2 = 16\) pares. Como cada test cubre 3 pares (uno por cada
+combinacion de caracteristicas), alcanzan 8 tests para cubrirlos todos:
+\((A,1,x),(A,2,x),(A,3,x),(B,1,y),(B,2,y),(B,3,y),(A,1,y),(B,1,x)\).
+\end{ejemplobox}
+
+\subsection{Base Choice Coverage (BCC)}
+
+\begin{definicionbox}
+Para cada caracteristica se designa un bloque como \textbf{eleccion base}. El test base se forma
+con la eleccion base de todas las caracteristicas. Los demas tests se forman manteniendo todas las
+bases constantes excepto una, que toma cada uno de los bloques no base.
+
+Numero de tests: \(1 + \sum_i (n_i - 1)\), donde \(n_i\) es el numero de bloques de la
+caracteristica \(i\).
+\end{definicionbox}
+
+La intuicion es: \emph{fijar un escenario tipico (camino feliz) y variar una caracteristica a la
+vez}. Es muy util cuando hay un caso ``normal'' claramente identificable y se quiere medir el
+impacto de cada variacion.
+
+\begin{ideabox}
+\textbf{El test base debe ser viable.} Tipicamente conviene elegir el ``camino feliz'' o el caso
+mas frecuente como base. La eleccion de las bases es una decision de diseno; conviene
+documentarla.
+\end{ideabox}
+
+\begin{ejemplobox}
+Para tres caracteristicas A, B, C con 4 bloques cada una, eligiendo \((A_1, B_1, C_1)\) como
+base, BCC produce \(1 + 3 + 3 + 3 = 10\) tests:
+\((A_1,B_1,C_1),(A_2,B_1,C_1),(A_3,B_1,C_1),(A_4,B_1,C_1),(A_1,B_2,C_1),(A_1,B_3,C_1),
+(A_1,B_4,C_1),(A_1,B_1,C_2),(A_1,B_1,C_3),(A_1,B_1,C_4)\).
+\end{ejemplobox}
+
+Existe una variante llamada \textbf{Multiple Base Choice (MBCC)} en la que se eligen varias bases
+distintas y se repite el procedimiento para cada una.
+
+\subsection{Restricciones entre caracteristicas}
+
+No todas las combinaciones de bloques son factibles. Las restricciones son de dos tipos:
+
+\begin{itemize}
+  \item Un bloque de una caracteristica \emph{no puede} combinarse con un bloque especifico de
+  otra (combinacion prohibida).
+  \item Un bloque \emph{solo puede} combinarse con un bloque especifico de otra (combinacion
+  forzada).
+\end{itemize}
+
+\textbf{Como se manejan segun el criterio}:
+\begin{itemize}
+  \item \textbf{ACoC y PWC}: se eliminan las combinaciones no viables del conjunto de TRs.
+  \item \textbf{BCC}: si la variacion produce una combinacion no viable, se cambia uno de los
+  valores base por otro no base hasta lograr una combinacion factible.
+\end{itemize}
+
+\begin{ejemplobox}
+Para \texttt{numberOfOcurrences} con caracteristicas:
+\begin{itemize}
+  \item A: ocurrencia del elemento \(\in \{\text{no aparece}, \text{una vez}, \text{mas de una}\}\),
+  \item B: primero en la lista \(\in \{\text{true}, \text{false}\}\),
+  \item C: ultimo en la lista \(\in \{\text{true}, \text{false}\}\),
+\end{itemize}
+hay dos restricciones obvias:
+\begin{itemize}
+  \item \(\neg(\text{no aparece} \wedge \text{primero} = \text{true})\),
+  \item \(\neg(\text{no aparece} \wedge \text{ultimo} = \text{true})\).
+\end{itemize}
+Combinaciones invalidas: \((A.B_1, B.B_1)\) y \((A.B_1, C.B_1)\).
+\end{ejemplobox}
+
+\subsection{Comparacion rapida de criterios}
+
+\begin{longtable}{@{}p{2.5cm}p{4cm}p{4cm}p{4cm}@{}}
+\toprule
+\textbf{Criterio} & \textbf{Idea} & \textbf{\# Tests} & \textbf{Comentario} \\
+\midrule
+\endhead
+ECC & Cada bloque aparece al menos una vez. & \(\max_i n_i\) & Mas barato, menos efectivo. \\
+PWC & Cada par de bloques de caracteristicas distintas aparece. & Al menos el producto de las dos caracteristicas con mas bloques. & Buen balance costo/beneficio. \\
+BCC & Test base + una variacion por bloque no base. & \(1 + \sum (n_i - 1)\). & Util cuando hay un ``camino feliz'' claro. \\
+ACoC & Producto cartesiano completo. & \(\prod n_i\). & Maximo nivel de combinacion, suele ser inviable. \\
+\bottomrule
+\end{longtable}
+
+\textbf{Relacion de subsumption}: ACoC subsume a PWC, que subsume a ECC. BCC \emph{no} se ordena
+linealmente con los anteriores: en general no subsume ni es subsumido por PWC, porque cubre
+escenarios distintos (variaciones controladas en lugar de pares forzados).
+
+\section{Conexion con los ejercicios del TP3}
+
+El TP3 instancia estos conceptos sobre cinco unidades concretas:
+
+\begin{itemize}
+  \item \textbf{Ejercicio 2 -- PWC sobre \texttt{numberOfOcurrences}.} MDE basado en
+  funcionalidad con cuatro caracteristicas (referencias y forma de la lista). Las restricciones
+  son centrales para que los TRs sean factibles.
+
+  \item \textbf{Ejercicio 3 -- analisis de un MDE + BCC sobre \texttt{intersection}.} El MDE
+  original viola \emph{completitud} y \emph{disjointness} en la caracteristica que describe la
+  relacion entre los sets; el ejercicio pide encontrar contraejemplos y proponer un MDE corregido
+  antes de aplicar BCC.
+
+  \item \textbf{Ejercicio 4 -- PWC sobre \texttt{PatternIndex}.} MDE combinado (interfaz +
+  funcionalidad) con caracteristicas para el resultado esperado. La suite revela dos defectos
+  clasicos: precondiciones no validadas y manejo incorrecto de cadenas vacias.
+
+  \item \textbf{Ejercicio 5 -- PWC sobre \texttt{Iterator}.} Caracteristicas booleanas que
+  describen el estado del iterador. Como \texttt{Iterator} es una interfaz, hay que elegir
+  implementaciones concretas para cada combinacion (por ejemplo, usar
+  \texttt{Collections.unmodifiableList} para forzar el caso ``\texttt{remove()} no soportado'').
+\end{itemize}
+
+\section{Glosario rapido}
+
+\begin{itemize}[itemsep=0.15em]
+  \item \textbf{SUT}: \textit{System Under Test}. La unidad/modulo/sistema que se prueba.
+  \item \textbf{MDE}: Modelo del Dominio de Entradas (en ingles, IDM, \textit{Input Domain
+  Model}).
+  \item \textbf{TR}: Test Requirement, requisito de test.
+  \item \textbf{ECC}: \textit{Each Choice Coverage}.
+  \item \textbf{PWC}: \textit{Pair-Wise Coverage}; caso particular de TWC con \(t=2\).
+  \item \textbf{TWC}: \textit{t-Wise Coverage}; generaliza PWC a tuplas de \(t\) caracteristicas.
+  \item \textbf{BCC}: \textit{Base Choice Coverage}.
+  \item \textbf{ACoC}: \textit{All Combinations Coverage}.
+  \item \textbf{MBCC}: \textit{Multiple Base Choice Coverage}; variante con varias bases.
+  \item \textbf{Subsumption}: relacion entre criterios, \(C_1\) subsume a \(C_2\) si toda suite
+  que cumple \(C_1\) cumple \(C_2\).
+  \item \textbf{Infeasible TR}: requisito de test que ningun input puede satisfacer.
+\end{itemize}
+
+\section*{Cierre}
+\addcontentsline{toc}{section}{Cierre}
+
+El particionado del espacio de entradas es una de las herramientas mas versatiles de testing
+moderno: \emph{no requiere conocer la implementacion}, solo la especificacion del espacio de
+entradas; se adapta a unit, integration y system testing; y permite ajustar el esfuerzo cambiando
+de criterio. La diferencia entre una suite ``casual'' y una basada en criterios es exactamente la
+trazabilidad: cada test responde a un TR, y la suite completa se puede auditar y mantener con
+claridad.
+
+\end{document}

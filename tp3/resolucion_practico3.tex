@@ -12,6 +12,11 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
 
 \geometry{margin=2.5cm}
 \onehalfspacing
@@ -22,7 +27,7 @@
   colorlinks=true,
   linkcolor=black,
   urlcolor=blue,
-  pdftitle={Resolución del Práctico 3 - Testing de Software 2024},
+  pdftitle={Resolucion del Practico 3 - Testing de Software 2024},
   pdfauthor={}
 }
 
@@ -30,10 +35,13 @@
   basicstyle=\ttfamily\small,
   frame=single,
   breaklines=true,
-  showstringspaces=false
+  showstringspaces=false,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{gray!70!black}\itshape,
+  stringstyle=\color{orange!70!black}
 }
 
-\title{\textbf{Resolución del Práctico 3}\\Testing de Software 2024}
+\title{\textbf{Resolucion del Practico 3}\\Testing de Software 2024}
 \author{}
 \date{}
 
@@ -43,285 +51,563 @@
 \tableofcontents
 \newpage
 
-\section*{Introducción}
-\addcontentsline{toc}{section}{Introducción}
-Este documento presenta la resolución integral del \textit{Práctico 3}. Se mantiene la línea de trabajo de los prácticos anteriores: redacción formal, organización por ejercicio y fundamentación de diseño de pruebas a partir de modelos del dominio de entradas y criterios de cobertura.
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
 
-\section{Ejercicio 1}
-Lectura del capítulo 6 (\textit{Input Space Partitioning}) del libro \textit{Introduction to Software Testing}.
+Este documento resuelve el \textit{Practico 3} de Testing de Software. El eje del practico es el
+\textbf{Particionado del Espacio de Entradas} (\textit{Input Space Partitioning}, ISP) y los
+criterios de cobertura combinatoria asociados (\textit{Each Choice}, \textit{Pair-Wise},
+\textit{Base Choice}, \textit{All Combinations}). Toda la resolucion sigue el flujo recomendado por
+Ammann y Offutt:
 
-\section{Ejercicio 2}
-Se diseñó y ejecutó una batería de pruebas para \texttt{numberOfOcurrences(List<Integer> l, Integer element)} utilizando \textit{Input Space Partitioning} y cobertura \textit{pairwise}.
+\begin{enumerate}
+  \item identificar la unidad a testear y listar sus parametros,
+  \item construir un \textit{Modelo del Dominio de Entradas} (MDE) a partir de la especificacion,
+  \item declarar restricciones de factibilidad,
+  \item aplicar un criterio para generar requisitos de test,
+  \item instanciar valores concretos para satisfacer cada requisito.
+\end{enumerate}
+
+Cada ejercicio se acompana del MDE elegido, los requisitos de test (TR) derivados, los casos de
+prueba que los cubren y, cuando corresponde, la implementacion que satisface dichos casos.
+
+\section{Ejercicio 1: Lectura del Capitulo 6}
+
+El ejercicio pide leer el Capitulo 6 (\textit{Input Space Partitioning}) del libro
+\textit{Introduction to Software Testing} (Ammann y Offutt, 2da edicion). Los puntos centrales que
+estructuran la lectura y que aparecen aplicados en los ejercicios siguientes son:
+
+\begin{itemize}
+  \item \textbf{Particionado del dominio.} Toda entrada valida debe caer en algun bloque
+  (\textit{completitud}) y solo en uno (\textit{disjointness}). Si un valor cae en mas de un
+  bloque o en ninguno, la particion esta mal definida y deben revisarse las caracteristicas.
+
+  \item \textbf{Caracteristicas y bloques.} Una \textit{caracteristica} es un escenario relevante
+  para testing (por ejemplo, ``la lista esta vacia''). Cada caracteristica induce una particion del
+  dominio en \textit{bloques} (los posibles ``modos'' de esa propiedad).
+
+  \item \textbf{Dos enfoques para construir el MDE.}
+  \begin{itemize}
+    \item \textbf{Basado en interfaz}: una caracteristica por parametro, mirando la sintaxis. Es
+    rapido pero ignora relaciones entre parametros.
+    \item \textbf{Basado en funcionalidad}: las caracteristicas se derivan del comportamiento
+    esperado (precondiciones, poscondiciones, valores especiales). Es mas costoso pero mucho mas
+    expresivo.
+  \end{itemize}
+
+  \item \textbf{Criterios de combinacion.}
+  \begin{itemize}
+    \item \textit{Each Choice Coverage (ECC)}: cada bloque aparece al menos en un test.
+    \item \textit{Pair-Wise Coverage (PWC)}: todo par de bloques de caracteristicas distintas
+    aparece en algun test.
+    \item \textit{Base Choice Coverage (BCC)}: se fija un test base y se varia una caracteristica
+    a la vez.
+    \item \textit{All Combinations (ACoC)}: producto cartesiano de todos los bloques.
+  \end{itemize}
+
+  \item \textbf{Restricciones e infeasibility.} No todas las combinaciones son posibles. En ACoC y
+  PWC se descartan las combinaciones invalidas; en BCC se reemplaza un valor por uno no base hasta
+  obtener una combinacion factible.
+
+  \item \textbf{Costo/beneficio.} PWC suele ser un buen compromiso entre tamano de la suite y
+  capacidad de deteccion, ya que muchas fallas se disparan por interaccion de a dos factores.
+\end{itemize}
+
+Estos conceptos son la base directa de los ejercicios 2 a 5.
+
+\section{Ejercicio 2: \texttt{numberOfOcurrences} -- PWC}
+
+Se disena una bateria de tests para
+\texttt{ListUtils.numberOfOcurrences(List<Integer> l, Integer element)} aplicando
+\textit{Pair-Wise Coverage} sobre un MDE basado en funcionalidad.
 
 \subsection{Archivos trabajados}
+
 \begin{itemize}
   \item \texttt{src/main/java/assignment3\_exercises/ListUtils.java}
   \item \texttt{src/test/java/assignment3\_exercises/numberOfOcurrencesTest.java}
 \end{itemize}
 
 \subsection{Modelo del Dominio de Entradas (MDE)}
-Características y bloques:
+
+Se identifican cuatro caracteristicas relevantes a partir de la especificacion: dos verifican que
+los parametros sean no nulos (precondicion explicita) y otras dos describen el comportamiento
+funcional sobre la lista.
+
 \begin{itemize}
-  \item C1 (referencia de \texttt{l}): L0 = \texttt{null}, L1 = no \texttt{null}.
-  \item C2 (referencia de \texttt{element}): E0 = \texttt{null}, E1 = no \texttt{null}.
-  \item C3 (tamaño de lista, si L1): S0 = vacía, S1 = no vacía.
-  \item C4 (ocurrencias, si L1 y E1): O0 = 0, O1 = 1, O2 = más de 1.
+  \item \textbf{C1 -- referencia de \texttt{l}}:
+  \begin{itemize}
+    \item L0: \texttt{l == null}
+    \item L1: \texttt{l != null}
+  \end{itemize}
+  \item \textbf{C2 -- referencia de \texttt{element}}:
+  \begin{itemize}
+    \item E0: \texttt{element == null}
+    \item E1: \texttt{element != null}
+  \end{itemize}
+  \item \textbf{C3 -- tamano de la lista} (solo aplica si L1):
+  \begin{itemize}
+    \item S0: lista vacia
+    \item S1: lista no vacia
+  \end{itemize}
+  \item \textbf{C4 -- cantidad de ocurrencias} (solo aplica si L1 y E1):
+  \begin{itemize}
+    \item O0: 0 ocurrencias
+    \item O1: 1 ocurrencia
+    \item O2: mas de 1 ocurrencia
+  \end{itemize}
 \end{itemize}
 
-Restricciones:
+\textbf{Restricciones de factibilidad}:
 \begin{itemize}
-  \item Si L0, C3 y C4 no aplican.
-  \item Si E0, C4 no aplica.
-  \item Si S0, necesariamente O0.
+  \item Si L0 entonces C3 y C4 no aplican: la lista nula dispara excepcion antes de inspeccionar
+  cualquier otra propiedad.
+  \item Si E0 entonces C4 no aplica: sin elemento valido no tiene sentido hablar de ocurrencias.
+  \item Si S0 entonces necesariamente O0: una lista vacia no puede contener al elemento.
 \end{itemize}
 
-\subsection{Requisitos de test para Pairwise Coverage (PWC)}
-\begin{itemize}
-  \item R01: (L0, E0)
-  \item R02: (L0, E1)
-  \item R03: (L1, E0)
-  \item R04: (L1, E1)
-  \item R05: (L1, S0)
-  \item R06: (L1, S1)
-  \item R07: (L1, O0)
-  \item R08: (L1, O1)
-  \item R09: (L1, O2)
-  \item R10: (E0, S0)
-  \item R11: (E0, S1)
-  \item R12: (E1, S0)
-  \item R13: (E1, S1)
-  \item R14: (E1, O0)
-  \item R15: (E1, O1)
-  \item R16: (E1, O2)
-  \item R17: (S0, O0)
-  \item R18: (S1, O0)
-  \item R19: (S1, O1)
-  \item R20: (S1, O2)
+\subsection{Requisitos de test (PWC)}
+
+PWC obliga a que toda pareja de bloques entre caracteristicas distintas aparezca en al menos un
+test. Aplicando las restricciones anteriores, los pares factibles son:
+
+\begin{itemize}[itemsep=0.05em]
+  \item R01: (L0, E0) \quad R02: (L0, E1)
+  \item R03: (L1, E0) \quad R04: (L1, E1)
+  \item R05: (L1, S0) \quad R06: (L1, S1)
+  \item R07: (L1, O0) \quad R08: (L1, O1) \quad R09: (L1, O2)
+  \item R10: (E0, S0) \quad R11: (E0, S1)
+  \item R12: (E1, S0) \quad R13: (E1, S1)
+  \item R14: (E1, O0) \quad R15: (E1, O1) \quad R16: (E1, O2)
+  \item R17: (S0, O0) \quad R18: (S1, O0) \quad R19: (S1, O1) \quad R20: (S1, O2)
 \end{itemize}
 
-\subsection{Casos implementados}
-\begin{itemize}
-  \item TC1: \texttt{l = null}, \texttt{element = null} $\rightarrow$ \texttt{IllegalArgumentException} (R01).
-  \item TC2: \texttt{l = null}, \texttt{element = 7} $\rightarrow$ \texttt{IllegalArgumentException} (R02).
-  \item TC3: \texttt{l = []}, \texttt{element = null} $\rightarrow$ \texttt{IllegalArgumentException} (R03, R05, R10).
-  \item TC4: \texttt{l = [1,2,3]}, \texttt{element = null} $\rightarrow$ \texttt{IllegalArgumentException} (R03, R06, R11).
-  \item TC5: \texttt{l = []}, \texttt{element = 5} $\rightarrow$ \texttt{0} (R04, R05, R07, R12, R14, R17).
-  \item TC6: \texttt{l = [1,2,3]}, \texttt{element = 9} $\rightarrow$ \texttt{0} (R04, R06, R07, R13, R14, R18).
-  \item TC7: \texttt{l = [1,2,3]}, \texttt{element = 2} $\rightarrow$ \texttt{1} (R04, R06, R08, R13, R15, R19).
-  \item TC8: \texttt{l = [4,1,4,4]}, \texttt{element = 4} $\rightarrow$ \texttt{3} (R04, R06, R09, R13, R16, R20).
-\end{itemize}
+\subsection{Casos de prueba}
 
-Además, se incorporó un caso de robustez para verificar que la lista de entrada no sea modificada por la rutina.
+\begin{longtable}{@{}p{1cm}p{4.5cm}p{2.5cm}p{2.2cm}p{3cm}@{}}
+\toprule
+\textbf{TC} & \textbf{Entrada \texttt{l}} & \textbf{\texttt{element}} & \textbf{Salida} & \textbf{Cubre} \\
+\midrule
+\endhead
+TC1 & \texttt{null} & \texttt{null} & \texttt{IAE} & R01 \\
+TC2 & \texttt{null} & 7 & \texttt{IAE} & R02 \\
+TC3 & \texttt{[]} & \texttt{null} & \texttt{IAE} & R03, R05, R10 \\
+TC4 & \texttt{[1,2,3]} & \texttt{null} & \texttt{IAE} & R03, R06, R11 \\
+TC5 & \texttt{[]} & 5 & 0 & R04, R05, R07, R12, R14, R17 \\
+TC6 & \texttt{[1,2,3]} & 9 & 0 & R04, R06, R07, R13, R14, R18 \\
+TC7 & \texttt{[1,2,3]} & 2 & 1 & R04, R06, R08, R13, R15, R19 \\
+TC8 & \texttt{[4,1,4,4]} & 4 & 3 & R04, R06, R09, R13, R16, R20 \\
+\bottomrule
+\end{longtable}
 
-\subsection{Implementación}
-La implementación en \texttt{ListUtils.numberOfOcurrences} valida precondiciones y luego contabiliza coincidencias con \texttt{element.equals(actual)}.
+\noindent \textit{IAE} indica \texttt{IllegalArgumentException}. Adicionalmente se incluye un caso
+de robustez (TC9) que verifica que la rutina no muta la lista de entrada: tras invocar
+\texttt{numberOfOcurrences} sobre \texttt{[4,1,4,4]} buscando \texttt{4}, la lista debe seguir
+siendo \texttt{[4,1,4,4]}.
 
-\subsection{Ejecución}
+\subsection{Implementacion}
+
+\begin{lstlisting}[style=codestyle,language=Java]
+public static int numberOfOcurrences(List<Integer> l, Integer element) {
+    if (l == null || element == null) {
+        throw new IllegalArgumentException("List and element must be non-null");
+    }
+    int count = 0;
+    for (Integer current : l) {
+        if (element.equals(current)) {
+            count++;
+        }
+    }
+    return count;
+}
+\end{lstlisting}
+
+La rutina primero valida las precondiciones (R01--R03 dependen de esto) y luego recorre la lista
+contando con \texttt{element.equals(current)} para que \texttt{Integer} se compare por valor y no
+por referencia.
+
+\subsection{Ejecucion}
+
 \begin{lstlisting}[style=codestyle]
 mvn -Dmaven.repo.local=.m2 -Dtest=numberOfOcurrencesTest test
 \end{lstlisting}
 
-\section{Ejercicio 3}
-Se analizó el MDE propuesto para \texttt{SetUtils.intersection(Set<Integer> set1, Set<Integer> set2)} y se diseñó una suite de pruebas con criterio \textit{Base Choice}.
+\section{Ejercicio 3: \texttt{intersection} -- analisis del MDE y BCC}
+
+El ejercicio analiza el MDE original propuesto en el enunciado para
+\texttt{SetUtils.intersection(Set<Integer> set1, Set<Integer> set2)}, corrige sus problemas y
+genera una suite por \textit{Base Choice Coverage}.
 
 \subsection{Archivos trabajados}
+
 \begin{itemize}
   \item \texttt{src/main/java/assignment3\_exercises/SetUtils.java}
   \item \texttt{src/test/java/assignment3\_exercises/IntersectionTest.java}
 \end{itemize}
 
-\subsection{Análisis del modelo original}
-\subsubsection*{a) Completitud de C1 (y análogamente C2)}
-Sí, es completa: para \texttt{set1} las opciones son \texttt{null}, vacío o no vacío, y esos casos quedan cubiertos.
+\subsection{a) Completitud de C1 (analogamente C2)}
 
-\subsubsection*{b) No solapamiento de C1 (y análogamente C2)}
-Sí, no hay solapamiento: un set no puede ser simultáneamente \texttt{null}, vacío y no vacío.
-
-\subsubsection*{c) Completitud de C3}
-No se cumple. Contraejemplo:
-\[
-set1 = \{1,2\}, \quad set2 = \{2,3\}
-\]
-La intersección no es vacía, pero no son iguales ni subconjuntos entre sí, y tampoco son disjuntos.
-
-\subsubsection*{d) Disyunción de C3}
-Tampoco se cumple. Contraejemplo:
-\[
-set1 = set2 = \{1,2\}
-\]
-Si ``subconjunto'' no se restringe a subconjunto propio, la entrada cae a la vez en ``iguales'' y en ``set1 subconjunto de set2''.
-
-\subsection{MDE corregido}
+\textbf{Si, C1 es completa.} Para un \texttt{Set<Integer> set1} solo hay tres posibilidades
+mutuamente excluyentes:
 \begin{itemize}
-  \item C1: \texttt{set1 == null}, \texttt{set1 = \{\}}, \texttt{set1} no vacío.
-  \item C2: \texttt{set2 == null}, \texttt{set2 = \{\}}, \texttt{set2} no vacío.
-  \item C3 (solo si C1 y C2 no nulos):
+  \item \texttt{set1 == null},
+  \item \texttt{set1 != null} y vacio,
+  \item \texttt{set1 != null} con al menos un elemento.
+\end{itemize}
+Los bloques \texttt{b1}, \texttt{b2}, \texttt{b3} del enunciado cubren exactamente esas tres
+posibilidades, por lo que todo \texttt{Set<Integer>} concebible cae en algun bloque.
+
+\subsection{b) No solapamiento de C1 (analogamente C2)}
+
+\textbf{Si, C1 no solapa.} Las tres situaciones son incompatibles entre si: un set nulo no puede
+ser vacio o no vacio (ni siquiera tiene metodos invocables), y un set vacio no puede ser
+simultaneamente no vacio. No existe \texttt{set1} que caiga a la vez en dos bloques.
+
+\subsection{c) Completitud de C3}
+
+\textbf{No, C3 no es completa.} Considerese el contraejemplo:
+\[
+\texttt{set1} = \{1,2\}, \qquad \texttt{set2} = \{2,3\}.
+\]
+Aqui hay interseccion no vacia (\(\{2\}\)), pero \texttt{set1} y \texttt{set2} no son iguales,
+ninguno es subconjunto del otro y tampoco son disjuntos. Esta entrada no encaja en ninguno de los
+bloques \texttt{b1}--\texttt{b4} originales: existe un \textit{solapamiento parcial} que el MDE no
+contempla.
+
+\subsection{d) Disjointness de C3}
+
+\textbf{No, C3 no es disjunta.} Si ``subconjunto'' se interpreta de forma no estricta, el caso
+\[
+\texttt{set1} = \texttt{set2} = \{1,2\}
+\]
+cae simultaneamente en tres bloques: representan el mismo conjunto (\texttt{b1}), \texttt{set1} es
+subconjunto de \texttt{set2} (\texttt{b2}) y \texttt{set2} es subconjunto de \texttt{set1}
+(\texttt{b3}). Hay solapamiento entre los bloques.
+
+\subsection{e) Revision del MDE}
+
+Para que C3 sea completa y disjunta se utiliza la nocion de subconjunto \textit{propio} y se anade
+un bloque adicional que cubra el solapamiento parcial:
+
+\begin{itemize}
+  \item \textbf{C1 (validez de \texttt{set1})}:
+  \begin{itemize}
+    \item C1.b1: \texttt{set1 == null}
+    \item C1.b2: \texttt{set1 == \{\}}
+    \item C1.b3: \texttt{set1} no vacio
+  \end{itemize}
+  \item \textbf{C2 (validez de \texttt{set2})}: analogo a C1.
+  \item \textbf{C3 (relacion entre \texttt{set1} y \texttt{set2})}, solo aplicable si ninguno es
+  nulo:
   \begin{itemize}
     \item C3.b1: \texttt{set1 = set2}
-    \item C3.b2: \texttt{set1} subconjunto propio de \texttt{set2}
-    \item C3.b3: \texttt{set2} subconjunto propio de \texttt{set1}
-    \item C3.b4: disjuntos
-    \item C3.b5: solapamiento parcial (intersección no vacía y sin inclusión)
+    \item C3.b2: \texttt{set1} es subconjunto \textit{propio} de \texttt{set2}
+    \item C3.b3: \texttt{set2} es subconjunto \textit{propio} de \texttt{set1}
+    \item C3.b4: \texttt{set1} y \texttt{set2} disjuntos
+    \item C3.b5: solapamiento parcial (interseccion no vacia y ninguno es subconjunto del otro)
   \end{itemize}
 \end{itemize}
 
-Con esta revisión, C3 resulta completa y disyunta.
+Con estos ajustes C3 queda completa (todo par \((\texttt{set1},\texttt{set2})\) con ambos no nulos
+encaja en alguno de los cinco bloques) y disjunta (los cinco bloques se excluyen mutuamente).
 
-\subsection{Base Choice (BC): requisitos y casos}
-Bloques base elegidos:
+\subsection{f) Base Choice Coverage}
+
+\textbf{Bloques base elegidos}: el caso ``camino feliz'' es ambos sets no vacios e iguales.
 \begin{itemize}
-  \item C1 base: set1 no vacío.
-  \item C2 base: set2 no vacío.
-  \item C3 base: conjuntos iguales.
+  \item C1 base: C1.b3 (\texttt{set1} no vacio).
+  \item C2 base: C2.b3 (\texttt{set2} no vacio).
+  \item C3 base: C3.b1 (\texttt{set1 = set2}).
 \end{itemize}
 
-Requisitos BC considerados:
+\textbf{Requisitos BC} (el test base mas un test por cada bloque no base, ajustando
+factibilidad):
+
+\begin{longtable}{@{}p{2cm}p{6cm}p{6.5cm}@{}}
+\toprule
+\textbf{TR} & \textbf{Variacion respecto del base} & \textbf{Resultado esperado} \\
+\midrule
+\endhead
+TR-BC1 & --- (caso base) & \texttt{\{1,2,3\}} \\
+TR-BC2 & C1 $\rightarrow$ C1.b1 (\texttt{null}) & \texttt{NullPointerException} \\
+TR-BC3 & C1 $\rightarrow$ C1.b2 (\texttt{\{\}}) & \texttt{\{\}} \\
+TR-BC4 & C2 $\rightarrow$ C2.b1 (\texttt{null}) & \texttt{NullPointerException} \\
+TR-BC5 & C2 $\rightarrow$ C2.b2 (\texttt{\{\}}) & \texttt{\{\}} \\
+TR-BC6 & C3 $\rightarrow$ C3.b2 (subc.\ propio) & \texttt{set1} \\
+TR-BC7 & C3 $\rightarrow$ C3.b3 (superc.\ propio) & \texttt{set2} \\
+TR-BC8 & C3 $\rightarrow$ C3.b4 (disjuntos) & \texttt{\{\}} \\
+TR-BC9 & C3 $\rightarrow$ C3.b5 (solap.\ parcial) & elementos comunes \\
+\bottomrule
+\end{longtable}
+
+\noindent Notar que TR-BC3 y TR-BC5 son los casos donde una variacion sobre C1 o C2 vuelve no
+aplicable a C3; segun la guia de manejo de restricciones para BCC, se sustituye la base de C3 por
+una combinacion factible (en este caso, interseccion vacia trivial).
+
+\subsection{Casos implementados}
+
+Cada \texttt{TC1}--\texttt{TC9} cubre uno de los TR-BCi correspondientes. Adicionalmente la suite
+incluye:
+
 \begin{itemize}
-  \item TR-BC1: caso base.
-  \item TR-BC2: variar C1 a \texttt{null} $\rightarrow$ \texttt{NullPointerException}.
-  \item TR-BC3: variar C1 a vacío (ajustado por factibilidad).
-  \item TR-BC4: variar C2 a \texttt{null} $\rightarrow$ \texttt{NullPointerException}.
-  \item TR-BC5: variar C2 a vacío (ajustado por factibilidad).
-  \item TR-BC6: variar C3 a ``set1 subconjunto propio de set2''.
-  \item TR-BC7: variar C3 a ``set2 subconjunto propio de set1''.
-  \item TR-BC8: variar C3 a disjuntos.
-  \item TR-BC9: variar C3 a solapamiento parcial.
+  \item Verificacion de no mutacion: \texttt{set1} y \texttt{set2} deben quedar igual a su copia
+  pre-llamada.
+  \item Verificacion de nueva instancia: el resultado no es \texttt{== set1} ni \texttt{== set2}.
+  \item Borde adicional: ambos sets vacios $\rightarrow$ resultado vacio.
 \end{itemize}
 
-Los casos \texttt{TC1} a \texttt{TC9} de \texttt{IntersectionTest} cubren estos requisitos y agregan, además, validaciones de no mutación de entradas, nueva instancia de retorno y borde con ambos conjuntos vacíos.
+\subsection{Implementacion}
 
-\subsection{Implementación}
-\texttt{SetUtils.intersection} se implementó para:
-\begin{itemize}
-  \item lanzar \texttt{NullPointerException} ante entradas \texttt{null},
-  \item devolver un nuevo \texttt{Set} con la intersección,
-  \item no modificar los conjuntos recibidos.
-\end{itemize}
+\begin{lstlisting}[style=codestyle,language=Java]
+public static Set<Integer> intersection(Set<Integer> set1, Set<Integer> set2) {
+    Objects.requireNonNull(set1, "set1 must be non-null");
+    Objects.requireNonNull(set2, "set2 must be non-null");
 
-\subsection{Ejecución}
+    Set<Integer> result = new HashSet<>(set1);
+    result.retainAll(set2);
+    return result;
+}
+\end{lstlisting}
+
+La validacion por \texttt{Objects.requireNonNull} respeta la especificacion de
+\texttt{NullPointerException}, y la copia previa a \texttt{retainAll} garantiza tanto la no
+mutacion de \texttt{set1} como la nueva instancia de retorno.
+
+\subsection{Ejecucion}
+
 \begin{lstlisting}[style=codestyle]
 mvn -Dmaven.repo.local=.m2 -Dtest=IntersectionTest test
 \end{lstlisting}
 
-\section{Ejercicio 4}
-Se modeló y probó el método \texttt{PatternIndex.patternIndex(String subject, String pattern)} aplicando cobertura \textit{pairwise} con restricciones de factibilidad.
+\section{Ejercicio 4: \texttt{PatternIndex} -- PWC y deteccion de fallas}
+
+Se modela y prueba \texttt{PatternIndex.patternIndex(String subject, String pattern)} con
+\textit{Pair-Wise Coverage}, y se documentan las fallas que la suite revela en la implementacion
+original.
 
 \subsection{Archivos trabajados}
+
 \begin{itemize}
   \item \texttt{src/main/java/assignment3\_exercises/PatternIndex.java}
   \item \texttt{src/test/java/assignment3\_exercises/PatternIndexTest.java}
 \end{itemize}
 
-\subsection{Modelo del Dominio de Entradas (MDE)}
+\subsection{Modelo del Dominio de Entradas}
+
+El MDE combina dos caracteristicas de interfaz (referencia de cada parametro) con tres de
+funcionalidad (tamano y posicion de la ocurrencia esperada):
+
 \begin{itemize}
-  \item C1: referencia de \texttt{subject} (\texttt{null} / no \texttt{null}).
-  \item C2: referencia de \texttt{pattern} (\texttt{null} / no \texttt{null}).
-  \item C3: tamaño de \texttt{subject} (vacío / no vacío), si C1 no es \texttt{null}.
-  \item C4: tamaño de \texttt{pattern} (vacío / 1 carácter / 2 o más), si C2 no es \texttt{null}.
-  \item C5: tipo de resultado (índice inicial / intermedio / final / \texttt{-1}), si C1 y C2 no son \texttt{null}.
+  \item \textbf{C1 -- referencia de \texttt{subject}}: C1.b1 = \texttt{null}, C1.b2 = no nulo.
+  \item \textbf{C2 -- referencia de \texttt{pattern}}: C2.b1 = \texttt{null}, C2.b2 = no nulo.
+  \item \textbf{C3 -- tamano de \texttt{subject}} (si C1.b2): C3.b1 = vacio, C3.b2 = no vacio.
+  \item \textbf{C4 -- tamano de \texttt{pattern}} (si C2.b2): C4.b1 = vacio, C4.b2 = 1 caracter,
+  C4.b3 = 2 o mas caracteres.
+  \item \textbf{C5 -- posicion del resultado} (si C1.b2 y C2.b2): C5.b1 = indice 0 (inicio),
+  C5.b2 = intermedio, C5.b3 = final, C5.b4 = \texttt{-1} (no encontrado).
 \end{itemize}
 
-Restricciones destacadas:
+\textbf{Restricciones}:
 \begin{itemize}
-  \item Si C1 o C2 es \texttt{null}, se espera excepción y C3--C5 no aplican.
-  \item Si \texttt{pattern} es vacía, el resultado esperado es \texttt{0}.
-  \item Si \texttt{subject} es vacía y \texttt{pattern} no vacía, el resultado esperado es \texttt{-1}.
+  \item Si \texttt{subject} o \texttt{pattern} es \texttt{null}: precondicion violada,
+  \texttt{IllegalArgumentException}; C3--C5 no aplican.
+  \item Si \texttt{pattern} es vacio (C4.b1): por especificacion devuelve 0 (cubre C5.b1).
+  \item Si \texttt{subject} es vacio (C3.b1) y \texttt{pattern} no lo es (C4.b2 o C4.b3): el
+  resultado es \texttt{-1} (cubre C5.b4).
 \end{itemize}
 
-\subsection{Requisitos pairwise y casos de prueba}
-Se definieron 20 requisitos de cobertura por pares (R01--R20) y se implementaron 15 casos (TC1--TC15) que cubren:
-\begin{itemize}
-  \item validación de precondiciones en entradas \texttt{null},
-  \item patrón vacío,
-  \item coincidencia al inicio, medio y final,
-  \item patrón no encontrado,
-  \item sujeto vacío con patrón no vacío.
-\end{itemize}
+\subsection{Requisitos PWC y casos}
 
-\subsection{Defectos observados en la versión original}
-La batería de tests permite evidenciar dos problemas clásicos en la implementación base:
-\begin{itemize}
-  \item ausencia de validación de \texttt{null} según especificación,
-  \item manejo incorrecto del caso \texttt{pattern} vacía.
-\end{itemize}
+Los 20 requisitos de cobertura por pares (R01--R20) modelan combinaciones validas entre las
+caracteristicas. La suite implementa 15 casos:
 
-\subsection{Corrección documentada}
-La corrección aplicada/esperada para satisfacer la especificación es:
+\begin{longtable}{@{}p{1cm}p{2.5cm}p{2.5cm}p{1.5cm}p{4cm}@{}}
+\toprule
+\textbf{TC} & \texttt{subject} & \texttt{pattern} & \textbf{Salida} & \textbf{Cubre} \\
+\midrule
+\endhead
+TC1  & \texttt{null}     & \texttt{null}     & IAE & R01 \\
+TC2  & \texttt{null}     & \texttt{"a"}      & IAE & R02 \\
+TC3  & \texttt{"abc"}    & \texttt{null}     & IAE & R03 \\
+TC4  & \texttt{""}       & \texttt{""}       & 0   & R04, R05, R11 \\
+TC5  & \texttt{"abc"}    & \texttt{""}       & 0   & R04, R06, R12 \\
+TC6  & \texttt{""}       & \texttt{"a"}      & -1  & R04, R07, R15 \\
+TC7  & \texttt{"abc"}    & \texttt{"a"}      & 0   & R04, R08, R13 \\
+TC8  & \texttt{"abc"}    & \texttt{"b"}      & 1   & R04, R08, R14 \\
+TC9  & \texttt{"abc"}    & \texttt{"c"}      & 2   & R04, R08, R16 \\
+TC10 & \texttt{"abcde"}  & \texttt{"ab"}     & 0   & R04, R09, R17 \\
+TC11 & \texttt{"abcde"}  & \texttt{"cd"}     & 2   & R04, R09, R18 \\
+TC12 & \texttt{"abcde"}  & \texttt{"de"}     & 3   & R04, R09, R19 \\
+TC13 & \texttt{"abcde"}  & \texttt{"fg"}     & -1  & R04, R09, R20 \\
+TC14 & \texttt{"abc"}    & \texttt{"z"}      & -1  & R04, R08, R15 \\
+TC15 & \texttt{""}       & \texttt{"ab"}     & -1  & R04, R10, R20 \\
+\bottomrule
+\end{longtable}
+
+\subsection{Fallas detectadas en la implementacion original}
+
+La version provista en el repositorio \textit{no} sigue la especificacion documentada en el
+Javadoc. Los tests revelan dos defectos concretos:
+
+\begin{enumerate}
+  \item \textbf{Ausencia de validacion de \texttt{null}.} La rutina invoca directamente
+  \texttt{subject.length()} y \texttt{pattern.length()}, por lo que TC1--TC3 lanzan
+  \texttt{NullPointerException} en lugar del \texttt{IllegalArgumentException} prometido.
+
+  \item \textbf{Tratamiento incorrecto de \texttt{pattern} vacio.} Con
+  \texttt{pattern.length() == 0}, la condicion \texttt{iSub + patternLen - 1 < subjectLen}
+  evalua \(iSub - 1 < \text{subjectLen}\), lo cual es verdadero al menos para \(iSub = 0\). Dentro
+  del cuerpo se ejecuta \texttt{pattern.charAt(0)}, que dispara
+  \texttt{StringIndexOutOfBoundsException} en lugar de devolver 0.
+\end{enumerate}
+
+\subsection{Correccion aplicada}
+
+Se anaden las dos guardas faltantes al principio del metodo:
+
 \begin{lstlisting}[style=codestyle,language=Java]
-if (subject == null || pattern == null) {
-    throw new IllegalArgumentException(...);
+public static int patternIndex(String subject, String pattern) {
+    if (subject == null || pattern == null) {
+        throw new IllegalArgumentException("subject and pattern must be non-null");
+    }
+
+    final int NOTFOUND = -1;
+    int  iSub = 0, rtnIndex = NOTFOUND;
+    boolean isPat  = false;
+    int subjectLen = subject.length();
+    int patternLen = pattern.length();
+
+    if (patternLen == 0) {
+        return 0;
+    }
+
+    while (isPat == false && iSub + patternLen - 1 < subjectLen) {
+        if (subject.charAt(iSub) == pattern.charAt(0)) {
+            rtnIndex = iSub;
+            isPat = true;
+            for (int iPat = 1; iPat < patternLen; iPat++) {
+                if (subject.charAt(iSub + iPat) != pattern.charAt(iPat)) {
+                    rtnIndex = NOTFOUND;
+                    isPat = false;
+                    break;
+                }
+            }
+        }
+        iSub++;
+    }
+    return rtnIndex;
 }
-if (pattern.isEmpty()) {
-    return 0;
-}
-if (pattern.length() > subject.length()) {
-    return -1;
-}
-// buscar primera ocurrencia y devolver su indice
 \end{lstlisting}
 
-\subsection{Ejecución}
+Con estas dos correcciones, los 15 casos de la suite pasan: las precondiciones lanzan
+\texttt{IllegalArgumentException}, el patron vacio devuelve 0 y los demas casos no se ven
+afectados porque el algoritmo de busqueda original es correcto.
+
+\subsection{Ejecucion}
+
 \begin{lstlisting}[style=codestyle]
 mvn -Dmaven.repo.local=.m2 -Dtest=PatternIndexTest test
 \end{lstlisting}
 
-\section{Ejercicio 5}
-Se diseñaron pruebas sobre \texttt{Iterator} de \texttt{ArrayList} a partir de la especificación oficial de Java, aplicando modelado de características y cobertura de pares.
+\section{Ejercicio 5: \texttt{Iterator} sobre \texttt{ArrayList} -- PWC}
 
-\subsection{Referencia}
-\begin{itemize}
-  \item Oracle Java SE 7, \texttt{java.util.Iterator}: \url{https://docs.oracle.com/javase/7/docs/api/java/util/Iterator.html}
-\end{itemize}
-
-Puntos de especificación utilizados:
-\begin{itemize}
-  \item \texttt{hasNext()} informa si existe próximo elemento.
-  \item \texttt{next()} devuelve el siguiente elemento o lanza \texttt{NoSuchElementException}.
-  \item \texttt{remove()} es opcional.
-  \item \texttt{remove()} lanza \texttt{UnsupportedOperationException} si no está soportado.
-  \item \texttt{remove()} lanza \texttt{IllegalStateException} si se viola su precondición de uso.
-\end{itemize}
+Se prueba la interfaz \texttt{java.util.Iterator} usando \texttt{ArrayList} como coleccion
+subyacente (Iterator es interfaz y no se instancia directamente).
 
 \subsection{Archivos trabajados}
+
 \begin{itemize}
   \item \texttt{src/test/java/assignment3\_exercises/IteratorArrayListTest.java}
 \end{itemize}
 
-\subsection{MDE utilizado}
-Características modeladas:
+\subsection{Especificacion de referencia}
+
+De Oracle Java SE 7 (\url{https://docs.oracle.com/javase/7/docs/api/java/util/Iterator.html}):
+
 \begin{itemize}
-  \item C1: el iterador tiene más valores \{\texttt{true}, \texttt{false}\}.
-  \item C2: \texttt{next()} retorna objeto no \texttt{null} \{\texttt{true}, \texttt{false}\}.
-  \item C3: \texttt{remove()} soportado \{\texttt{true}, \texttt{false}\}.
-  \item C4: restricción de \texttt{remove()} satisfecha \{\texttt{true}, \texttt{false}\}.
+  \item \texttt{hasNext()}: devuelve \texttt{true} si quedan elementos por iterar.
+  \item \texttt{next()}: devuelve el proximo elemento; lanza \texttt{NoSuchElementException} si no
+  hay mas.
+  \item \texttt{remove()}: operacion opcional. Si no esta soportada, lanza
+  \texttt{UnsupportedOperationException}. Si esta soportada, lanza \texttt{IllegalStateException}
+  cuando no se llamo a \texttt{next()} previamente o cuando ya se llamo a \texttt{remove()}
+  despues del ultimo \texttt{next()}.
 \end{itemize}
 
-Decisiones de instanciación:
+\subsection{MDE}
+
 \begin{itemize}
-  \item C3=\texttt{true}: \texttt{ArrayList.iterator()}.
-  \item C3=\texttt{false}: \texttt{Collections.unmodifiableList(...).iterator()}.
+  \item \textbf{C1}: ``hay mas elementos'' $\in \{\text{true}, \text{false}\}$.
+  \item \textbf{C2}: ``\texttt{next()} devuelve no nulo'' $\in \{\text{true}, \text{false}\}$.
+  \item \textbf{C3}: ``\texttt{remove()} esta soportado'' $\in \{\text{true}, \text{false}\}$.
+  \item \textbf{C4}: ``precondicion de \texttt{remove()} satisfecha''
+  $\in \{\text{true}, \text{false}\}$.
 \end{itemize}
 
-\subsection{Cobertura y suite implementada}
-Se cubrieron 13 requisitos (R01--R13) mediante casos \texttt{TC1} a \texttt{TC13}, contemplando:
+\noindent \textbf{Decisiones de instanciacion}:
 \begin{itemize}
-  \item estados de \texttt{hasNext()} en iterador con datos, vacío y agotado,
-  \item \texttt{next()} con retorno no nulo, retorno nulo y excepción por agotamiento,
-  \item \texttt{remove()} no soportado,
-  \item \texttt{remove()} con precondición inválida,
-  \item \texttt{remove()} exitoso con y sin elementos remanentes.
+  \item Para C3 = \texttt{true} se usa \texttt{new ArrayList<>(...).iterator()}, que sí soporta
+  \texttt{remove()}.
+  \item Para C3 = \texttt{false} se usa \texttt{Collections.unmodifiableList(...).iterator()},
+  cuya implementacion delega en una vista que \textbf{no} soporta \texttt{remove()}, manteniendo
+  un \texttt{ArrayList} como coleccion subyacente.
 \end{itemize}
+
+\subsection{Requisitos y casos}
+
+Se cubren 13 requisitos:
+
+\begin{longtable}{@{}p{1cm}p{2cm}p{9.5cm}@{}}
+\toprule
+\textbf{TC} & \textbf{R} & \textbf{Escenario} \\
+\midrule
+\endhead
+TC1  & R01 & \texttt{hasNext()} = true sobre iterador con datos. \\
+TC2  & R02 & \texttt{hasNext()} = false sobre iterador vacio. \\
+TC3  & R03 & \texttt{hasNext()} = false sobre iterador agotado. \\
+TC4  & R04 & \texttt{next()} devuelve un valor no nulo. \\
+TC5  & R05 & \texttt{next()} devuelve \texttt{null} (la lista contiene un \texttt{null}). \\
+TC6  & R06 & \texttt{next()} sobre iterador vacio $\rightarrow$ \texttt{NoSuchElementException}. \\
+TC7  & R07 & \texttt{next()} sobre iterador agotado $\rightarrow$ \texttt{NoSuchElementException}. \\
+TC8  & R08 & \texttt{remove()} no soportado (\texttt{unmodifiableList}) $\rightarrow$ \texttt{UOE}. \\
+TC9  & R09 & \texttt{remove()} soportado pero sin \texttt{next()} previo $\rightarrow$ \texttt{ISE}. \\
+TC10 & R10 & \texttt{remove()} sobre iterador vacio sin \texttt{next()} previo $\rightarrow$ \texttt{ISE}. \\
+TC11 & R11 & \texttt{remove()} elimina el ultimo retornado con elementos restantes. \\
+TC12 & R12 & \texttt{remove()} elimina el ultimo retornado sin elementos restantes. \\
+TC13 & R13 & Doble \texttt{remove()} consecutivo $\rightarrow$ \texttt{ISE}. \\
+\bottomrule
+\end{longtable}
 
 \subsection{Resultado}
-En los escenarios modelados no se identificaron inconsistencias respecto de la especificación de \texttt{Iterator}. La suite confirma el comportamiento esperado tanto en caminos válidos como en excepciones contractuales.
 
-\subsection{Ejecución}
+La implementacion de \texttt{Iterator} para \texttt{ArrayList} (y la vista de
+\texttt{unmodifiableList} para el caso C3 = false) respeta la especificacion en todos los
+escenarios modelados. No se detectaron divergencias respecto del contrato documentado.
+
+\subsection{Ejecucion}
+
 \begin{lstlisting}[style=codestyle]
 mvn -Dmaven.repo.local=.m2 -Dtest=IteratorArrayListTest test
 \end{lstlisting}
 
 \section*{Conclusiones}
 \addcontentsline{toc}{section}{Conclusiones}
-La resolución del Práctico 3 consolidó el trabajo con \textit{Input Space Partitioning} aplicado a problemas concretos de especificación, modelado y diseño de pruebas. El uso combinado de \textit{Pairwise Coverage} y \textit{Base Choice} permitió estructurar suites justificadas por requisitos explícitos, reducir redundancia y mantener trazabilidad entre modelo, casos y comportamiento esperado.
+
+La resolucion consolida el trabajo con \textit{Input Space Partitioning} sobre cinco unidades
+concretas. Tres lecciones se repiten a lo largo del practico:
+
+\begin{enumerate}
+  \item \textbf{El MDE no es opcional.} En el Ejercicio 3 quedo claro que un MDE descuidado (C3
+  con bloques no disjuntos y no completos) hace inutil cualquier criterio que se aplique encima.
+  Antes de generar requisitos hay que verificar completitud y disjointness.
+
+  \item \textbf{PWC vs BCC.} PWC fuerza interacciones; BCC fuerza variaciones controladas
+  alrededor de un camino feliz. La eleccion depende del problema: PWC es mas exhaustivo en
+  interacciones (ejercicios 2 y 4), BCC concentra el esfuerzo en variaciones locales y se ajusta
+  bien cuando se tiene un caso ``normal'' claro (ejercicio 3).
+
+  \item \textbf{Trazabilidad.} Anclar cada test a un TR explicito hace que la suite sea auditable
+  y revisable: se sabe \textit{por que} esta cada caso y que pasa si se elimina.
+\end{enumerate}
 
 \end{document}

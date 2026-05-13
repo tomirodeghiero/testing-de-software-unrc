@@ -18,12 +18,20 @@ public class PatternIndex
     */
    public static int patternIndex (String subject, String pattern)
    {
+      if (subject == null || pattern == null) {
+         throw new IllegalArgumentException("subject and pattern must be non-null");
+      }
+
       final int NOTFOUND = -1;
       int  iSub = 0, rtnIndex = NOTFOUND;
       boolean isPat  = false;
       int subjectLen = subject.length();
       int patternLen = pattern.length();
-   
+
+      if (patternLen == 0) {
+         return 0;
+      }
+
       while (isPat == false && iSub + patternLen - 1 < subjectLen)
       {
          if (subject.charAt(iSub) == pattern.charAt(0))
