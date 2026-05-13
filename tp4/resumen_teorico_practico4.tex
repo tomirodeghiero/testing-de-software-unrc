@@ -1,0 +1,565 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resumen teorico TP4 - Testing basado en grafos},
+  pdfauthor={}
+}
+
+\newtcolorbox{definicionbox}[1][]{
+  colback=blue!4!white,
+  colframe=blue!50!black,
+  fonttitle=\bfseries,
+  title=Definicion,
+  #1
+}
+
+\newtcolorbox{ideabox}[1][]{
+  colback=green!4!white,
+  colframe=green!40!black,
+  fonttitle=\bfseries,
+  title=Idea clave,
+  #1
+}
+
+\newtcolorbox{ejemplobox}[1][]{
+  colback=orange!4!white,
+  colframe=orange!50!black,
+  fonttitle=\bfseries,
+  title=Ejemplo,
+  #1
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\title{\textbf{Resumen Teorico -- Practico 4}\\
+Testing basado en grafos\\
+Cobertura estructural y CFG\\
+\textit{Testing de Software 2024}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
+
+Este resumen sintetiza el material teorico asociado al TP4:
+
+\begin{itemize}
+  \item \textit{Introduction to Software Testing} (Ammann \& Offutt, 2da edicion), Capitulo 7:
+  \textbf{Graph Coverage}.
+  \item \textit{Notas 07: Criterios de cobertura de grafos -- Introduccion} (V. Bengolea).
+  \item \textit{Notas 08: Criterios de cobertura de grafos desde codigo fuente} (V. Bengolea).
+\end{itemize}
+
+El objetivo del resumen es servir de referencia para repasar: definiciones formales, criterios
+estructurales sobre grafos (NC, EC, EPC, CPC, PPC), conceptos de \textit{tour}, \textit{sidetrip},
+\textit{detour}, infeasibility, \textit{Best Effort Touring}, y aplicaciones al codigo fuente
+mediante el grafo de control de flujo (CFG).
+
+\section{Grafos como estructura de modelado}
+
+\subsection{Por que grafos}
+
+Los grafos son la \emph{estructura mas utilizada} para testing. Permiten modelar:
+\begin{itemize}
+  \item flujo de control de un programa (CFG),
+  \item modelos de diseno (UML, secuencia, actividad),
+  \item maquinas de estados finitos (FSM) y \textit{statecharts},
+  \item casos de uso, flujo de datos, llamadas entre metodos, etc.
+\end{itemize}
+
+\textbf{Idea operativa.} Una vez que el software esta modelado como un grafo, el testing se
+convierte en \emph{recorrer} ese grafo siguiendo reglas explicitas: las reglas son los criterios
+de cobertura.
+
+\begin{ideabox}
+``Definir un modelo del software y encontrar formas de recorrerlo'' es la receta basica del
+diseno de tests guiado por modelos (MDTD).
+\end{ideabox}
+
+\subsection{Definicion formal de grafo}
+
+\begin{definicionbox}
+Un \textbf{grafo} consta de:
+\begin{itemize}
+  \item un conjunto \emph{no vacio} de nodos $N$;
+  \item un conjunto \emph{no vacio} de nodos iniciales $N_0 \subseteq N$;
+  \item un conjunto \emph{no vacio} de nodos finales $N_f \subseteq N$;
+  \item un conjunto de aristas $E \subseteq N \times N$. Cada arista $(n_i, n_j)$ tiene
+  \emph{predecesor} $n_i$ y \emph{sucesor} $n_j$.
+\end{itemize}
+Convencion grafica: el nodo final se dibuja con doble circulo; el nodo inicial recibe una flecha
+``de la nada''.
+\end{definicionbox}
+
+\textbf{Cuidado.} Si $N_0 = \emptyset$, el grafo no es valido para testing: no hay punto desde
+donde empezar la ejecucion. Lo mismo si $N_f = \emptyset$: no hay donde terminar.
+
+\subsection{Caminos, longitud y subcaminos}
+
+\begin{definicionbox}
+\textbf{Camino.} Secuencia $[n_1, n_2, \ldots, n_M]$ tal que cada par consecutivo $(n_i,
+n_{i+1})$ esta conectado por una arista.
+
+\textbf{Longitud.} Numero de aristas (es decir, $M - 1$).
+
+\textbf{Subcamino.} Una subsecuencia consecutiva de un camino $p$ es un subcamino de $p$. (Cada
+arista, mirada como un camino de longitud 1, es tambien un subcamino.)
+\end{definicionbox}
+
+\textbf{Camino de test.} Camino que empieza en algun nodo inicial y termina en algun nodo final.
+\emph{Es la abstraccion de una ejecucion de test}.
+
+\begin{ideabox}
+\textbf{Software determinista}: cada test ejecuta exactamente un camino de test (relacion
+many-to-one: muchos tests pueden ejecutar el mismo camino).
+
+\textbf{Software no determinista}: el mismo test puede ejecutar distintos caminos en distintas
+corridas.
+\end{ideabox}
+
+\subsection{Alcanzabilidad}
+
+\begin{definicionbox}
+Un nodo $n$ es \textbf{sintacticamente alcanzable} desde $n_i$ si existe un camino de $n_i$ a
+$n$.
+
+Un nodo $n$ es \textbf{semanticamente alcanzable} si existe \emph{algun} input que efectivamente
+hace que la ejecucion lo visite (es decir, el camino sintactico es factible).
+\end{definicionbox}
+
+Los criterios estructurales razonan sobre alcanzabilidad sintactica; la semantica entra cuando se
+discute si un requisito de test es \emph{factible} o \emph{infactible} (infeasible).
+
+\subsection{Grafos SESE}
+
+\begin{definicionbox}
+Un grafo es \textbf{SESE} (\textit{Single Entry, Single Exit}) si:
+\begin{itemize}
+  \item $|N_0| = 1$ y $|N_f| = 1$ (un unico nodo inicial $n_0$ y un unico nodo final $n_f$);
+  \item $n_f$ es sintacticamente alcanzable desde todos los nodos de $N$;
+  \item ningun nodo es sintacticamente alcanzable desde $n_f$, salvo que $n_f = n_0$.
+\end{itemize}
+\end{definicionbox}
+
+El CFG de un metodo se modela tipicamente como SESE: un punto de entrada (el \texttt{return}, o
+un nodo virtual al final) y un unico punto de salida.
+
+\subsection{Visita, recorrido y notacion}
+
+\begin{itemize}
+  \item Un camino $p$ \textbf{visita} un nodo $n$ si $n$ esta en $p$. Analogamente para aristas.
+  \item Un camino $p$ \textbf{recorre} (tours) un subcamino $q$ si $q$ es subcamino de $p$.
+  \item $\textit{camino}(t)$: el camino de test que el test $t$ ejecuta.
+  \item $\textit{caminos}(T)$: el conjunto de caminos ejecutados por la suite $T$.
+\end{itemize}
+
+\section{Testing y cobertura de grafos}
+
+\subsection{Esquema general}
+
+\begin{enumerate}
+  \item Desarrollar un modelo del software como un grafo $G$.
+  \item Definir un \textbf{criterio de cobertura} $C$ sobre $G$. El criterio genera un conjunto
+  de \textbf{requisitos de test} $TR$ (cada uno describe una propiedad que los caminos de test
+  deben satisfacer).
+  \item Encontrar un conjunto de tests $T$ tal que para todo $tr \in TR$ exista al menos un
+  camino en $\textit{caminos}(T)$ que recorra/visite $tr$.
+\end{enumerate}
+
+\begin{definicionbox}
+\textbf{Satisfaccion.} $T$ satisface $C$ sobre $G$ sii
+$\forall\, tr \in TR,\ \exists\, p \in \textit{caminos}(T) : p \text{ recorre/visita } tr$.
+\end{definicionbox}
+
+\subsection{Tipos de criterios sobre grafos}
+
+\begin{itemize}
+  \item \textbf{Estructurales}: definidos sobre nodos y aristas del grafo. Son los que cubre el
+  practico.
+  \item \textbf{Sobre flujo de datos}: requieren un grafo \emph{anotado} con definiciones y usos
+  de variables. (Fuera del alcance de esta asignatura.)
+\end{itemize}
+
+\section{Criterios estructurales}
+
+\subsection{Cobertura de nodos (NC)}
+
+\begin{definicionbox}
+\textbf{Node Coverage (NC).} $T$ satisface NC sobre $G$ sii para cada nodo sintacticamente
+alcanzable $n$, existe $p \in \textit{caminos}(T)$ que visita $n$.
+
+Equivalentemente, $TR$ contiene todos los nodos alcanzables de $G$.
+\end{definicionbox}
+
+\begin{ejemplobox}
+En el grafo $1 \to \{2, 3\} \to 4 \to \{5, 6\} \to 7$, los caminos
+$p_1 = [1,2,4,5,7]$ y $p_2 = [1,3,4,6,7]$ visitan todos los nodos: $\{1,2,3,4,5,6,7\}$. Cualquier
+suite $T$ con $\textit{camino}(t_1) = p_1$ y $\textit{camino}(t_2) = p_2$ satisface NC.
+\end{ejemplobox}
+
+\subsection{Cobertura de aristas (EC)}
+
+\begin{definicionbox}
+\textbf{Edge Coverage (EC).} $TR$ contiene cada camino de longitud \emph{a lo sumo} 1 incluido
+en $G$.
+\end{definicionbox}
+
+``A lo sumo 1'' significa que tambien se incluyen los caminos de longitud 0 (nodos aislados), de
+manera que EC pueda definirse incluso en grafos sin aristas. Esto permite que \textbf{EC subsuma
+a NC}: si una suite cubre todas las aristas, automaticamente visita todos los nodos.
+
+\begin{ideabox}
+NC y EC \emph{difieren} solo cuando hay dos nodos unidos por una arista y por otro subcamino. El
+caso canonico es un \texttt{if} sin \texttt{else}: el cuerpo del \texttt{if} crea un nodo extra,
+pero la arista que lo evita es propia de EC y no de NC.
+\end{ideabox}
+
+\textbf{Mapeo a herramientas reales.}
+\begin{itemize}
+  \item Cobertura de nodos = \textit{Statement Coverage} (cobertura de sentencias).
+  \item Cobertura de aristas = \textit{Branch Coverage} (cobertura de ramas).
+\end{itemize}
+
+\subsection{Cobertura de pares de aristas (EPC)}
+
+\begin{definicionbox}
+\textbf{Edge-Pair Coverage (EPC).} $TR$ contiene cada camino de longitud \emph{a lo sumo} 2
+incluido en $G$.
+\end{definicionbox}
+
+EPC obliga a cubrir cada secuencia de \emph{dos} aristas consecutivas. Por la clausula ``a lo
+sumo 2'', sigue siendo aplicable a grafos con menos de dos aristas. EPC subsume EC, que subsume
+NC.
+
+\begin{ejemplobox}
+Para un grafo con $\{(1,4),(2,4),(3,4),(4,5),(4,6)\}$ los pares de aristas son
+$[1,4,5]$, $[1,4,6]$, $[2,4,5]$, $[2,4,6]$, $[3,4,5]$, $[3,4,6]$, mas las aristas mismas como
+caminos de longitud 1.
+\end{ejemplobox}
+
+\subsection{Complete Path Coverage (CPC)}
+
+\begin{definicionbox}
+\textbf{Complete Path Coverage (CPC).} $TR$ contiene \emph{todos} los caminos de $G$.
+\end{definicionbox}
+
+CPC es el criterio mas exigente. Si el grafo tiene un bucle (cycle), la cantidad de caminos es
+\textbf{infinita} y CPC \emph{no se puede realizar}. De aqui nace la necesidad de un sustituto
+mas razonable.
+
+\subsection{Caminos simples y caminos principales (prime paths)}
+
+\begin{definicionbox}
+\textbf{Camino simple.} Camino donde no se repiten nodos, \emph{salvo posiblemente} el primero y
+el ultimo (es decir, una vuelta de bucle es simple, pero un camino con bucles \emph{internos} no
+lo es).
+
+\textbf{Camino principal} (\textit{prime path}). Camino simple que no es subcamino propio de
+ningun otro camino simple. Equivalentemente: un camino simple \emph{maximal}.
+\end{definicionbox}
+
+\subsection{Prime Path Coverage (PPC)}
+
+\begin{definicionbox}
+\textbf{Prime Path Coverage (PPC).} $TR$ contiene todos los caminos principales de $G$.
+\end{definicionbox}
+
+\textbf{Propiedades.}
+\begin{itemize}
+  \item PPC es \emph{finito} (a diferencia de CPC): todo grafo tiene un numero finito de caminos
+  simples y por lo tanto de prime paths.
+  \item PPC requiere que los bucles se ejecuten \emph{y} se salten (cero veces, una vez, mas de
+  una vez).
+  \item PPC subsume NC y EC.
+  \item PPC \emph{casi} subsume EPC, pero no siempre: si un nodo $n$ tiene un bucle hacia si
+  mismo (arista $(n,n)$), EPC exige $[n,n,m]$ y $[m,n,n]$, pero ninguno de los dos es un camino
+  simple ni un subcamino de uno. Por lo tanto, no es prime path.
+\end{itemize}
+
+\begin{ejemplobox}
+Si el grafo es $1 \to 2 \to 3$ con un bucle $2 \to 2$:
+\begin{itemize}
+  \item $TR_{EPC} = \{[1,2,3], [1,2,2], [2,2,3], [2,2,2]\}$.
+  \item $TR_{PPC} = \{[1,2,3], [2,2]\}$.
+\end{itemize}
+PPC pide menos requisitos, pero EPC tiene requisitos que no son subcaminos de ningun prime path.
+\end{ejemplobox}
+
+\subsection{Computo de prime paths: tabla por longitud}
+
+Una tecnica clasica para enumerar prime paths:
+\begin{enumerate}
+  \item Listar todos los caminos simples de longitud 0 (los nodos individuales).
+  \item Extender a longitud 1, 2, 3, $\ldots$ agregando una arista por vez sin repetir nodos.
+  \item Marcar los caminos que \emph{no se pueden extender} (terminaron en un nodo final o en
+  uno sin sucesores nuevos) y los caminos \emph{ciclicos} (vuelven al inicio).
+  \item Eliminar los caminos que son subcamino propio de alguno mas largo. Lo que queda son los
+  prime paths.
+\end{enumerate}
+
+\section{Tours, sidetrips y detours}
+
+Los caminos primarios no tienen bucles internos, pero los caminos de \emph{test} si pueden
+tenerlos. La diferencia entre lo que un test pide y lo que el codigo permite hace necesarias
+tres formas distintas de ``visitar'' un subcamino.
+
+\begin{definicionbox}
+Sea $p$ un camino de test y $q$ un subcamino objetivo.
+\begin{itemize}
+  \item \textbf{Tour.} $p$ recorre $q$ si $q$ es subcamino directo de $p$.
+  \item \textbf{Tour con sidetrip} (viaje adicional). $p$ recorre $q$ con sidetrips sii cada
+  \emph{arista} de $q$ esta en $p$ \emph{en el mismo orden}, aunque entre medias haya
+  desviaciones que vuelvan al \emph{mismo nodo} del que salieron.
+  \item \textbf{Tour con detour} (desvio). $p$ recorre $q$ con detours sii cada \emph{nodo} de
+  $q$ esta en $p$ en el mismo orden, aunque la conexion entre dos nodos consecutivos de $q$ se
+  haga por otra ruta (que reentra por un sucesor del nodo de salida, no por el mismo nodo).
+\end{itemize}
+\end{definicionbox}
+
+\textbf{Diferencia practica.} Sidetrip exige que el desvio vuelva exactamente al mismo nodo;
+detour solo exige que vuelva a algun sucesor del camino. Por eso detour es mas permisivo.
+
+\begin{ejemplobox}
+Sobre $q = [1, 2, 3, 5, 6]$:
+\begin{itemize}
+  \item Tour directo: $[1, 2, 3, 5, 6]$.
+  \item Tour con sidetrip: $[1, 2, 3, 4, 3, 5, 6]$ (desvio $3 \to 4 \to 3$ que vuelve a 3).
+  \item Tour con detour: $[1, 2, 3, 4, 5, 6]$ (en lugar de $3 \to 5$, se va $3 \to 4 \to 5$).
+\end{itemize}
+\end{ejemplobox}
+
+\section{Requisitos infactibles y Best Effort Touring}
+
+\subsection{Requisitos infactibles}
+
+\begin{definicionbox}
+Un requisito de test es \textbf{infactible} si no existe ningun input que lo haga ejecutar.
+\end{definicionbox}
+
+\textbf{Causas tipicas:}
+\begin{itemize}
+  \item Codigo muerto.
+  \item Subcamino que solo se ejecutaria con un input contradictorio (por ejemplo, $x > 0 \land x
+  < 0$).
+  \item Caminos que requieren bucles que el codigo siempre ejecuta al menos una vez (cuando el
+  cuerpo no puede saltarse).
+\end{itemize}
+
+\textbf{Mala noticia.} Decidir si un requisito es factible es \emph{indecidible} en general. Por
+lo tanto, casi nunca se alcanza el 100\,\% de cobertura en la practica.
+
+\subsection{Best Effort Touring}
+
+\begin{ideabox}
+\textbf{Best Effort Touring (BET).} Para cada requisito de test:
+\begin{itemize}
+  \item satisfacerlo \emph{directamente} (tour sin sidetrips) si es posible;
+  \item si no, permitir un tour con sidetrips;
+  \item si ni siquiera asi es factible, justificarlo como infactible y declararlo no cubierto.
+\end{itemize}
+\end{ideabox}
+
+BET es un compromiso entre dos extremos:
+\begin{itemize}
+  \item \textbf{Sin sidetrips}: muchos requisitos quedan infactibles aunque su intencion se haya
+  cumplido por otro camino.
+  \item \textbf{Siempre con sidetrips}: el criterio se debilita, porque cualquier camino que pase
+  ``cerca'' del requisito lo da por cubierto.
+\end{itemize}
+
+BET ofrece la maxima rigurosidad posible sin descartar requisitos solo porque no se puedan
+recorrer \emph{contiguamente}.
+
+\section{Relacion entre criterios: subsumption}
+
+\begin{definicionbox}
+$C_1$ \emph{subsume} a $C_2$ sii \emph{todo} conjunto de tests que satisface $C_1$ tambien
+satisface $C_2$.
+\end{definicionbox}
+
+\textbf{Jerarquia para los criterios estructurales:}
+
+\[
+\text{CPC} \to \text{PPC} \to \text{EPC} \to \text{EC} \to \text{NC},
+\]
+
+donde $C_1 \to C_2$ significa ``$C_1$ subsume $C_2$''. La unica salvedad es el bucle propio
+($(n,n)$), donde PPC no subsume EPC.
+
+\textbf{Consecuencia practica.} Para cubrir un criterio basta cubrir cualquiera que lo subsuma.
+PPC es el criterio mas fuerte que se puede satisfacer en finito tiempo en grafos con bucles.
+
+\section{Grafos de Control de Flujo (CFG)}
+
+\subsection{Definicion}
+
+\begin{definicionbox}
+Un \textbf{Grafo de Control de Flujo (CFG)} modela todas las ejecuciones posibles de un programa
+mediante su estructura de control.
+\begin{itemize}
+  \item \textbf{Nodos}: instrucciones o \emph{bloques basicos} (secuencias de instrucciones tales
+  que, si se ejecuta la primera, se ejecutan todas las demas, sin ramificacion intermedia).
+  \item \textbf{Aristas}: transferencias de control.
+  \item Opcionalmente se anotan con \emph{predicados} en las ramas, definiciones y usos de
+  variables.
+\end{itemize}
+\end{definicionbox}
+
+\textbf{Bloque basico.} Es la unidad natural de modelado del CFG: agrupa sentencias secuenciales
+que ``van juntas'' desde el punto de vista del control.
+
+\subsection{Construccion del CFG a partir del codigo}
+
+\begin{itemize}
+  \item \textbf{Secuencia.} Las sentencias del mismo bloque basico se colapsan en un solo nodo.
+  \item \textbf{\texttt{if-else}.} Un nodo de condicion con dos aristas salientes (true/false);
+  los dos cuerpos terminan en un nodo de merge.
+  \item \textbf{\texttt{if} sin \texttt{else}.} Un nodo de condicion, una rama que ejecuta el
+  cuerpo, otra que lo evita; ambas terminan en el sucesor.
+  \item \textbf{\texttt{if-return}.} La rama true va al \texttt{return} y \emph{no} continua al
+  resto del flujo; no hay arista entre el bloque de \texttt{return} y el sucesor.
+  \item \textbf{\texttt{while}.} Un nodo de condicion con dos aristas: hacia el cuerpo (true) y
+  hacia la salida (false). El cuerpo vuelve al nodo de condicion.
+  \item \textbf{\texttt{for}.} Equivalente a un \texttt{while} con un nodo extra de inicializacion
+  y otro de actualizacion (que se ejecuta antes de volver a la condicion).
+  \item \textbf{\texttt{do-while}.} El cuerpo se ejecuta primero; la condicion al final decide
+  si se vuelve.
+  \item \textbf{\texttt{break} / \texttt{continue}.} Aristas extra desde el bloque que las
+  contiene: \texttt{break} salta al sucesor del bucle; \texttt{continue} vuelve a la condicion
+  (o al paso de actualizacion en un \texttt{for}).
+  \item \textbf{\texttt{switch}.} Un nodo de condicion con $k$ aristas salientes (una por
+  \texttt{case} y otra por \texttt{default}). Si un \texttt{case} no tiene \texttt{break}, hay
+  una arista que ``cae'' al siguiente \texttt{case} (\textit{fallthrough}).
+  \item \textbf{\texttt{try-catch}.} Cada sentencia que puede lanzar una excepcion tiene una
+  arista hacia el bloque \texttt{catch}; las excepciones propias del bloque \texttt{try} pueden
+  modelarse explicitamente con un nodo \texttt{throw}.
+\end{itemize}
+
+\subsection{Criterios sobre CFG}
+
+\textbf{Mapeo directo} entre los criterios genericos y la nomenclatura habitual:
+\begin{itemize}
+  \item Cobertura de nodos $=$ cobertura de sentencias (\emph{statement coverage}).
+  \item Cobertura de aristas $=$ cobertura de ramas (\emph{branch coverage}).
+\end{itemize}
+
+EPC y PPC se aplican igual que en grafos abstractos: cada par de aristas (resp. cada prime path)
+del CFG es un requisito de test.
+
+\subsection{Ejemplo: \texttt{computeStats}}
+
+Un metodo con dos bucles \texttt{for} consecutivos, asignaciones intermedias y bloques de
+impresion final. Un CFG tipico tendria 8 nodos:
+\begin{enumerate}
+  \item Inicializacion (\texttt{length}, \texttt{sum = 0}).
+  \item \texttt{i = 0} del primer \texttt{for}.
+  \item Condicion del primer \texttt{for}.
+  \item Cuerpo del primer \texttt{for} ($\texttt{sum += numbers[i]}$, $\texttt{i++}$).
+  \item Bloque intermedio (\texttt{med, mean, varsum = 0}, \texttt{i = 0}).
+  \item Condicion del segundo \texttt{for}.
+  \item Cuerpo del segundo \texttt{for} ($\texttt{varsum += \ldots}$, $\texttt{i++}$).
+  \item Bloque final (varios \texttt{System.out.println}).
+\end{enumerate}
+con aristas que cierran cada bucle ($3 \to 4 \to 3$ y $6 \to 7 \to 6$) y aristas de salida
+($3 \to 5$, $6 \to 8$). Sobre ese CFG se calculan los TR para EC, EPC y PPC del mismo modo que en
+los grafos abstractos.
+
+\section{Otros grafos utiles en testing de codigo}
+
+\subsection{Grafo de llamadas (call graph)}
+
+\begin{definicionbox}
+\textbf{Grafo de llamadas.} Nodos $=$ unidades (en Java, metodos). Aristas $=$ llamadas entre
+unidades.
+\end{definicionbox}
+
+Es el tipo de grafo mas comun para \emph{testing estructural a nivel de diseno}.
+\begin{itemize}
+  \item Cobertura de nodos $=$ \textbf{cobertura de metodos} (llamar a cada metodo al menos una
+  vez).
+  \item Cobertura de aristas $=$ \textbf{cobertura de llamadas} (ejecutar cada llamada al menos
+  una vez).
+\end{itemize}
+
+En programacion orientada a objetos el enfasis en modularidad y reuso desplaza la complejidad a
+las \emph{conexiones} entre componentes, por lo que testear esas conexiones se vuelve
+particularmente importante.
+
+\subsection{Otros modelos}
+
+Los criterios estructurales sobre grafos tambien se aplican a:
+\begin{itemize}
+  \item Grafos de flujo de datos (DD-graphs), con anotaciones de definiciones y usos de
+  variables.
+  \item Maquinas de estados finitos (FSM) y \textit{statecharts}.
+  \item Grafos de casos de uso o de actividad UML.
+  \item Grafos de integracion entre modulos.
+\end{itemize}
+
+\section{Glosario rapido}
+
+\begin{itemize}[itemsep=0.15em]
+  \item \textbf{CFG}: \textit{Control Flow Graph} -- grafo de flujo de control.
+  \item \textbf{NC}: \textit{Node Coverage} (cobertura de nodos / sentencias).
+  \item \textbf{EC}: \textit{Edge Coverage} (cobertura de aristas / ramas).
+  \item \textbf{EPC}: \textit{Edge-Pair Coverage} (cobertura de pares de aristas).
+  \item \textbf{CPC}: \textit{Complete Path Coverage} (cobertura de todos los caminos).
+  \item \textbf{PPC}: \textit{Prime Path Coverage} (cobertura de caminos principales).
+  \item \textbf{SESE}: \textit{Single Entry, Single Exit}.
+  \item \textbf{Camino simple}: sin nodos repetidos, salvo opcionalmente el primero y el ultimo.
+  \item \textbf{Camino principal}: camino simple maximal.
+  \item \textbf{Tour}: subcamino recorrido contiguamente.
+  \item \textbf{Sidetrip}: desvio que vuelve al mismo nodo.
+  \item \textbf{Detour}: desvio que vuelve a un sucesor del nodo.
+  \item \textbf{Infeasible TR}: requisito de test que ningun input puede satisfacer.
+  \item \textbf{Best Effort Touring}: tour directo donde se pueda, sidetrips para el resto.
+\end{itemize}
+
+\section*{Cierre}
+\addcontentsline{toc}{section}{Cierre}
+
+Los grafos son una abstraccion muy potente para disenar tests: capturan la estructura de control
+del programa, se traducen mecanicamente a requisitos de test, y permiten elegir el nivel de
+exigencia (NC, EC, EPC, PPC) segun el presupuesto. La nocion de tour, sidetrip y detour, junto
+con \textit{Best Effort Touring}, ofrecen el lenguaje necesario para manejar los requisitos
+infactibles sin renunciar a la rigurosidad del criterio elegido.
+
+\end{document}
