@@ -1,0 +1,523 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resumen teorico TP7 - Property-Based Testing y generacion aleatoria},
+  pdfauthor={}
+}
+
+\newtcolorbox{definicionbox}[1][]{
+  colback=blue!4!white,
+  colframe=blue!50!black,
+  fonttitle=\bfseries,
+  title=Definicion,
+  #1
+}
+
+\newtcolorbox{ideabox}[1][]{
+  colback=green!4!white,
+  colframe=green!40!black,
+  fonttitle=\bfseries,
+  title=Idea clave,
+  #1
+}
+
+\newtcolorbox{ejemplobox}[1][]{
+  colback=orange!4!white,
+  colframe=orange!50!black,
+  fonttitle=\bfseries,
+  title=Ejemplo,
+  #1
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\title{\textbf{Resumen Teorico -- Practico 7}\\
+Testing basado en propiedades y generacion aleatoria de tests\\
+\textit{Testing de Software 2024}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
+
+Este resumen sintetiza el material teorico asociado al TP7:
+
+\begin{itemize}
+  \item \textit{Notas 12: Testing basado en propiedades} (V. Bengolea).
+  \item \textit{Notas 13: Generacion automatica de tests --- generacion aleatoria guiada por
+  feedback} (V. Bengolea).
+\end{itemize}
+
+\textbf{Idea general.} Hasta aqui los tests se escribian uno a uno: cada \texttt{@Test}
+fijaba un input concreto y verificaba una salida concreta. Esa estrategia es valiosa pero
+\emph{costosa, tediosa e incompleta}. Las dos tecnicas que se cubren en el TP7 amplian el
+espectro:
+
+\begin{itemize}
+  \item \textbf{Property-Based Testing (PBT)}: en lugar de un input concreto, se enuncia una
+  \emph{propiedad} que debe valer para todas las entradas dentro de una precondicion. El
+  framework muestrea valores y reporta cualquier contraejemplo.
+  \item \textbf{Generacion aleatoria automatica}: la herramienta no solo muestrea inputs, sino
+  que construye \emph{secuencias de operaciones} aleatorias sobre las APIs del programa,
+  alimentando \emph{feedback} de las ejecuciones anteriores para guiar la busqueda.
+\end{itemize}
+
+\section{Por que ir mas alla del unit testing}
+
+\subsection{El espectro garantia vs.\ esfuerzo}
+
+Las tecnicas de verificacion se pueden ordenar en un eje ``cuanta garantia dan'' vs.\ ``cuanto
+esfuerzo cuestan'':
+
+\begin{enumerate}
+  \item \textbf{Metodos tradicionales} (unit tests escritos a mano): bajo esfuerzo por test,
+  garantia muy local.
+  \item \textbf{Testing automatico} (PBT, fuzzing, generacion aleatoria): mas garantia con
+  esfuerzo medio. El programador solo escribe propiedades o configura generadores.
+  \item \textbf{Metodos formales automaticos} (model checking, bounded verification): mayor
+  garantia, costo de configuracion alto.
+  \item \textbf{Verificacion deductiva} (Hoare, Coq, Isabelle): garantia maxima pero esfuerzo
+  enorme.
+\end{enumerate}
+
+\begin{ideabox}
+PBT y generacion automatica viven en el ``escalon util'' del espectro: dan mas garantia que
+los unit tests sin pedir el esfuerzo de un metodo formal. Bien usados, pueden encontrar bugs
+sutiles que ningun unit test individual cubriria.
+\end{ideabox}
+
+\subsection{Problemas de la creacion manual de tests}
+
+Escribir tests a mano tiene tres problemas estructurales:
+
+\begin{itemize}
+  \item \textbf{Es costosa.} Cada caso requiere pensar input, oraculo y assertion.
+  \item \textbf{Es tediosa.} Muchos casos son variaciones triviales.
+  \item \textbf{Es incompleta.} El humano tiende a probar los casos que ya tiene en mente; los
+  bordes y combinaciones inusuales suelen quedar fuera.
+\end{itemize}
+
+La automatizacion ataca los tres: testing automatico genera muchos casos rapidamente, y
+explora regiones del input que un humano dificilmente cubriria.
+
+\section{Property-Based Testing}
+
+\subsection{Definicion}
+
+\begin{definicionbox}
+Un \textbf{test basado en propiedades} (Property-Based Test) captura un aspecto del
+comportamiento del sistema bajo test para un \emph{numero potencialmente infinito de
+entradas}. En lugar de un par fijo (input, output esperado), se enuncia una propiedad logica
+que debe valer para \emph{todas} las entradas dentro de una precondicion.
+\end{definicionbox}
+
+\textbf{Contraste con unit testing.}
+
+\begin{itemize}
+  \item \textbf{Unit test}: comportamiento para una entrada particular.
+  \item \textbf{Property test}: comportamiento para una familia entera de entradas.
+\end{itemize}
+
+\subsection{Estructura de una propiedad}
+
+Una propiedad tipicamente sigue el esquema:
+
+\begin{lstlisting}[style=codestyle]
+public void myProperty(MyEntry e) {
+    AssumePrecondition(e);    // 1. Precondicion: descartar entradas invalidas
+    Arrange(e);               // 2. Preparar el escenario (opcional)
+    Act(e);                   // 3. Ejecutar la operacion bajo test
+    AssertExpectedProperty(e);// 4. Postcondicion: verificar la propiedad
+}
+\end{lstlisting}
+
+Las cuatro partes:
+
+\begin{itemize}
+  \item \textbf{Precondicion (assume).} Describe las entradas validas. Si el generador produce
+  algo que no la cumple, el caso se descarta (no se considera ``fail'').
+  \item \textbf{Arrange.} Setup necesario antes de la operacion (e.g.\ poblar una lista).
+  \item \textbf{Act.} La operacion bajo prueba.
+  \item \textbf{Postcondicion (assert).} Lo que el codigo debe garantizar, expresado en
+  funcion de los parametros que cumplen la precondicion.
+\end{itemize}
+
+\subsection{Ejemplo: \texttt{BoundedQueue.enqueue}}
+
+\textbf{Propiedad.} Para toda cola no llena, insertar un elemento incrementa el tamano en 1.
+
+\textbf{Unit test:}
+\begin{lstlisting}[style=codestyle,language=Java]
+@Test public void enqueueSizeTest_1() {
+    BoundedQueue q = new BoundedQueue();
+    q.enqueue(4); q.enqueue(3); q.enqueue(5);
+    assertThat(q.size(), is(3));
+}
+\end{lstlisting}
+
+Este test verifica la propiedad para un escenario puntual. Necesitariamos muchos tests
+parecidos para distintos tamanos iniciales y elementos.
+
+\textbf{Property test:}
+\begin{lstlisting}[style=codestyle,language=Java]
+public void enqueueSizeProperty(BoundedQueue queue, Integer i) {
+    assumeTrue("cola no llena", !queue.isFull());
+    int oldSize = queue.size();
+    queue.enqueue(i);
+    assertThat(queue.size(), is(oldSize + 1));
+}
+\end{lstlisting}
+
+Una sola propiedad reemplaza a una familia entera de unit tests, y el framework muestrea
+muchos valores de \texttt{queue} y de \texttt{i}.
+
+\subsection{Mas ejemplos clasicos de propiedades}
+
+\begin{itemize}
+  \item \textbf{Sets:} ``si se agrega un elemento que ya pertenece, el set no cambia''.
+  $$\forall s, x.\ x \in s \Rightarrow s \cup \{x\} = s.$$
+  \item \textbf{Strings:} ``$a$ es substring de \texttt{concat}$(a, b)$ para todo $a, b$''.
+  \item \textbf{Math.max:} para todo $a, b$ enteros,
+  \begin{itemize}
+    \item \texttt{Math.max(a, b) == Math.max(b, a)} (conmutatividad),
+    \item \texttt{Math.max(a, b) >= a} y \texttt{>= b},
+    \item \texttt{p + Math.max(a, b) == Math.max(p+a, p+b)} (compatibilidad con suma).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Tipos de propiedades utiles}
+
+\begin{itemize}
+  \item \textbf{Invariantes.} Propiedades que se preservan al aplicar operaciones (e.g.\
+  \texttt{repOK()} antes y despues).
+  \item \textbf{Contratos del lenguaje.} Como el contrato \texttt{equals/hashCode} de
+  \texttt{Object}: si \texttt{a.equals(b)} entonces \texttt{a.hashCode() == b.hashCode()}.
+  \item \textbf{Propiedades algebraicas.} Conmutatividad, asociatividad, distributividad,
+  idempotencia.
+  \item \textbf{Round-trip.} \texttt{deserialize(serialize(x)) == x}, \texttt{parse(print(t))
+  == t}, \texttt{decompress(compress(d)) == d}.
+  \item \textbf{Oraculo de referencia.} Si existe una implementacion lenta pero confiable, la
+  propiedad puede ser ``mi implementacion rapida da el mismo resultado que la lenta''.
+  \item \textbf{Metamorficas.} Relacion entre dos llamadas del mismo metodo:
+  \texttt{sort(reverse(l)) == sort(l)}.
+\end{itemize}
+
+\subsection{Como hace el framework para muestrear}
+
+Un framework PBT (e.g.\ \texttt{jqwik} en Java, \texttt{QuickCheck} en Haskell,
+\texttt{Hypothesis} en Python) ejecuta cada propiedad cientos de veces. En cada iteracion:
+
+\begin{enumerate}
+  \item Llama a los generadores (\texttt{@ForAll}/\texttt{@Provide}) para producir valores
+  para los parametros.
+  \item Aplica la precondicion (\texttt{assumeTrue}); si falla, descarta el caso y prueba
+  otro.
+  \item Ejecuta la propiedad. Si lanza una excepcion o falla una assertion, registra el
+  contraejemplo.
+\end{enumerate}
+
+\subsection{Shrinking: minimizar contraejemplos}
+
+\begin{definicionbox}
+\textbf{Shrinking.} Cuando una propiedad falla, el framework intenta \emph{simplificar} el
+input que provoco la falla para obtener el contraejemplo \emph{minimo}. Por ejemplo, si una
+lista de 100 elementos rompe la propiedad, el shrinking busca la sub-lista mas chica que aun
+la rompe.
+\end{definicionbox}
+
+\begin{ideabox}
+Un contraejemplo minimo es muchisimo mas facil de depurar que uno gigante con datos al azar.
+Por eso shrinking es lo que distingue a un framework PBT serio de un simple ``ejecuta esto
+mil veces''.
+\end{ideabox}
+
+\section{Generadores}
+
+\subsection{Por que importan tanto}
+
+Las propiedades son tan buenas como los generadores. Un generador que solo produce listas
+vacias hace que la propiedad ``ordenar preserva la longitud'' sea trivialmente verdadera. Hay
+que pensar:
+
+\begin{itemize}
+  \item Que entradas son \emph{validas}.
+  \item Que entradas son \emph{representativas}.
+  \item Que entradas son \emph{borde} (valores extremos, vacios, repetidos).
+\end{itemize}
+
+\subsection{Primitivos: enteros, floats, strings}
+
+Casi todos los frameworks proveen primitivos con rangos configurables:
+
+\begin{lstlisting}[style=codestyle,language=Java]
+Arbitraries.integers().between(0, 100);
+Arbitraries.floats().between(-1e3f, 1e3f);
+Arbitraries.strings().withCharRange('a', 'z').ofMaxLength(20);
+\end{lstlisting}
+
+\subsection{Combinadores}
+
+A partir de primitivos se arman generadores compuestos. Los dos mas importantes son
+\texttt{map} y \texttt{flatMap}:
+
+\begin{itemize}
+  \item \textbf{\texttt{map}}: aplica una funcion al valor generado.
+  \begin{lstlisting}[style=codestyle,language=Java]
+  Arbitraries.integers().between(0, 100).map(n -> "user" + n);
+  \end{lstlisting}
+  \item \textbf{\texttt{flatMap}}: permite que un parametro \emph{dependa} de otro.
+  \begin{lstlisting}[style=codestyle,language=Java]
+  // generador de listas y un indice valido sobre cada lista
+  Arbitraries.integers().between(1, 100).flatMap(size ->
+    Arbitraries.integers().list().ofSize(size).flatMap(list ->
+      Arbitraries.integers().between(0, size - 1).map(idx ->
+        new Scenario(list, idx))));
+  \end{lstlisting}
+\end{itemize}
+
+\subsection{Generadores dependientes y validez}
+
+Muchos dominios requieren \emph{validez compuesta}: un dia depende del mes y del ano, un
+indice depende del tamano de la lista, una transicion de FSM depende del estado actual.
+\texttt{flatMap} es la herramienta para construir esos generadores sin tener que filtrar
+muchas entradas invalidas.
+
+\begin{ejemplobox}
+Generar fechas validas a partir de 1900:
+\begin{lstlisting}[style=codestyle,language=Java]
+Arbitraries.integers().between(1900, 2400).flatMap(year ->
+  Arbitraries.integers().between(1, 12).flatMap(month ->
+    Arbitraries.integers().between(1, daysInMonth(month, year))
+      .map(day -> new Date(day, month, year))));
+\end{lstlisting}
+Sin \texttt{flatMap} se generarian fechas como \texttt{31/04/2024}, que el constructor
+rechazaria.
+\end{ejemplobox}
+
+\subsection{\texttt{filter} vs.\ \texttt{flatMap}}
+
+\texttt{filter} descarta valores que no cumplen una condicion. Es \emph{lo ultimo} a usar:
+si la condicion es estricta (por ejemplo, ``primos''), el framework descartara miles de
+muestras hasta encontrar una valida.
+
+\begin{ideabox}
+Regla practica: si el filtro descarta mas del $\sim$30\% de las muestras, conviene rediseniar
+el generador con \texttt{flatMap} o construir directamente valores validos.
+\end{ideabox}
+
+\section{Generacion automatica de tests}
+
+\subsection{Idea general}
+
+La generacion aleatoria automatica de tests va un paso mas alla del PBT: en vez de pedirle al
+programador que escriba propiedades y generadores, la herramienta:
+
+\begin{enumerate}
+  \item Recibe el codigo del programa (sus clases, metodos, constructores).
+  \item Genera \emph{secuencias de llamadas} aleatorias a esas APIs.
+  \item Ejecuta cada secuencia y observa que pasa (excepciones, valores devueltos, contratos
+  violados).
+  \item Usa esa informacion como \emph{feedback} para decidir como continuar.
+\end{enumerate}
+
+\subsection{Generacion aleatoria guiada por feedback}
+
+\begin{definicionbox}
+\textbf{Generacion guiada por feedback} (e.g.\ \emph{Randoop}). Se genera la secuencia de
+llamadas paso a paso, ejecutando cada paso inmediatamente. Si la ejecucion lanza una
+excepcion no contractual (e.g.\ un \texttt{NullPointerException} no esperado), la secuencia
+se reporta como \emph{test que muestra un bug}. Si la ejecucion va bien, el resultado se
+guarda en un \emph{pool} de valores que puede usarse para construir secuencias futuras.
+\end{definicionbox}
+
+\textbf{Ciclo basico:}
+
+\begin{enumerate}
+  \item Comenzar con un pool de valores trivial (enteros, strings).
+  \item Elegir un metodo al azar de la API bajo prueba.
+  \item Elegir, del pool, valores que sirvan como argumentos compatibles en tipos.
+  \item Ejecutar la llamada:
+  \begin{itemize}
+    \item Si la ejecucion falla con un crash inesperado, reportar la secuencia como test
+    sospechoso.
+    \item Si retorna un valor, agregarlo al pool.
+    \item Si lanza una excepcion documentada, marcar como ``no extendible'' y descartar.
+  \end{itemize}
+  \item Repetir hasta agotar el presupuesto de tiempo.
+\end{enumerate}
+
+\subsection{Oraculo}
+
+Un detalle clave: \emph{quien decide} si una ejecucion es un bug? Hay varios oraculos posibles:
+
+\begin{itemize}
+  \item \textbf{Crashes inesperados.} \texttt{NullPointerException},
+  \texttt{ArrayIndexOutOfBoundsException}, \texttt{AssertionError} en lugares donde la
+  especificacion no los permite.
+  \item \textbf{Contratos del lenguaje.}
+  \texttt{equals}/\texttt{hashCode}/\texttt{toString}/\texttt{compareTo} con sus reglas:
+  reflexividad, simetria, transitividad, etc.
+  \item \textbf{Aserciones internas} del codigo (\texttt{assert} de Java).
+  \item \textbf{Diferencial.} Comparar contra una version de referencia.
+\end{itemize}
+
+\subsection{Por que feedback}
+
+La aleatoriedad pura genera muchas secuencias \emph{redundantes} (mismas operaciones, mismos
+valores). La guia por feedback hace varias cosas:
+
+\begin{itemize}
+  \item Evita repetir secuencias equivalentes (memoization de pools).
+  \item Acumula objetos en estados \emph{interesantes} que luego pueden combinarse.
+  \item Detecta secuencias que terminan rapido (excepciones esperadas) y las descarta como
+  ``muertas''.
+\end{itemize}
+
+\subsection{Limitaciones}
+
+\begin{itemize}
+  \item \textbf{Oraculo limitado.} Sin propiedades explicitas, la herramienta solo detecta
+  bugs ``visibles'' (crashes, contratos de lenguaje). Las violaciones de logica de dominio
+  pasan inadvertidas.
+  \item \textbf{Tests poco legibles.} Los tests generados son secuencias mecanicas; cuando
+  fallan, son dificiles de entender.
+  \item \textbf{Cobertura sesgada.} La aleatoriedad uniforme no es exploratoria: ciertas
+  partes del codigo quedan profundamente cubiertas y otras no.
+\end{itemize}
+
+\section{Relacion entre PBT, fuzzing y generacion automatica}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Tecnica & Quien escribe que & Que entrega \\
+\midrule
+Unit testing & Programador escribe input y oraculo & Tests concretos \\
+PBT & Programador escribe propiedad y generador & Familia de tests \\
+Fuzzing & Programador da semillas u oraculo minimo & Inputs (rara vez tests legibles) \\
+Generacion automatica & Programador da API (o nada) & Secuencias de llamadas \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{ideabox}
+A medida que se baja en la tabla, el programador escribe menos pero \emph{el oraculo se
+debilita}. PBT es un buen punto medio: la propiedad da un oraculo fuerte (no solo ``no
+crashea''), y el generador da exploracion amplia.
+\end{ideabox}
+
+\section{Patrones para disenar propiedades}
+
+\subsection{El patron ``oracle por construccion''}
+
+Cuando es dificil enunciar el resultado correcto, a veces se puede construir el escenario
+\emph{con} el resultado ya conocido:
+
+\begin{ejemplobox}
+En vez de generar un grafo y verificar ``el camino mas corto entre $u$ y $v$'', se construye
+un grafo donde ya se sabe el camino mas corto (por ejemplo, un grafo con un solo camino
+posible) y se verifica que el algoritmo lo encuentra.
+\end{ejemplobox}
+
+\subsection{El patron ``operaciones inversas''}
+
+Si una operacion tiene una inversa (deserializar/serializar, encriptar/desencriptar,
+parse/print, push/pop), la propiedad de round-trip es muy efectiva: aplica ambas y verifica
+que se vuelve al estado inicial.
+
+\subsection{El patron ``invariante de representacion''}
+
+Pedir que \texttt{repOK()} se preserve por toda operacion publica. Captura una clase entera
+de bugs (corrupcion de estado interno) con una propiedad sola.
+
+\subsection{El patron ``ley algebraica''}
+
+Si el dominio tiene leyes (asociatividad, conmutatividad, identidad), enunciar cada ley como
+una propiedad.
+
+\section{Comparacion con el resto del curso}
+
+\begin{itemize}
+  \item \textbf{Particion del input} (TP2) y PBT son complementarias: PBT muestrea \emph{en}
+  cada bloque, pero la particion ayuda a definir los rangos del generador.
+  \item \textbf{Cobertura estructural} (TP3-TP4) responde a una pregunta distinta:
+  ``\textquestiondown{}toque todo el codigo?''. PBT responde ``\textquestiondown{}mi codigo
+  cumple la propiedad?''. Idealmente ambas se combinan: usar cobertura para asegurarse de que
+  los generadores ejercitan todas las ramas.
+  \item \textbf{Cobertura logica} (TP5) y PBT se relacionan: las propiedades suelen escribirse
+  como predicados, y los generadores pueden disenarse para ejercitar CACC de esos predicados.
+  \item \textbf{Mutation testing} (TP6) puede medir la calidad de una suite de propiedades:
+  un buen conjunto de propiedades deberia matar la mayoria de los mutantes igual que una
+  buena suite de unit tests.
+  \item \textbf{Fuzzing} (TP6) es generacion aleatoria \emph{sin} propiedades sofisticadas:
+  el oraculo es ``no crash''. PBT y generacion guiada por feedback agregan oraculos mas
+  precisos.
+\end{itemize}
+
+\section{Glosario}
+
+\begin{itemize}
+  \item \textbf{Propiedad}: enunciado que debe valer para todas las entradas que cumplan una
+  precondicion.
+  \item \textbf{Generador} (\emph{arbitrary}, \emph{provider}): mecanismo que produce valores
+  aleatorios para un parametro.
+  \item \textbf{Shrinking}: proceso de minimizar un contraejemplo cuando una propiedad falla.
+  \item \textbf{Precondicion}: condicion sobre las entradas para que la propiedad sea
+  aplicable.
+  \item \textbf{Postcondicion}: lo que el codigo debe garantizar.
+  \item \textbf{Oraculo}: mecanismo que decide si la ejecucion es correcta.
+  \item \textbf{Pool de valores}: conjunto de objetos disponibles para construir nuevas
+  secuencias en generacion automatica.
+\end{itemize}
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+PBT cambia la unidad de testing: en vez de pensar en \emph{un} input, se piensa en una
+\emph{familia} entera de inputs. Esa abstraccion fuerza al programador a hacer explicitas
+las propiedades que su codigo realmente debe satisfacer --- y muchas veces, al hacerlo, se
+descubre que las propiedades no estaban tan claras. La generacion automatica de tests
+empuja aun mas la automatizacion: con una API y un oraculo minimo, la herramienta busca
+secuencias que crasheen. Ninguna de las dos reemplaza al unit testing, pero ambas atacan
+problemas que el unit testing solo no resuelve: cobertura sesgada, casos borde
+no-pensados y bugs combinatorios.
+
+\end{document}
