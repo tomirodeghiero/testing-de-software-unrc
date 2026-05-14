@@ -62,3 +62,5 @@ solucion_practico5_ej1.md
 node_modules/
 build/
 .docusaurus/
+docs/
+static/pdfs/

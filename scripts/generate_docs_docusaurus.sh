@@ -94,7 +94,7 @@ done
 for tp in $TPS; do
   idx="docs/$tp/index.md"
   subdocs="$(find "docs/$tp" -type f -name 'index.md' ! -path "$idx" | sort || true)"
-  if [ -n "$subdocs" ] && ! rg -q '^## Navegacion interna$' "$idx"; then
+  if [ -n "$subdocs" ] && ! grep -qE '^## Navegacion interna$' "$idx"; then
     {
       echo
       echo "## Navegacion interna"

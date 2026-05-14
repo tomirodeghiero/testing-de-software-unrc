@@ -1,8 +1,8 @@
 # Practico 8
 
 Resolucion del practico 8 de Testing de Software: generacion automatica de tests
-(\textbf{Randoop} y \textbf{EvoSuite}), \textbf{mocking} con \texttt{EasyMock} y
-\textbf{property-based testing} con \texttt{jqwik} sobre `fail2ban.Server`.
+(**Randoop** y **EvoSuite**), **mocking** con `EasyMock` y
+**property-based testing** con `jqwik` sobre `fail2ban.Server`.
 
 ## Resoluciones por ejercicio
 
