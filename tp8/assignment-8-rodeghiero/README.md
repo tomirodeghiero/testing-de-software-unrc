@@ -6,6 +6,7 @@ La documentacion del TP8 esta separada por ejercicio:
 2. [Ejercicio 2](./ejercicio2/README.md)
 3. [Ejercicio 3](./ejercicio3/README.md)
 4. [Ejercicio 4](./ejercicio4/README.md)
+5. [Ejercicio 5](./ejercicio5/README.md)
 
 Notas:
 
