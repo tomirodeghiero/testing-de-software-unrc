@@ -1,0 +1,460 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resolucion del Practico 6 - Testing de Software 2024},
+  pdfauthor={}
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{gray!70!black}\itshape,
+  stringstyle=\color{orange!70!black}
+}
+
+\title{\textbf{Resolucion del Practico 6}\\Testing de Software 2024}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
+
+Este documento contiene la resolucion del \textit{Practico 6} de Testing de Software, centrado
+en dos tecnicas modernas de generacion y evaluacion de tests:
+
+\begin{itemize}
+  \item \textbf{Testing de mutacion} con la herramienta \texttt{Pitest}. En los Ejercicios 1 y 2
+  se generan mutantes sobre el codigo bajo prueba (\texttt{Palindrome.capicua} y
+  \texttt{TriTyp.triang}), se construye una suite JUnit que pretende matarlos a todos y se
+  analiza el reporte de PIT (score, sobrevivientes, equivalentes).
+  \item \textbf{Fuzzing} en el Ejercicio 3. Se completan los componentes \texttt{Mutator},
+  \texttt{MutationFuzzer} y \texttt{RandomFuzzer} y se cierra un test parametrizado que ejecuta
+  el comando \texttt{bc} de Linux usando entradas generadas por mutacion.
+\end{itemize}
+
+\textbf{Convenciones.}
+
+\begin{itemize}
+  \item \texttt{KILLED}: mutante muerto por al menos un test.
+  \item \texttt{SURVIVED}: mutante sobreviviente (no es matado por ningun test).
+  \item \emph{Mutation Score} bruto: $\frac{\#KILLED}{\#GENERATED}$.
+  \item \emph{Mutante equivalente}: mutante cuyo comportamiento observable es identico al del
+  programa original; no puede matarse y por eso no debe contar contra el score.
+\end{itemize}
+
+\textbf{Como se ejecuta PIT.} Desde \texttt{tp6/assignment-6-rodeghiero}:
+
+\begin{lstlisting}[style=codestyle]
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Djacoco.skip=true test org.pitest:pitest-maven:mutationCoverage
+\end{lstlisting}
+
+La flag \texttt{-Djacoco.skip=true} desactiva el agente de JaCoCo (incompatible con la JVM 17
+con la version del plugin del template); ademas, PIT instrumenta el bytecode por su cuenta, asi
+que no se pierde nada al saltearlo.
+
+\section{Ejercicio 1: \texttt{Palindrome.capicua}}
+
+\subsection{Codigo bajo prueba}
+
+\begin{lstlisting}[style=codestyle,language=Java]
+public static boolean capicua(char[] list) {
+    int index = 0;
+    int l = list.length;
+    boolean res = true;
+    while (index < (l - 1) && res) {
+        if (list[index] != list[(l - index) - 1]) {
+            res = false;
+        }
+        index++;
+    }
+    return res;
+}
+\end{lstlisting}
+
+El metodo recorre el arreglo desde el extremo izquierdo y compara cada caracter con su
+\emph{espejo} en el extremo derecho hasta cruzar el centro o detectar un par desigual.
+
+\subsection{Suite JUnit propuesta}
+
+\begin{lstlisting}[style=codestyle,language=Java]
+@Test public void testCapicua() {
+    char[] a = {'n','e','u','q','u','e','n'};
+    assertTrue(Palindrome.capicua(a));
+}
+@Test public void testNoCapicuaPar() {
+    assertFalse(Palindrome.capicua(new char[]{'a','b'}));
+}
+@Test public void testNoCapicuaConExtremosIguales() {
+    assertFalse(Palindrome.capicua(new char[]{'a','b','c','a'}));
+}
+@Test public void testArregloVacioEsCapicua() {
+    assertTrue(Palindrome.capicua(new char[]{}));
+}
+@Test public void testUnElementoEsCapicua() {
+    assertTrue(Palindrome.capicua(new char[]{'x'}));
+}
+\end{lstlisting}
+
+\textbf{Por que estos cinco tests.}
+
+\begin{itemize}
+  \item \texttt{testCapicua}: caso positivo tipico (capicua impar de varios caracteres).
+  \item \texttt{testNoCapicuaPar}: minimo no capicua de longitud par.
+  \item \texttt{testNoCapicuaConExtremosIguales}: clave para evitar que la implementacion solo
+  compare el primer y ultimo caracter. Si un mutante se queda con la primera comparacion,
+  responderia \texttt{true} y este test lo detecta.
+  \item \texttt{testArregloVacioEsCapicua} y \texttt{testUnElementoEsCapicua}: cubren los dos
+  bordes ($l = 0$ y $l = 1$) que naturalmente devuelven \texttt{true} sin entrar al bucle.
+\end{itemize}
+
+\subsection{Reporte de PIT}
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Metrica & Valor \\
+\midrule
+Mutantes generados & 9 \\
+Mutantes muertos   & 8 \\
+Mutantes sobrevivientes & 1 \\
+\emph{Mutation Score} bruto & $8/9 = 89\%$ \\
+\emph{Mutation Score} sobre no equivalentes & $8/8 = 100\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Antes de completar la suite el score base (template) era $5/9 = 56\%$. Cada test que se sumo
+elimino mutantes especificos asociados al borde del bucle, a la negacion de la condicion del
+\texttt{if} y al manejo de arreglos cortos.
+
+\subsection{Respuestas}
+
+\paragraph{(a) \textquestiondown{}Cuantos mutantes genero la herramienta?}
+\textbf{9 mutantes} sobre el metodo \texttt{capicua}.
+
+\paragraph{(b) \textquestiondown{}Cuantos tests se necesitaron?}
+\textbf{5 tests}, suficientes para matar todos los mutantes \emph{no equivalentes}.
+
+\paragraph{(c) \textquestiondown{}Que puntaje se obtuvo antes de analizar equivalentes?}
+\textbf{89\% ($8/9$)}. El unico mutante restante es el que se justifica como equivalente.
+
+\paragraph{(d) Mutantes equivalentes.}
+
+Hay \textbf{1 mutante equivalente}, asociado a la guarda del \texttt{while}:
+
+\begin{lstlisting}[style=codestyle]
+Original: while (index <  (l - 1) && res)
+Mutado:   while (index <= (l - 1) && res)
+\end{lstlisting}
+
+Se analiza por casos sobre la longitud $l$:
+
+\begin{enumerate}
+  \item $l = 0$: ambos guardas son falsas ($0 < -1$ y $0 \le -1$). No se entra al ciclo. Ambas
+  versiones retornan \texttt{true}.
+  \item $l = 1$: original no entra ($0 < 0$ es falso). Mutado entra una vez ($0 \le 0$), compara
+  \texttt{list[0]} con \texttt{list[(1-0)-1] = list[0]}, que es la misma posicion: la igualdad
+  es trivial y \texttt{res} no cambia. Termina con \texttt{res = true} igual que el original.
+  \item $l \ge 2$: el bucle original ejecuta para $\textit{index} = 0, 1, \dots, l-2$. El mutante
+  ademas ejecuta una iteracion extra con $\textit{index} = l - 1$, donde se compara
+  \texttt{list[l-1]} con \texttt{list[(l - (l-1)) - 1] = list[0]}. Pero ese mismo par
+  ($\textit{list[0]}$, $\textit{list[l-1]}$) ya se comparo en la primera iteracion del bucle
+  original. La comparacion adicional es por definicion \emph{redundante}: si los extremos eran
+  iguales, lo siguen siendo; si eran distintos, \texttt{res} ya valdria \texttt{false} y la
+  segunda parte del \texttt{\&\&} corta el ciclo.
+\end{enumerate}
+
+Por lo tanto el mutante \emph{no es distinguible} por ningun input y no debe contarse contra el
+score: tras descontarlo, el resultado efectivo es $8/8 = 100\%$.
+
+\section{Ejercicio 2: \texttt{TriTyp.triang}}
+
+\subsection{Codigo bajo prueba}
+
+El metodo \texttt{triang(s1,s2,s3)} clasifica un triangulo: 1 escaleno, 2 isosceles, 3
+equilatero, 4 no triangulo (lados no positivos o desigualdad triangular incumplida). Su flujo
+encadena varios \texttt{if} sobre igualdades de lados, sumas y comparaciones con \texttt{triOut}.
+
+\subsection{Configuracion necesaria de PIT}
+
+El \texttt{pom.xml} apunta por defecto a \texttt{Palindrome}. Para este ejercicio se le indica
+explicitamente a PIT cual es la clase y la suite objetivo:
+
+\begin{lstlisting}[style=codestyle]
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Djacoco.skip=true \
+    -DtargetClasses=assignment6_exercises.TriTyp \
+    -DtargetTests=assignment6_exercises.TriTypTest \
+    test org.pitest:pitest-maven:mutationCoverage
+\end{lstlisting}
+
+\subsection{Suite construida}
+
+Para llegar a \emph{Mutation Score} completo hubo que pensar la suite por familias semanticas
+de casos. Se proponen \textbf{15 tests}, agrupados asi:
+
+\begin{itemize}
+  \item \textbf{Equilatero valido:} \texttt{triang(3,3,3) = 3}.
+  \item \textbf{Escaleno valido:} \texttt{triang(3,4,5) = 1}.
+  \item \textbf{No triangulo (escaleno) por desigualdad triangular,} en las tres permutaciones
+  donde la suma de dos lados iguala o queda por debajo del tercero:
+  \texttt{triang(1,2,3) = 4}, \texttt{triang(5,2,3) = 4}, \texttt{triang(2,5,3) = 4}.
+  \item \textbf{No triangulo (escaleno) por desigualdad estricta:}
+  \texttt{triang(2,3,10) = 4}.
+  \item \textbf{Isosceles valido en sus tres variantes:} \texttt{triang(2,2,3) = 2},
+  \texttt{triang(2,3,2) = 2}, \texttt{triang(3,2,2) = 2}.
+  \item \textbf{Isosceles que no es triangulo} (par igual pero el tercero rompe la
+  desigualdad): \texttt{triang(1,1,2) = 4}, \texttt{triang(1,2,1) = 4},
+  \texttt{triang(2,1,1) = 4}.
+  \item \textbf{Lado no positivo} en cada una de las tres posiciones:
+  \texttt{triang(0,2,2) = 4}, \texttt{triang(2,0,2) = 4}, \texttt{triang(2,2,0) = 4}.
+\end{itemize}
+
+Cada familia ejercita una decision distinta del metodo (igualdades, sumas, \texttt{triOut} en
+$\{0,1,2,3,>3\}$, validez de lados), garantizando que cada operador de mutacion encuentre algun
+caso que lo detecte.
+
+\subsection{Reporte de PIT}
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Metrica & Valor \\
+\midrule
+Mutantes generados & 39 \\
+Mutantes muertos   & 39 \\
+Mutantes sobrevivientes & 0 \\
+\emph{Mutation Score} & $39/39 = 100\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Progreso:} partiendo de un solo test (\texttt{triang(3,3,3)}) el score base era
+$9/39 \approx 23\%$. La adicion de los 14 casos restantes lo llevo al $100\%$.
+
+\subsection{Respuestas}
+
+\paragraph{(a) \textquestiondown{}Cuantos mutantes?} \textbf{39 mutantes.}
+
+\paragraph{(b) \textquestiondown{}Cuantos tests?} \textbf{15 tests} en \texttt{TriTypTest}.
+
+\paragraph{(c) \textquestiondown{}Score antes de analizar equivalentes?} \textbf{$100\%$
+($39/39$).}
+
+\paragraph{(d) Mutantes equivalentes.}
+
+\textbf{0 mutantes equivalentes observados.}
+
+La justificacion es directa: la suite mato todos los mutantes generados, por lo que no quedaron
+sobrevivientes a clasificar como equivalentes. Esto no significa que el operador de mutacion
+sea incapaz de producir equivalentes para este metodo en general; simplemente que, en esta
+corrida, ninguno aparecio como sobreviviente. Si hubiera quedado alguno vivo, habria que
+analizar caso por caso si admite o no input distinguidor.
+
+\section{Ejercicio 3: Fuzzing}
+
+\subsection{Estructura del paquete \texttt{fuzzing}}
+
+El paquete provee:
+
+\begin{itemize}
+  \item \texttt{Fuzzer}: interfaz con un unico metodo \texttt{String fuzz()}.
+  \item \texttt{Mutator}: clase utilitaria con operadores de mutacion sobre strings.
+  \item \texttt{MutationFuzzer}: fuzzer basado en mutaciones a partir de un conjunto de
+  \emph{semillas} validas.
+  \item \texttt{RandomFuzzer}: fuzzer puramente aleatorio.
+  \item \texttt{HttpProgramRunner}: punto de comparacion --- mide cuantos strings generados por
+  cada fuzzer son URLs validas.
+  \item \texttt{LinuxCommandTest}: test parametrizado que ejecuta \texttt{bc} sobre $100$
+  entradas mutadas y chequea ausencia de crashes.
+\end{itemize}
+
+\subsection{(a) \texttt{Mutator}}
+
+Tres operadores de mutacion sobre cadenas, todos protegidos contra entradas \texttt{null} y
+manejando explicitamente la cadena vacia donde corresponde:
+
+\begin{enumerate}
+  \item \texttt{deleteRandomCharacter(s)} elige una posicion aleatoria
+  $\textit{pos} \in [0, |s|)$ y devuelve $s$ sin ese caracter. Si $|s| = 0$, devuelve $s$
+  inalterada.
+  \item \texttt{insertRandomCharacter(s)} elige $\textit{pos} \in [0, |s|]$ (permite insertar
+  al final) y un \texttt{char} aleatorio en el rango ASCII imprimible $[32, 126]$, y lo
+  inserta.
+  \item \texttt{flipRandomCharacter(s)} elige $\textit{pos} \in [0, |s|)$ y aplica XOR contra
+  un solo bit pseudoaleatorio de los siete bits bajos del caracter. Esto produce un caracter
+  distinto en la misma posicion. Tambien protege la cadena vacia.
+\end{enumerate}
+
+El metodo publico \texttt{mutate(s)} elige uniformemente entre los tres operadores y los
+delega.
+
+\textbf{Por que estos tres operadores.} Forman una base minima que cubre los tres modos de
+cambio sintactico sobre un string: \emph{eliminar} un simbolo, \emph{agregar} uno, y
+\emph{modificar} uno existente. Permiten alcanzar progresivamente toda cadena finita en pocos
+pasos sucesivos (encadenando \texttt{mutate} sobre el resultado anterior).
+
+\subsection{(b) \texttt{MutationFuzzer}}
+
+\begin{lstlisting}[style=codestyle,language=Java]
+public String fuzz() {
+    String candidate = population.get(random.nextInt(population.size()));
+    int mutations = min_mutations;
+    if (max_mutations > min_mutations) {
+        mutations += random.nextInt((max_mutations - min_mutations) + 1);
+    }
+    for (int i = 0; i < mutations; i++) {
+        candidate = Mutator.mutate(candidate);
+    }
+    return candidate;
+}
+\end{lstlisting}
+
+\textbf{Funcionamiento.}
+
+\begin{enumerate}
+  \item Elige una semilla al azar de la poblacion (cadenas inicialmente validas).
+  \item Determina cuantas mutaciones aplicar en este \texttt{fuzz()}, entre
+  \texttt{min\_mutations} y \texttt{max\_mutations} (inclusivo).
+  \item Aplica las mutaciones \emph{en cadena}: cada paso opera sobre el resultado anterior.
+\end{enumerate}
+
+\textbf{Correccion vs. el template original.} El constructor del template tenia un bug por el
+cual \texttt{this.max\_mutations} no se asignaba correctamente; el codigo final asigna los tres
+parametros explicitamente. Tambien se agregaron precondiciones (\texttt{population} no vacia,
+rango de mutaciones consistente).
+
+\subsection{(c) \texttt{RandomFuzzer}}
+
+\begin{lstlisting}[style=codestyle,language=Java]
+public String fuzz() {
+    int stringLength = random.nextInt(maxLength + 1);
+    StringBuilder result = new StringBuilder(stringLength);
+    for (int i = 0; i < stringLength; i++) {
+        char c = (char) (charStart + random.nextInt(charRange));
+        result.append(c);
+    }
+    return result.toString();
+}
+\end{lstlisting}
+
+\textbf{Funcionamiento.}
+
+\begin{enumerate}
+  \item Elige una longitud aleatoria $L \in [0, \texttt{maxLength}]$.
+  \item Construye una cadena de longitud $L$ donde cada caracter es aleatorio en
+  $[\texttt{charStart}, \texttt{charStart} + \texttt{charRange})$.
+\end{enumerate}
+
+Es el contrapunto del \texttt{MutationFuzzer}: no parte de ninguna entrada valida y por lo
+tanto rara vez produce strings que ``parezcan'' validos.
+
+\subsection{(d) \texttt{LinuxCommandTest}}
+
+El test parametrizado ejecuta \texttt{bc} (calculadora Linux) sobre $100$ cadenas generadas por
+el fuzzer de mutacion (que parte de la semilla \texttt{"2 + 2"}).
+
+\begin{lstlisting}[style=codestyle,language=Java]
+@ParameterizedTest
+@MethodSource("stringProvider")
+public void bcCommandTest(String data) throws IOException, InterruptedException {
+    String interactiveData = data + "\nquit";
+    writer.write(interactiveData); writer.close();
+
+    ProcessBuilder pb = new ProcessBuilder(program, FILE);
+    Process process = pb.start();
+
+    // ... captura stdout, stderr ...
+
+    int exitCode = process.waitFor();
+
+    assertNotEquals(134, exitCode); // abort
+    assertNotEquals(139, exitCode); // segfault
+    String stderrLower = stderr.toString().toLowerCase();
+    assertFalse(stderrLower.contains("segmentation fault"));
+    assertFalse(stderrLower.contains("core dumped"));
+    assertFalse(stderrLower.contains("illegal instruction"));
+}
+\end{lstlisting}
+
+\textbf{Diseno del oraculo.}
+
+\begin{itemize}
+  \item \textbf{No se exige \texttt{exitCode == 0}.} Es normal que \texttt{bc} rechace entradas
+  malformadas con error sintactico; eso \emph{no es un crash}.
+  \item \textbf{Si se rechazan signales tipicos de fallo grave:} exit code $134$ (SIGABRT),
+  $139$ (SIGSEGV), o mensajes de \texttt{stderr} que mencionen segmentation fault, core dumped
+  o illegal instruction.
+\end{itemize}
+
+La consigna prohibe expresamente cambiar \texttt{bc} por otro programa, ya que el fuzzer puede
+generar entradas peligrosas si se las pasara a un programa que modifica el sistema. \texttt{bc}
+es seguro: solo lee expresiones aritmeticas.
+
+\subsection{Ejecucion}
+
+\begin{lstlisting}[style=codestyle]
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Djacoco.skip=true test
+\end{lstlisting}
+
+\textbf{Resultado:} \texttt{BUILD SUCCESS}. \texttt{LinuxCommandTest} pasa los $100$ casos
+parametrizados y \texttt{TriTypTest} pasa sus $15$ tests.
+
+\section*{Conclusiones}
+\addcontentsline{toc}{section}{Conclusiones}
+
+\begin{itemize}
+  \item \textbf{Testing de mutacion} es una herramienta poderosa para evaluar la
+  \emph{capacidad de deteccion} de una suite: no alcanza con tener cobertura de lineas o de
+  ramas. PIT inyecta variaciones sintacticas tipicas (cambiar operadores, eliminar
+  asignaciones, mover constantes, negar condicionales), y un test debe ser capaz de
+  distinguirlas. En el caso de \texttt{Palindrome}, una suite de 5 tests bien pensados llega a
+  $89\%$ y deja un unico mutante \emph{equivalente} identificable analiticamente.
+  \item En \texttt{TriTyp} el score alcanzo el $100\%$, pero esto fue resultado de una suite de
+  15 tests \emph{enfocada} en las decisiones del codigo. Una cobertura ingenua (e.g.\ todos
+  equilateros) deja la enorme mayoria de los mutantes vivos.
+  \item \textbf{Fuzzing} es una tecnica complementaria: en lugar de pedir tests humanos, genera
+  miles de entradas. \texttt{MutationFuzzer} y \texttt{RandomFuzzer} muestran el tradeoff entre
+  \emph{validez} y \emph{exploracion}: las mutaciones de semilla preservan estructura (mas
+  inputs validos), la generacion aleatoria explora mas pero acierta menos. La eleccion del
+  oraculo (que considera un ``fallo'') es tan importante como la generacion misma.
+\end{itemize}
+
+\end{document}
