@@ -1,0 +1,475 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Resumen teorico TP5 - Cobertura logica},
+  pdfauthor={}
+}
+
+\newtcolorbox{definicionbox}[1][]{
+  colback=blue!4!white,
+  colframe=blue!50!black,
+  fonttitle=\bfseries,
+  title=Definicion,
+  #1
+}
+
+\newtcolorbox{ideabox}[1][]{
+  colback=green!4!white,
+  colframe=green!40!black,
+  fonttitle=\bfseries,
+  title=Idea clave,
+  #1
+}
+
+\newtcolorbox{ejemplobox}[1][]{
+  colback=orange!4!white,
+  colframe=orange!50!black,
+  fonttitle=\bfseries,
+  title=Ejemplo,
+  #1
+}
+
+\lstdefinestyle{codestyle}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\title{\textbf{Resumen Teorico -- Practico 5}\\
+Testing basado en expresiones logicas\\
+Predicados, clausulas y cobertura logica\\
+\textit{Testing de Software 2024}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section*{Introduccion}
+\addcontentsline{toc}{section}{Introduccion}
+
+Este resumen sintetiza el material teorico asociado al TP5:
+
+\begin{itemize}
+  \item \textit{Introduction to Software Testing} (Ammann \& Offutt, 2da edicion), Capitulo 8:
+  \textbf{Logic Coverage}.
+  \item \textit{Notas 09: Cobertura logica} (V. Bengolea, primera parte).
+  \item \textit{Notas 09: Cobertura logica} (V. Bengolea, segunda parte).
+\end{itemize}
+
+\textbf{Idea general.} El software contiene constantemente \emph{expresiones logicas}: las
+guardas de un \texttt{if} o \texttt{while}, las transiciones de una FSM, las condiciones
+mencionadas en una especificacion o un requisito. Una expresion logica con $n$ variables
+booleanas tiene $2^n$ combinaciones; en la practica es inviable probarlas todas. Los
+\textbf{criterios de cobertura logica} eligen un subconjunto pequeno y representativo, atando
+los tests a la estructura de la formula.
+
+\begin{ideabox}
+Los criterios de cobertura logica responden a una pregunta operativa: ``si una decision booleana
+toma muchos valores distintos, \textquestiondown{}cuales necesito probar para estar razonablemente seguro de que
+la condicion fue codificada bien?''.
+\end{ideabox}
+
+\section{Predicados y clausulas}
+
+\subsection{Definiciones basicas}
+
+\begin{definicionbox}
+\textbf{Predicado.} Expresion que se evalua a un valor booleano. Un predicado puede contener:
+\begin{itemize}
+  \item variables booleanas,
+  \item variables no booleanas combinadas con operadores relacionales ($<, ==, !=, \ldots$),
+  \item llamadas a funciones que devuelven un booleano.
+\end{itemize}
+La estructura interna se forma con los operadores logicos
+$\neg,\;\wedge,\;\vee,\;\rightarrow,\;\oplus,\;\leftrightarrow$.
+
+\textbf{Clausula.} Predicado que \emph{no contiene operadores logicos}. En la formula
+$((a > b) \vee C) \wedge p(x)$ las clausulas son $(a>b)$, $C$ y $p(x)$.
+\end{definicionbox}
+
+\begin{ideabox}
+Las \emph{clausulas} son los ``atomos'' booleanos de una formula: son lo mas pequeno que aun se
+evalua a \textit{true} o \textit{false}. Los criterios actuan sobre clausulas porque cada
+clausula corresponde, conceptualmente, a una decision atomica que el programador codifica.
+\end{ideabox}
+
+\subsection{\textquestiondown{}De donde salen los predicados?}
+
+Las expresiones logicas no aparecen solo en el codigo. Surgen tambien de:
+
+\begin{itemize}
+  \item \textbf{Codigo:} guardas de \texttt{if}/\texttt{while}, condiciones de salida de bucles,
+  cortocircuitos.
+  \item \textbf{Maquinas de estados y statecharts:} las transiciones se etiquetan con guardas
+  booleanas.
+  \item \textbf{Requisitos y especificaciones} (formales o informales). Por ejemplo, las
+  precondiciones de un metodo: ``the stack is not full and o is not null'' se traduce a
+  $\neg\,\textit{this.isFull}() \wedge o \ne \textit{null}$.
+  \item \textbf{Lenguaje natural,} convirtiendo enunciados a logica formal.
+  \item \textbf{Consultas SQL} y otras DSL que evaluan condiciones.
+\end{itemize}
+
+La FAA estadounidense exige cobertura de expresiones logicas (concretamente MCDC, un primo
+hermano de CACC) en \textit{safety-critical software}.
+
+\subsection{Traduccion de lenguaje natural}
+
+Pasar de una frase a una formula logica es una fuente clasica de errores:
+
+\begin{itemize}
+  \item \emph{``I am interested in SWE 637 and CS 652''}: la conjuncion natural es realmente un
+  \emph{O} logico: $\textit{course} = \textit{swe637} \vee \textit{course} = \textit{cs652}$.
+  \item \emph{``If you leave before 6:30, take Braddock; if you leave after 7:00, take
+  Prosperity''}: la formula directa $(t < 6{:}30 \rightarrow \textit{Braddock}) \wedge
+  (t > 7{:}00 \rightarrow \textit{Prosperity})$ es incompleta: deja sin cubrir el intervalo
+  $[6{:}30, 7{:}00]$. Una version corregida es $(t < 6{:}30 \rightarrow \textit{Braddock})
+  \wedge (t \ge 6{:}30 \rightarrow \textit{Prosperity})$.
+\end{itemize}
+
+\begin{ideabox}
+\textbf{``Y'' del castellano} a menudo se traduce a \emph{O logico}; \textbf{``O'' del
+castellano} suele significar XOR (``cafe o te''); las descripciones por casos suelen tener
+\emph{huecos} no cubiertos. Antes de aplicar criterios de cobertura conviene asegurarse de que
+la traduccion sea fiel.
+\end{ideabox}
+
+\subsection{Datos empiricos}
+
+Estudio sobre 63 programas open source y mas de $400\,000$ predicados:
+
+\begin{itemize}
+  \item $88{,}5\%$ tiene una sola clausula.
+  \item $9{,}5\%$ tiene dos.
+  \item $1{,}35\%$ tiene tres.
+  \item $0{,}65\%$ tiene cuatro o mas.
+\end{itemize}
+
+Es decir, los predicados con muchas clausulas son la minoria, pero son justamente donde la
+diferencia entre criterios (PC, CC, CACC, \ldots) se vuelve interesante.
+
+\subsection{Expresiones logicas desde el codigo}
+
+Una decision como
+\begin{lstlisting}[style=codestyle,language=Java]
+if (((a > b) || C) && (x < y)) o.m(); else o.n();
+\end{lstlisting}
+produce el predicado $p = ((a>b) \vee C) \wedge (x<y)$ con clausulas $(a>b)$, $C$ y $(x<y)$.
+
+\section{Notacion estandar}
+
+\begin{definicionbox}
+A lo largo del capitulo se usa la siguiente notacion:
+\begin{itemize}
+  \item $P$: conjunto de predicados.
+  \item $p$: un predicado de $P$.
+  \item $C$: conjunto de clausulas en $P$.
+  \item $C_p$: conjunto de clausulas del predicado $p$.
+  \item $c$: una clausula.
+  \item $\textit{RT}$: conjunto de requisitos de test generados por el criterio.
+\end{itemize}
+\end{definicionbox}
+
+\section{Cobertura de predicados y de clausulas}
+
+Los dos criterios mas simples piden que cada predicado o cada clausula tome ambos valores de
+verdad.
+
+\begin{definicionbox}
+\textbf{Predicate Coverage (PC).} Para cada predicado $p \in P$, $RT$ contiene dos requisitos:
+$p$ se evalua a \textit{true} y $p$ se evalua a \textit{false}.
+\end{definicionbox}
+
+\begin{definicionbox}
+\textbf{Clause Coverage (CC).} Para cada clausula $c \in C$, $RT$ contiene dos requisitos: $c$
+se evalua a \textit{true} y $c$ se evalua a \textit{false}.
+\end{definicionbox}
+
+\textbf{Relacion con cobertura estructural.} Si los predicados provienen de las decisiones del
+codigo, entonces:
+
+\begin{itemize}
+  \item PC equivale a \emph{cobertura de aristas} (Edge Coverage) del CFG: cada rama del
+  \texttt{if} tiene que ejecutarse.
+  \item CC equivale a \emph{cobertura de condiciones}: cada condicion booleana individual debe
+  evaluar a $T$ y a $F$.
+\end{itemize}
+
+\begin{ideabox}
+\textbf{CC y PC no se subsumen entre si.} PC ignora la estructura interna del predicado; CC
+ignora si el predicado toma realmente ambos valores. Pueden construirse suites que cumplan uno
+sin cumplir el otro.
+\end{ideabox}
+
+\subsection{Ejemplo: \texorpdfstring{$p = a \vee (b \wedge c)$}{p = a or (b and c)}}
+
+\begin{ejemplobox}
+Suite $\{(T,F,F), (F,T,T)\}$:
+\begin{itemize}
+  \item Cada clausula toma $T$ y $F$ $\Rightarrow$ CC ok.
+  \item Pero $p$ vale $T$ en los dos casos $\Rightarrow$ PC \emph{no} se cumple.
+\end{itemize}
+
+Suite $\{(T,T,T), (F,T,F)\}$:
+\begin{itemize}
+  \item $p$ toma $T$ y $F$ $\Rightarrow$ PC ok.
+  \item La clausula $b$ queda fija en $T$ $\Rightarrow$ CC \emph{no} se cumple.
+\end{itemize}
+\end{ejemplobox}
+
+\subsection{Limitacion practica de CC}
+
+CC pide que cada clausula tome ambos valores, pero \emph{sin coordinarse} con el predicado. En
+$p = a \wedge b$, los pares $(a=T,b=F)$ y $(a=F,b=T)$ satisfacen CC, pero ninguno ejercita el
+caso $p=T$. Por eso CC suele ir acompanado de PC o reemplazado por criterios mas finos como
+CACC.
+
+\section{Cobertura combinatoria}
+
+\begin{definicionbox}
+\textbf{Combinatorial Coverage (CoC).} Para cada predicado $p \in P$, $RT$ contiene un requisito
+por cada combinacion posible de valores de las clausulas de $C_p$.
+\end{definicionbox}
+
+CoC es ``el criterio ideal'': cubrir toda la tabla de verdad. El costo es exponencial: con $n$
+clausulas hace falta $2^n$ tests. En la practica se reserva solo para predicados muy chicos.
+
+\textbf{Cuello de botella.} CoC subsume PC y CC, pero suele ser inviable para
+$n \ge 4$ o cuando hay muchos predicados.
+
+\section{Clausulas activas}
+
+CC peca por desacoplado y CoC por excesivo. La idea intermedia es: para cada clausula, exigir
+casos en los que esa clausula realmente \emph{determine} el valor del predicado.
+
+\subsection{Determinacion}
+
+\begin{definicionbox}
+Una clausula $c_i \in C_p$ \textbf{determina} el predicado $p$ si, al fijar las demas clausulas
+(las menores) y cambiar $c_i$, el valor de $p$ cambia. De forma equivalente, $p$ se vuelve una
+funcion de $c_i$ solo: $p|_{c_i=T} \neq p|_{c_i=F}$.
+\end{definicionbox}
+
+\begin{ejemplobox}
+En $p = a \vee b$, la clausula $a$ determina cuando $b=F$ (sino el OR siempre es $T$). En
+$p = a \wedge b$, $a$ determina cuando $b=T$ (sino el AND siempre es $F$).
+\end{ejemplobox}
+
+\subsection{Active Clause Coverage (ACC)}
+
+\begin{definicionbox}
+\textbf{Active Clause Coverage (ACC).} Para cada $p \in P$ y cada clausula $c_i \in C_p$ (la
+\emph{clausula mayor}), elegir valores para las clausulas menores $c_j$ ($j \ne i$) tales que
+$c_i$ determina $p$. $RT$ contiene dos requisitos por clausula mayor:
+\begin{enumerate}
+  \item $c_i = T$ con las menores fijadas asi;
+  \item $c_i = F$ con las menores fijadas asi.
+\end{enumerate}
+\end{definicionbox}
+
+ACC se queda ambiguo porque no precisa \emph{como} se eligen las clausulas menores. De ahi
+nacen tres variantes que se diferencian en la rigidez de esa eleccion.
+
+\subsection{GACC, CACC y RACC}
+
+\begin{definicionbox}
+\textbf{General Active Clause Coverage (GACC).} Para cada $c_i$, las menores pueden tener
+cualquier valor mientras $c_i$ determine $p$. No se exige nada sobre el valor de $p$ entre los
+dos tests.
+
+\textbf{Correlated Active Clause Coverage (CACC).} Igual que GACC, pero \emph{ademas} se exige
+que en el par de tests $p$ tome ambos valores ($T$ y $F$): la clausula mayor debe \emph{causar
+correlativamente} el cambio.
+
+\textbf{Restricted Active Clause Coverage (RACC).} Igual que CACC, pero las clausulas menores
+deben tener \emph{exactamente los mismos valores} en los dos tests del par.
+\end{definicionbox}
+
+\begin{ideabox}
+\textbf{De debil a fuerte:} $\text{GACC} \prec \text{CACC} \prec \text{RACC}$. CACC es el mas
+usado en la practica; es esencialmente lo que la industria llama \textbf{MCDC} (Modified
+Condition / Decision Coverage). RACC es mas exigente y a veces \emph{infactible} (no existen
+asignaciones validas que dejen las menores fijas y permitan que la mayor determine).
+\end{ideabox}
+
+\subsection{Ejemplo: \texorpdfstring{$p = a \wedge (b \vee c)$}{p = a and (b or c)}}
+
+\begin{ejemplobox}
+\textbf{Mayor $a$.} $a$ determina cuando $b \vee c = T$. Par CACC:
+$(T,T,F) \Rightarrow p=T$ vs $(F,T,F) \Rightarrow p=F$.
+
+\textbf{Mayor $b$.} $b$ determina cuando $c=F$ y $a=T$. Par CACC:
+$(T,T,F) \Rightarrow p=T$ vs $(T,F,F) \Rightarrow p=F$.
+
+\textbf{Mayor $c$.} $c$ determina cuando $b=F$ y $a=T$. Par CACC:
+$(T,F,T) \Rightarrow p=T$ vs $(T,F,F) \Rightarrow p=F$.
+
+Las menores estan fijadas a un unico valor por par, asi que esta suite es RACC tambien.
+\end{ejemplobox}
+
+\section{Cobertura inactiva}
+
+La idea simetrica: para cada clausula mayor, mantenerla en cada valor mientras \emph{no}
+determina el predicado, y mostrar que en ese caso $p$ no depende de $c_i$.
+
+\begin{definicionbox}
+\textbf{Inactive Clause Coverage (ICC).} Para cada $c_i$ se eligen menores que hagan que $c_i$
+\emph{no} determine $p$, y se exigen cuatro requisitos por clausula mayor:
+\begin{enumerate}
+  \item $c_i = T$, $p = T$;
+  \item $c_i = T$, $p = F$;
+  \item $c_i = F$, $p = T$;
+  \item $c_i = F$, $p = F$.
+\end{enumerate}
+\textbf{GICC} no restringe las menores; \textbf{RICC} las pide identicas en cada par.
+\end{definicionbox}
+
+ICC ayuda a detectar errores de tipo ``clausula sobrante'': si el codigo agrega una clausula
+$c_i$ que en la formula correcta no aparece, ICC trata de exhibirlo verificando que $p$ se
+mantiene igual cuando $c_i$ cambia ``por las razones correctas''.
+
+\section{Mapa de subsuncion}
+
+Las relaciones de subsuncion entre los criterios (un criterio $X$ \emph{subsume} a $Y$ si toda
+suite que satisface $X$ tambien satisface $Y$) son:
+
+\begin{itemize}
+  \item $\text{CoC} \succ \text{CACC} \succ \text{GACC} \succ \text{CC}$.
+  \item $\text{CACC} \succ \text{PC}$.
+  \item $\text{RACC} \succ \text{CACC}$, pero $\text{RACC}$ puede ser \emph{infactible} en
+  ciertos predicados.
+  \item Ni CC subsume a PC, ni PC subsume a CC.
+\end{itemize}
+
+\begin{ideabox}
+Una manera intuitiva de pensar la jerarquia:
+\begin{itemize}
+  \item PC ve el predicado como una caja negra: ``salgan ambos resultados''.
+  \item CC mira las clausulas, pero sin coordinarlas con $p$.
+  \item ACC/CACC/RACC son lo que se quiere casi siempre: cada clausula tiene que importar.
+  \item CoC es la cota superior brutal: probar todo.
+\end{itemize}
+\end{ideabox}
+
+\section{Origenes de las expresiones logicas}
+
+\subsection{Desde el codigo fuente}
+
+Una expresion booleana del codigo (sin importar como esta agrupada con parentesis) se mapea a
+una formula \emph{con clausulas} en la que cada operando relacional o booleano elemental es una
+clausula. El cortocircuito (\texttt{\&\&}, \texttt{||}) en lenguajes como Java suele tratarse
+como evaluacion sintactica completa para fines del criterio.
+
+\subsection{Desde especificaciones}
+
+Las precondiciones y postcondiciones (formato JML, contratos, comentarios estilo Eiffel)
+contienen formulas logicas explicitas. Por ejemplo:
+
+\begin{lstlisting}[style=codestyle]
+/*@precondition: the stack is not full and o object is not null; */
+public void push(Object o);
+\end{lstlisting}
+se traduce a $\neg\,\textit{this.isFull}() \wedge o \ne \textit{null}$, con dos clausulas claras
+sobre las que aplicar PC/CC/CACC.
+
+\subsection{Desde maquinas de estados}
+
+Las transiciones de un statechart estan etiquetadas por \emph{guardas} de la forma
+$\textit{trigger}\,[\textit{guard}] / \textit{accion}$. La guarda es un predicado al que se le
+puede pedir cobertura logica: PC sobre transiciones, CACC sobre guardas con varias clausulas.
+
+\subsection{Desde lenguaje natural}
+
+Como se discutio, la traduccion es propensa a errores de cuantificadores, conectivas y casos no
+cubiertos. Antes de aplicar cobertura logica conviene formalizar y revisar la formula.
+
+\section{Conexion con MCDC}
+
+Cuando la industria (especialmente aviacion, DO-178B/C) habla de cobertura logica usualmente se
+refiere a \textbf{MCDC}: \emph{Modified Condition/Decision Coverage}. Es esencialmente lo mismo
+que \textbf{CACC}: cada decision toma todos los valores; cada condicion toma todos los valores;
+y se demuestra que cada condicion influye de forma independiente en el resultado de la decision.
+
+\begin{ideabox}
+Si te piden ``MCDC'' en una norma como DO-178C, la receta operativa es la misma que para CACC:
+para cada clausula mayor, dos casos donde ella determina el predicado y donde el predicado
+cambia.
+\end{ideabox}
+
+\section{Como derivar tests con cobertura logica}
+
+\subsection{Receta paso a paso}
+
+\begin{enumerate}
+  \item Identificar el predicado $p$ y sus clausulas $C_p$.
+  \item Construir o pensar la tabla de verdad (o un subconjunto razonado de ella).
+  \item Elegir el criterio (PC, CC, CACC, RACC, \ldots) segun el nivel de exigencia.
+  \item Para cada requisito del criterio, encontrar valores de las clausulas que lo satisfagan.
+  \item Traducir cada combinacion de clausulas a inputs concretos del codigo (a veces hace falta
+  invertir las relaciones $a = (x < y)$ para encontrar $x,y$).
+  \item Escribir los tests y verificar con la herramienta correspondiente.
+\end{enumerate}
+
+\subsection{De clausulas a inputs}
+
+Una clausula como $a := \textit{curTemp} < \textit{dTemp} - \textit{thresholdDiff}$ es
+verdadera cuando se cumple la desigualdad. Para forzar $a = T$ se eligen valores numericos que
+la cumplan. Cuando varias clausulas comparten variables (e.g. \texttt{curTemp} aparece en $a$ y
+$c$), hay que armar inputs que respeten todas las restricciones simultaneamente; a veces es
+necesario fijar parametros adicionales (\texttt{thresholdDiff}, \texttt{minLag}) para tener
+control fino.
+
+\section{Pequeno glosario}
+
+\begin{itemize}
+  \item \textbf{Clausula mayor.} La clausula sobre la que se esta razonando (la que ``cambia'')
+  en un par CACC/RACC.
+  \item \textbf{Clausulas menores.} Las restantes; se eligen para que la mayor determine $p$.
+  \item \textbf{Test factible.} Aquel para el que existe una entrada del programa que produzca
+  esa combinacion de valores. Si la combinacion es contradictoria con la logica del codigo
+  (e.g.\ dos clausulas se excluyen), el test es \emph{infactible}.
+  \item \textbf{Subsuncion.} Si $X$ subsume a $Y$, todo conjunto de tests que satisface $X$
+  satisface tambien $Y$.
+\end{itemize}
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+La cobertura logica organiza, con definiciones claras, una intuicion vieja: ``si una decision
+del programa tiene varias condiciones, hay que mover cada una y mirar como cambia el resultado''.
+PC y CC son puntos de partida, CACC/RACC formalizan la idea de \emph{causalidad}, y CoC actua
+como cota superior. En la practica, la combinacion mas usada es CACC (equivalente a MCDC), por
+ser exigente sin volverse exponencial.
+
+\end{document}
