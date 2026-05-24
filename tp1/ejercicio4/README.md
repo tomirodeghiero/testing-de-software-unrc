@@ -91,6 +91,13 @@ Sobre `OriginalPrograms`, esos casos detectan la falla. Sobre `RepairedPrograms`
 
 Corriendo `mvn -Dmaven.repo.local=.m2 test` sobre esta carpeta los tests pasan, porque se ejecutan contra `RepairedPrograms`.
 
+## Código
+
+- [`OriginalPrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio4/src/main/java/OriginalPrograms.java) — versión original con los defectos.
+- [`RepairedPrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio4/src/main/java/RepairedPrograms.java) — versión reparada que aplica las correcciones del Ejercicio 3.
+- [`RepairedProgramsTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio4/src/test/java/RepairedProgramsTest.java) — suite JUnit con los casos del enunciado y el análisis RIPR.
+- [`pom.xml`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio4/pom.xml) — configuración Maven del módulo.
+
 ## Enlaces relacionados
 
 - Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)

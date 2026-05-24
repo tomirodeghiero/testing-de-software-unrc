@@ -75,6 +75,13 @@ Por ejemplo, en el test de borrado:
 
 `PointSet` y `PointSetTest` no estaban provistos, así que creé ambos para poder resolver el ejercicio. Sobre los tests construidos la implementación pasa todas las verificaciones, lo cual valida la corrección de `Point` aplicada en el Ejercicio 6.
 
+## Código
+
+- [`Point.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio7/src/main/java/practico1_exercises/point_set/Point.java) — `Point` con la corrección de `equals`/`hashCode` traída del Ejercicio 6.
+- [`PointSet.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio7/src/main/java/practico1_exercises/point_set/PointSet.java) — conjunto de puntos apoyado en `HashSet<Point>`.
+- [`PointSetTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio7/src/test/java/practico1_exercises/point_set/PointSetTest.java) — suite JUnit con `add`, `contains`, `remove` y el patrón Arrange–Act–Assert.
+- [`pom.xml`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio7/pom.xml) — configuración Maven del módulo.
+
 ## Enlaces relacionados
 
 - Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)

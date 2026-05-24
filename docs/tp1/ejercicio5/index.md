@@ -148,6 +148,12 @@ Tampoco lo veo posible acá. Cuando el problema aparece, se manifiesta directame
 - `ColorPoint` por herencia rompe el contrato de `equals`.
 - La salida correcta es usar composición, no herencia. Eso es lo que hace `ColorPointFixed`.
 
+## Código
+
+- [`Point.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio5/practico1_exercises/color_points/Point.java) — clase base con igualdad por valor.
+- [`ColorPoint.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio5/practico1_exercises/color_points/ColorPoint.java) — versión defectuosa por herencia que rompe la simetría de `equals`.
+- [`ColorPointFixed.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio5/practico1_exercises/color_points/ColorPointFixed.java) — corrección por composición.
+
 ## Enlaces relacionados
 
 - Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)

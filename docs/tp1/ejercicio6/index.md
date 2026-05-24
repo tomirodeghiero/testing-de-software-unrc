@@ -81,6 +81,12 @@ Por ejemplo, en el test del `HashSet`:
 
 La versión actual de `Point` queda corregida para funcionar correctamente dentro de estructuras basadas en hashing.
 
+## Código
+
+- [`Point.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio6/src/main/java/practico1_exercises/point_set/Point.java) — implementación de `Point` con `equals` y `hashCode` consistentes.
+- [`PointTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio6/src/test/java/practico1_exercises/point_set/PointTest.java) — suite JUnit con las tres fases Arrange–Act–Assert marcadas explícitamente.
+- [`pom.xml`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio6/pom.xml) — configuración Maven del módulo.
+
 ## Enlaces relacionados
 
 - Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)

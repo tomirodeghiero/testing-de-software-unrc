@@ -254,6 +254,12 @@ Los valores que deberían contarse son `-3`, `1` y `4`, pero el programa defectu
 - `countPositive`: cuenta el `0` como positivo.
 - `oddOrPos`: no reconoce impares negativos por la semántica del operador `%` en Java.
 
+## Código
+
+- [`DefectivePrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/DefectivePrograms.java) — los cuatro programas tal como aparecen en el enunciado.
+- [`FixedPrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/FixedPrograms.java) — corrección aplicada a cada programa.
+- [`Exercise3Runner.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/Exercise3Runner.java) — runner por consola que ejecuta los casos de los puntos b, c y d sobre la versión defectuosa o la corregida.
+
 ## Enlaces relacionados
 
 - Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
