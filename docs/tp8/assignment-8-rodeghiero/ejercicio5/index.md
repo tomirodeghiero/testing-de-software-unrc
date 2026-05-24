@@ -9,37 +9,37 @@ description: "Contenido importado desde tp8/assignment-8-rodeghiero/ejercicio5/R
 
 ## Objetivo
 
-Resolver el ejercicio sobre `assignment8_exercises.fail2ban.Server`:
+Este ejercicio integra varias de las técnicas vistas en la materia sobre la clase `assignment8_exercises.fail2ban.Server`. Las tareas solicitadas son:
 
 1. Implementar `repOK()`.
-2. Generar tests con Randoop (30s), analizar salidas y depurar.
-3. Generar tests con EvoSuite (30s), analizar y comparar.
-4. Explicar como usar `repOK()` para depurar con EvoSuite.
-5. Escribir una propiedad con jqwik para `update` usando un solo generador.
+2. Generar tests con Randoop (30s), analizar las salidas y depurar en base a ellas.
+3. Generar tests con EvoSuite (30s), analizar los resultados y compararlos con los de Randoop.
+4. Explicar cómo se puede aprovechar `repOK()` para depurar con EvoSuite.
+5. Escribir una propiedad con jqwik para `update` utilizando un único generador.
 
-## a) Implementacion de `repOK()`
+## a) Implementación de `repOK()`
 
-Se implemento `repOK()` en el archivo:
+El invariante se implementó en:
 
 - `src/main/java/assignment8_exercises/fail2ban/Server.java`
 
-Validaciones incluidas:
+Las validaciones incluidas son:
 
-- `expirationTime` no nulo y mayor a 0.
+- `expirationTime` no nulo y estrictamente mayor a 0.
 - `time` no nulo.
 - `exceptions` y `bans` no nulos.
 - `exceptions.repOK()` y `bans.repOK()` verdaderos.
-- Ninguna IP puede estar al mismo tiempo en `exceptions` y en `bans`.
-- Si `lastUpdate != null`, todos los bans deben cumplir `expires > lastUpdate`.
+- Ninguna IP puede estar simultáneamente en `exceptions` y en `bans`.
+- Si `lastUpdate != null`, entonces todos los bans deben satisfacer `expires > lastUpdate`.
 
-Además, se agrego `@CheckRep` para que Randoop use el invariante durante la generacion.
-
-Tambien se completaron invariantes auxiliares en:
+Además se anotó el método con `@CheckRep` para que Randoop lo evalúe como invariante durante la generación. Complementariamente, se completaron los invariantes auxiliares en:
 
 - `SinglyLinkedList.repOK()`
 - `StrictlySortedSinglyLinkedList.repOK()`
 
-## b) Randoop (30s): analisis, debugging y mediciones
+De este modo, cuando `Server.repOK()` delega en las estructuras internas, la validación se extiende también a ellas.
+
+## b) Randoop (30s): análisis, debugging y mediciones
 
 ### Corrida base
 
@@ -50,16 +50,16 @@ Tambien se completaron invariantes auxiliares en:
 Resultado:
 
 - `failing inputs=0`
-- no se genero `ErrorTest`
-- se genero una suite de regresion de 250 tests
+- no se generó `ErrorTest`
+- se obtuvo una suite de regresión de 250 tests
 
 ### Problema observado
 
-Esa suite trae aserciones sensibles al tiempo del sistema (`lastUpdate` en `toString()`), por eso al ejecutar aparecen fallas intermitentes de regresion (flaky), no defectos funcionales reales.
+La suite inicial incluía aserciones dependientes del tiempo del sistema (por ejemplo, comparaciones contra `lastUpdate` embebidas en `toString()`). Esto hace que al volver a ejecutarla aparezcan fallas intermitentes de regresión, es decir, tests flaky más que defectos funcionales reales.
 
-### Suite estable para ejecucion y metricas
+### Suite estable para ejecución y métricas
 
-Se regenero con opciones para evitar ese ruido:
+Para evitar ese ruido y obtener métricas confiables, se regeneró la suite con opciones más estrictas:
 
 ```bash
 java -classpath target/classes:libs/randoop-all-3.0.8.jar randoop.main.Main gentests \
@@ -84,7 +84,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) \
 mvn -q -Djacoco.skip=true -Dtest=assignment8_exercises.fail2ban.RegressionTest test
 ```
 
-### Defectos corregidos durante depuracion
+### Defectos corregidos durante la depuración
 
 Archivos modificados:
 
@@ -92,31 +92,31 @@ Archivos modificados:
 - `src/main/java/assignment8_exercises/fail2ban/SinglyLinkedList.java`
 - `src/main/java/assignment8_exercises/fail2ban/StrictlySortedSinglyLinkedList.java`
 
-Cambios principales:
+Los cambios principales fueron:
 
-- Fix en `SinglyLinkedList.remove(...)` (eliminacion correcta + `size--`).
-- Validaciones de `null` en operaciones publicas para evitar NPE que eran evitables.
-- `StrictlySortedSinglyLinkedList.removeFromIP(...)` ahora devuelve `false` si no elimina.
-- Mejoras de robustez en recorridos/inserciones de listas.
+- Corrección en `SinglyLinkedList.remove(...)`, asegurando la eliminación correcta y el decremento de `size`.
+- Validaciones de `null` en las operaciones públicas para evitar NPEs que resultaban innecesarios.
+- `StrictlySortedSinglyLinkedList.removeFromIP(...)` ahora devuelve `false` cuando no elimina ningún elemento.
+- Mejoras generales de robustez en los recorridos e inserciones sobre las listas.
 
 ### Cobertura de ramas (Randoop)
 
-Sobre `Server` con JaCoCo:
+Medición con JaCoCo sobre `Server`:
 
-- ramas cubiertas: 2
-- ramas totales: 52
-- **Branch Coverage: 3.85%**
+- Ramas cubiertas: 2
+- Ramas totales: 52
+- **Branch Coverage: 3,85%**
 
 ### Mutación (Randoop)
 
-Con PIT sobre `Server` y suite Randoop estable:
+Ejecución de PIT sobre `Server` con la suite Randoop estable:
 
-- mutantes generados: 54
-- mutantes muertos: 2
+- Mutantes generados: 54
+- Mutantes muertos: 2
 - **Mutation score: 4%**
-- mutantes sin cobertura: 50
+- Mutantes sin cobertura: 50
 
-Comando usado:
+Comando utilizado:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) \
@@ -126,7 +126,7 @@ mvn -q \
   org.pitest:pitest-maven:mutationCoverage
 ```
 
-## c) EvoSuite (30s): analisis y comparacion con Randoop
+## c) EvoSuite (30s): análisis y comparación con Randoop
 
 Generación con Java 11:
 
@@ -137,64 +137,66 @@ JAVA_HOME=$(/usr/libexec/java_home -v 11) PATH=$JAVA_HOME/bin:$PATH \
 
 Resultados reportados por EvoSuite:
 
-- tests generados: 30
-- longitud total: 111
-- cobertura promedio: 89%
+- Tests generados: 30
+- Longitud total: 111
+- Cobertura promedio: 89%
 - **Branch coverage: 89%** (48/54)
 - **Weak mutation coverage: 92%** (65/71)
 - **Mutation score: 72%**
 
-EvoSuite tambien genero `Server_Failed_ESTest` con escenarios que rompen el estado interno (por ejemplo dejar `bans = null` desde test en la misma package), lo cual dispara excepciones no declaradas.
+EvoSuite también generó `Server_Failed_ESTest`, una suite con escenarios que rompen el estado interno (por ejemplo, dejando `bans = null` desde un test dentro del mismo paquete) y disparan excepciones no declaradas.
 
-### Comparacion breve
+### Comparación breve
 
-- Branches: Randoop 3.85% vs EvoSuite 89%
-- Mutacion: Randoop 4% (PIT) vs EvoSuite 72% (reporte EvoSuite)
+- Branches: Randoop 3,85% vs EvoSuite 89%.
+- Mutación: Randoop 4% (medido con PIT) vs EvoSuite 72% (métrica propia).
 
-En este caso, EvoSuite ejercita mejor la logica de `Server`.
+En este caso, EvoSuite ejercita de forma mucho más efectiva la lógica de `Server`. La diferencia se explica porque su generación guiada por cobertura logra construir secuencias que efectivamente llegan a ramas profundas, mientras que Randoop se queda en configuraciones superficiales.
 
 ## d) ¿Se puede usar `repOK()` para depurar con EvoSuite?
 
-Si, pero de forma distinta a Randoop:
+Sí, aunque de manera distinta a como se usa con Randoop:
 
-- Randoop usa `@CheckRep` directamente durante la generacion.
-- EvoSuite no lo toma automaticamente igual; `repOK()` se usa como oraculo explicito (por ejemplo, agregando aserciones o wrappers que lo invoquen).
+- Randoop consume directamente la anotación `@CheckRep` y evalúa el invariante durante la generación.
+- EvoSuite no la toma de forma automática: en su caso, `repOK()` se usa como oráculo explícito, típicamente agregando aserciones en los tests generados o envolviendo las operaciones para invocarlo.
 
-Conclusion: `repOK()` sigue siendo muy util para detectar estados invalidos y guiar la depuracion, tambien con EvoSuite.
+Conclusión: `repOK()` sigue siendo una herramienta muy útil para detectar estados inválidos y guiar la depuración también en el flujo con EvoSuite, solo que su integración requiere un paso manual adicional.
 
 ## e) Propiedad jqwik sobre `update`
 
-Se agrego:
+Se agregó el archivo:
 
 - `src/test/java/assignment8_exercises/fail2ban/ServerPropertyTest.java`
 
-Propiedad:
+La propiedad implementada es:
 
 - `updateRemovesExactlyExpiredBans`
 
-Que verifica:
+Verifica que:
 
-- despues de `update()`, cada IP queda permitida o bloqueada segun su expiracion,
-- y el estado final mantiene `repOK()`.
+- después de ejecutar `update()`, cada IP queda correctamente permitida o bloqueada según su expiración,
+- y el estado final del servidor sigue cumpliendo `repOK()`.
 
-Generador (uno solo):
+Se utiliza un único generador, como pedía el enunciado:
 
 - `@Provide updateScenarios()`
-- genera un escenario completo (`UpdateScenario`) con lista de IPs unicas, tiempo inicial y tiempo transcurrido.
+- produce un escenario completo (`UpdateScenario`) compuesto por una lista de IPs únicas, un tiempo inicial y un tiempo transcurrido.
 
-Ejecucion:
+De esta forma, jqwik puede explorar combinaciones variadas de entradas sin que el test dependa de múltiples generadores independientes.
+
+Ejecución:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) \
 mvn -q -Djacoco.skip=true -Dtest=assignment8_exercises.fail2ban.ServerPropertyTest test
 ```
 
-Resultado: property test en verde.
+Resultado: la propiedad se cumple en todas las ejecuciones; el test queda en verde.
 
 ## Resumen final
 
-- `repOK()` implementado y usado en el flujo de testing automatico.
-- Se corrigieron defectos funcionales y de robustez en `Server` y listas auxiliares.
-- Randoop permitio detectar y depurar, pero tuvo baja cobertura/mutacion en esta clase.
-- EvoSuite logro mejor exploracion de ramas y mejor score de mutacion.
-- Se completo la parte de testing basado en propiedades con jqwik para `update`.
+- `repOK()` quedó implementado y efectivamente incorporado al flujo de testing automático.
+- Durante la depuración con Randoop se corrigieron defectos funcionales y de robustez tanto en `Server` como en las listas auxiliares.
+- Randoop permitió detectar y depurar problemas, pero alcanzó baja cobertura y un mutation score pobre en esta clase.
+- EvoSuite logró una mejor exploración de ramas y un mutation score claramente superior.
+- La parte de property-based testing se completó con una propiedad jqwik para `update` apoyada en un único generador.

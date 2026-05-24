@@ -7,26 +7,26 @@ description: "Contenido importado desde tp4/ejercicio3/README.md"
 
 # Ejercicio 3
 
-Se usa el metodo `fmtRewrap()` de:
+Se trabaja sobre el método `fmtRewrap()` ubicado en:
 
 - `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/FmtRewrap.java`
 
-### Modelo de CFG usado en la resolucion
+### Modelo de CFG utilizado
 
-Para mantener el analisis legible, use un CFG de bloques:
+Para que el análisis sea legible y manejable, se utiliza un CFG por bloques en lugar de uno a nivel de instrucción individual. Los nodos del modelo son los siguientes:
 
-- `W`: condicion del `while`
-- `C`: clasificacion del caracter (if/else-if de `col`, `CR`, `' '`, `inWord`)
-- `BW`: caso `betweenWord`
-- `LB`: caso `lineBreak`
-- `CR?`: caso `crFound` (decision interna)
-- `CRh`: rama hard-CR (`i+1 < len && next == CR`)
-- `CRs`: rama soft-CR (else)
-- `IW`: caso `inWord/default`
-- `INC`: `i++`
-- `EXIT`: `S = new String(SArr) + CR; return`
+- `W`: condición del `while`.
+- `C`: clasificación del carácter actual (cadena de `if/else if` sobre `col`, `CR`, `' '` e `inWord`).
+- `BW`: caso `betweenWord`.
+- `LB`: caso `lineBreak`.
+- `CR?`: caso `crFound`, que internamente toma una decisión.
+- `CRh`: rama hard-CR (cuando `i+1 < len && next == CR`).
+- `CRs`: rama soft-CR (rama else del caso anterior).
+- `IW`: caso `inWord` o por defecto.
+- `INC`: incremento `i++`.
+- `EXIT`: ejecución de `S = new String(SArr) + CR; return`.
 
-Grafo:
+El CFG resultante es:
 
 ```mermaid
 flowchart TD
@@ -46,42 +46,42 @@ flowchart TD
   INC --> W
 ```
 
-### (a) CFG del metodo
+### (a) CFG del método
 
-Es el grafo anterior.
+El CFG del método es exactamente el grafo presentado más arriba.
 
-### (b) Test `t` que va de comienzo del `while` a `S = new String(SArr) + CR` sin cuerpo
+### (b) Test que va del comienzo del `while` a `EXIT` sin entrar al cuerpo
 
-Un caso valido es:
+Un caso válido para esto es:
 
 - `t = ("", 10)`
 
-Con `S = ""`, al entrar al `while` se evalua `i < S.length()` como `0 < 0` (falso), por lo que se toma directamente el arco `W -> EXIT`.
+Justificación: cuando `S = ""` la condición del `while` evalúa `i < S.length()` como `0 < 0`, lo cual es falso. Por lo tanto el flujo toma directamente el arco `W -> EXIT` sin pasar por ningún nodo intermedio del cuerpo del bucle.
 
 ### (c) Requisitos de tests para NC, EC y PPC
 
-NC (nodos):
+**NC (cobertura de nodos):**
 
 - `{W, C, BW, LB, CR?, CRh, CRs, IW, INC, EXIT}`
 
-EC (arcos):
+**EC (cobertura de arcos):**
 
-1. `(W,C)`
-2. `(W,EXIT)`
-3. `(C,BW)`
-4. `(C,LB)`
-5. `(C,CR?)`
-6. `(C,IW)`
-7. `(BW,INC)`
-8. `(LB,INC)`
-9. `(CR?,CRh)`
-10. `(CR?,CRs)`
-11. `(CRh,INC)`
-12. `(CRs,INC)`
-13. `(IW,INC)`
-14. `(INC,W)`
+1. `(W, C)`
+2. `(W, EXIT)`
+3. `(C, BW)`
+4. `(C, LB)`
+5. `(C, CR?)`
+6. `(C, IW)`
+7. `(BW, INC)`
+8. `(LB, INC)`
+9. `(CR?, CRh)`
+10. `(CR?, CRs)`
+11. `(CRh, INC)`
+12. `(CRs, INC)`
+13. `(IW, INC)`
+14. `(INC, W)`
 
-PPC (caminos principales del CFG reducido): 47 requisitos
+**PPC (caminos principales sobre el CFG reducido):** se obtienen 47 prime paths.
 
 1. `[W, C, BW, INC, W]`
 2. `[W, C, LB, INC, W]`
@@ -133,72 +133,68 @@ PPC (caminos principales del CFG reducido): 47 requisitos
 
 ### (d) Suite para NC pero no EC
 
-Suite implementada:
+La suite implementada se encuentra en:
 
 - `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapNodeCoverageTest.java`
 
-Comando usado:
+Comando de ejecución:
 
 - `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapNodeCoverageTest test`
 
-Resultado JaCoCo para `fmtRewrap`:
+Resultado de JaCoCo sobre `fmtRewrap`:
 
 - `LINE: 29/29`
 - `BRANCH: 16/16`
 
-Observacion importante: con esta implementacion y este nivel de modelado, la suite que cubre todos los nodos de sentencias tambien termina cubriendo todos los arcos medidos por la herramienta. Es decir, en la practica de este metodo no se pudo mantener `NC` sin `EC` al mismo tiempo con JaCoCo.
+**Observación:** con esta implementación particular del método y con el nivel de modelado utilizado, una suite que cubre todos los nodos de sentencias termina cubriendo también todos los arcos que mide la herramienta. En la práctica, no fue posible obtener una suite que cumpliera NC sin cumplir EC al mismo tiempo según la medición de JaCoCo. Esto se debe a que muchas sentencias y ramas están tan acopladas que llegar al nodo correspondiente implica recorrer también su arco saliente.
 
 ### (e) Suite para EC pero no PPC
 
-Suite implementada:
+La suite implementada se encuentra en:
 
 - `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapEdgeButNotPrimePathCoverageTest.java`
 
-Comando usado:
+Comando de ejecución:
 
 - `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapEdgeButNotPrimePathCoverageTest test`
 
-Resultado JaCoCo para `fmtRewrap`:
+Resultado de JaCoCo sobre `fmtRewrap`:
 
 - `LINE: 29/29`
-- `BRANCH: 16/16`  (equivalente practico de EC en esta herramienta)
+- `BRANCH: 16/16` (que en esta herramienta funciona como equivalente práctico de EC).
 
-Por que no es PPC (sobre el CFG definido arriba):
+**Por qué la suite no cumple PPC** (sobre el CFG definido más arriba):
 
-- Esta suite no recorre el prime path `[BW, INC, W, C, IW]`.
-- Intuitivamente, cuando entra a `BW` en la suite de (e), el siguiente paso vuelve por `LB` y no por `IW`.
+- La suite no recorre el prime path `[BW, INC, W, C, IW]`. Intuitivamente, cada vez que entra a `BW`, la siguiente iteración relevante del bucle pasa por `LB` en lugar de `IW`, por lo que esa secuencia particular nunca aparece en los caminos ejecutados.
 
 ### (f) Suite para PPC con Best Effort Touring
 
-Suite implementada:
+La suite implementada se encuentra en:
 
 - `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapPrimePathBestEffortCoverageTest.java`
 
-Comando usado:
+Comando de ejecución:
 
 - `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapPrimePathBestEffortCoverageTest test`
 
-Resultado JaCoCo para `fmtRewrap`:
+Resultado de JaCoCo sobre `fmtRewrap`:
 
 - `LINE: 29/29`
 - `BRANCH: 16/16`
 
-Analisis de prime paths en el CFG definido:
+Análisis de prime paths sobre el CFG definido:
 
-- Prime paths totales: `47`
-- Paths cubiertos directamente por la suite: `43`
-- No cubiertos: `4`, y son infeasibles por semantica del metodo:
-1. `[CR?, CRh, INC, W, C, LB]`
-2. `[CR?, CRs, INC, W, C, CR?]`
-3. `[CRs, INC, W, C, CR?, CRh]`
-4. `[CRs, INC, W, C, CR?, CRs]`
+- Cantidad total de prime paths: `47`.
+- Prime paths cubiertos directamente por la suite: `43`.
+- Prime paths no cubiertos: `4`. Todos ellos son **infactibles** por la semántica del método:
+  1. `[CR?, CRh, INC, W, C, LB]`
+  2. `[CR?, CRs, INC, W, C, CR?]`
+  3. `[CRs, INC, W, C, CR?, CRh]`
+  4. `[CRs, INC, W, C, CR?, CRs]`
 
-Justificacion breve de infeasibilidad:
+Justificación de la infactibilidad:
 
-- Luego de `CRh`, el codigo fuerza `col = 1`; forzar `LB` inmediatamente despues requiere un `N` muy chico que haria imposible haber tomado `CRh` en la iteracion previa (por precedencia de `col >= N`).
-- `CRs` implica que el siguiente caracter inmediato **no** es `CR`; por eso no puede ocurrir un nuevo `CR?` en la iteracion inmediatamente siguiente.
+- Después de tomar la rama `CRh`, el código fija `col = 1`. Para que en la siguiente iteración se entre directamente a `LB` sería necesario tener un `N` tan pequeño que, en la iteración previa, ya se hubiera disparado la condición `col >= N` y por lo tanto no se habría podido tomar `CRh` en primer lugar. Las dos condiciones son mutuamente excluyentes.
+- La rama `CRs` se toma precisamente cuando el siguiente carácter inmediato **no** es `CR`. Eso impide que en la iteración siguiente se vuelva a entrar al caso `CR?`, ya que ese caso requiere haber detectado un nuevo `CR` justo en esa posición.
 
-Conclusión:
-
-- La suite de (f) cumple PPC bajo `Best Effort Touring`: cubre todos los prime paths factibles directamente y deja afuera solo los infeasibles, manteniendo ademas cobertura total de arcos en JaCoCo.
-
+**Conclusión:** la suite del punto (f) cumple PPC bajo el criterio de *Best Effort Touring*, ya que cubre directamente todos los prime paths factibles del CFG y los únicos cuatro que quedan fuera son demostrablemente infactibles por la lógica del método. Además, mantiene cobertura total de líneas y de ramas según JaCoCo.

@@ -5,28 +5,30 @@ slug: "/tp8/assignment-8-rodeghiero/ejercicio2/"
 description: "Contenido importado desde tp8/assignment-8-rodeghiero/ejercicio2/README.md"
 ---
 
-# Ejercicio 2 - Analisis de `fileExample` con Randoop y EvoSuite
+# Ejercicio 2 - Análisis de `fileExample` con Randoop y EvoSuite
 
-## Analisis rapido del codigo
+## Análisis rápido del código
 
-La clase `assignment8_exercises.fileContents.fileExample` tiene una sola operacion (`checkContent`) con dependencia fuerte del contexto del entorno:
+La clase `assignment8_exercises.fileContents.fileExample` expone una única operación (`checkContent`) que concentra varias dependencias fuertes con el entorno de ejecución. Su flujo es:
 
-1. Lee nombre de archivo desde `System.in`.
-2. Cierra el `Scanner` de consola (cierra tambien `System.in`).
-3. Si el archivo no existe, devuelve `false`.
-4. Si existe, lee primera linea del archivo.
-5. Compara con fecha actual (`DateFormat.SHORT`).
+1. Lee un nombre de archivo desde `System.in`.
+2. Cierra el `Scanner` asociado a consola, lo que también cierra `System.in`.
+3. Si el archivo no existe, retorna `false`.
+4. Si existe, lee la primera línea del archivo.
+5. Compara esa línea con la fecha actual formateada con `DateFormat.SHORT`.
 
-Esto vuelve sensibles los tests a:
+Como consecuencia, cualquier test generado queda expuesto a varias fuentes de no determinismo:
 
-- entrada estandar,
+- entrada estándar,
 - sistema de archivos,
 - fecha del sistema,
-- locale/formato de fecha.
+- locale y formato de fecha.
+
+Este contexto es el que hace interesante comparar el comportamiento de Randoop y EvoSuite sobre la clase.
 
 ## Resultado con Randoop
 
-Generacion:
+Comando de generación:
 
 ```bash
 ./gen-randoop.sh assignment8_exercises.fileContents.fileExample 25 300 200
@@ -34,11 +36,11 @@ Generacion:
 
 Salida obtenida:
 
-- Se genero `RegressionTest0` con 1 test.
-- No se genero `ErrorTest`.
-- El test verifica `NoSuchElementException` al no haber entrada en `System.in`.
+- Se generó `RegressionTest0` con un único test.
+- No se produjo `ErrorTest`.
+- El test verifica la `NoSuchElementException` que se lanza cuando no hay datos disponibles en `System.in`.
 
-Ejecucion (evitando bloqueo por stdin):
+Ejecución, evitando que el test se bloquee esperando entrada estándar:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) \
@@ -48,17 +50,15 @@ mvn -q -Djacoco.skip=true -DforkCount=0 \
 
 Resultado:
 
-- 1 test
+- 1 test ejecutado
 - 0 fallos
 - 0 errores
 
-Interpretacion:
-
-Randoop explora poco comportamiento funcional en esta clase porque la API publica requiere IO y estado externo para llegar a caminos interesantes.
+Interpretación: Randoop explora muy poco comportamiento funcional de esta clase porque su API pública exige IO real y estado externo para alcanzar los caminos relevantes. Sin ese soporte, la generación aleatoria queda atrapada en el caso trivial.
 
 ## Resultado con EvoSuite
 
-Generacion:
+Comando de generación:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 11) PATH=$JAVA_HOME/bin:$PATH \
@@ -68,16 +68,16 @@ JAVA_HOME=$(/usr/libexec/java_home -v 11) PATH=$JAVA_HOME/bin:$PATH \
 Salida obtenida:
 
 - `fileExample_ESTest` (suite principal) con 3 tests.
-- `fileExample_Failed_ESTest` (casos de violaciones/errores).
+- `fileExample_Failed_ESTest` con los casos correspondientes a violaciones o errores detectados.
 
-Cobertura reportada por EvoSuite durante la generacion de tests:
+Cobertura reportada por EvoSuite durante la generación:
 
 - Cobertura promedio: 60%
 - Line: 53%
 - Branch: 60%
 - Weak mutation: 10%
 
-También detecto excepciones no declaradas en la suite `Failed` (ejemplo: `No line found`), consistente con `Scanner.nextLine()` sin validar disponibilidad.
+También se detectaron excepciones no declaradas en la suite `Failed` (por ejemplo, `No line found`), lo cual es consistente con un `Scanner.nextLine()` que no valida disponibilidad previa.
 
 Ejecución de `fileExample_ESTest` en este entorno:
 
@@ -87,24 +87,18 @@ mvn -q -Djacoco.skip=true -DforkCount=0 \
 -Dtest=assignment8_exercises.fileContents.fileExample_ESTest test
 ```
 
-Resultado:
+Resultado: los tests se generan correctamente, pero fallan al inicializar el runner de EvoSuite porque no encuentra `tools.jar`.
 
-- Falla en inicialización del runner de EvoSuite por `tools.jar` no encontrado.
-
-Interpretación:
-
-Los tests se generan, pero el runtime de EvoSuite usado por el template no ejecuta bien sobre JDK modernos (11/17+) y espera infraestructura historica de JDK 8.
+Interpretación: el runtime que usa la suite de EvoSuite está pensado para un JDK 8 con infraestructura histórica; sobre JDK 11 o superior no llega a inicializarse. Por eso la comparación se hace sobre las métricas reportadas por EvoSuite en la fase de generación.
 
 ## Comparación Randoop vs EvoSuite
 
-- Randoop:
-  - Robusto para generar rápido.
-  - En esta clase genero solo un escenario trivial.
-  - No levanto `ErrorTest`.
-- EvoSuite:
-  - Genero mas casos y detecto violaciones de excepciones no declaradas.
-  - Requiere entorno mas especifico para ejecutar (idealmente JDK 8 compatible con su runtime).
+- **Randoop**:
+  - Muy rápido y simple de poner en marcha.
+  - Para esta clase solo generó un escenario trivial.
+  - No produjo `ErrorTest`.
+- **EvoSuite**:
+  - Generó más casos y detectó violaciones de excepciones no declaradas.
+  - Requiere un entorno más específico para ejecutarse, idealmente compatible con el runtime histórico pensado para JDK 8.
 
-Conclusion:
-
-Para `fileExample`, EvoSuite fue mas expresivo en generacion; Randoop fue mas simple de ejecutar en este entorno.
+Conclusión: para `fileExample`, EvoSuite resultó más expresivo en la generación, mientras que Randoop fue más práctico de ejecutar en este entorno. Ninguno reemplaza al otro; cada uno ilustra un trade-off distinto entre profundidad de exploración y facilidad de integración.

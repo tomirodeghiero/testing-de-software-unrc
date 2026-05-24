@@ -58,7 +58,17 @@
 Este documento reúne la resolución del \textit{Práctico 1} de \textit{Testing de Software 2024}. La consigna combina lecturas del libro de Ammann y Offutt con ejercicios de análisis de defectos, reparación de programas y diseño de pruebas unitarias en JUnit. A lo largo del práctico se trabajan los conceptos de \textit{fault}, \textit{error} y \textit{failure}, el modelo RIPR como herramienta para razonar sobre la detectabilidad de un defecto, y un caso clásico del libro de Bloch sobre el contrato de \texttt{equals} en jerarquías por herencia.
 
 \section{Ejercicio 1}
-Lectura de los capítulos 1 y 2 del libro \textit{Introduction to Software Testing}.
+El primer ejercicio no pide una entrega concreta: consiste en la lectura de los capítulos 1 y 2 del libro \textit{Introduction to Software Testing} (Ammann y Offutt, 2.\textsuperscript{a} edición). Esta lectura es la que fija el vocabulario que se usa en todos los ejercicios siguientes, por lo que conviene dejar registrado, aunque sea brevemente, qué conceptos se asientan en este punto:
+
+\begin{itemize}
+  \item \textbf{Motivación del testing.} Por qué testear es una actividad de ingeniería y no un control de fin de proyecto, acompañado de los casos clásicos --- Therac-25, Ariane 5, Mars Climate Orbiter, Pentium FDIV, Zune --- que muestran el costo concreto de un defecto.
+  \item \textbf{Cadena \textit{fault} $\rightarrow$ \textit{error} $\rightarrow$ \textit{failure}.} El defecto estático en el código, el estado interno incorrecto que se produce cuando ese defecto se ejecuta y la falla como manifestación observable. Esta distinción se aplica directamente en el Ejercicio 2.
+  \item \textbf{Modelo RIPR.} \textit{Reachability}, \textit{Infection}, \textit{Propagation} y \textit{Revealability} como las cuatro condiciones que un test debe satisfacer para revelar un defecto. Es el criterio que articula los Ejercicios 3 y 4.
+  \item \textbf{Test requirements y criterios de cobertura.} La idea de separar el \textit{qué hay que cubrir} (criterio) del \textit{cómo se cubre} (casos de prueba concretos), que es el andamiaje sobre el que se montan los prácticos posteriores.
+  \item \textbf{Niveles y tipos de testing.} Unidad, integración, sistema y aceptación; \textit{black-box} frente a \textit{white-box}; el lugar del testing dentro del ciclo de vida del software.
+\end{itemize}
+
+Un desarrollo más extenso de estos puntos, integrado con las notas de la cátedra, está en el documento adjunto \textit{Resumen teórico --- TP1}.
 
 \section{Ejercicio 2}
 \subsection{Diferencia entre \textit{fault} y \textit{failure}}

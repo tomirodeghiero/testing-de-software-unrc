@@ -1,10 +1,3 @@
----
-title: "TP1"
-sidebar_position: 1
-slug: "/tp1/"
-description: "Contenido importado desde tp1/readme.md"
----
-
 # Práctico 1 — Testing de Software
 
 Resolución del primer práctico de la materia. El TP introduce el vocabulario básico del testing de software (*fault*, *error* y *failure*), el modelo RIPR como criterio para razonar sobre la detectabilidad de un defecto, y arranca con las primeras pruebas en JUnit siguiendo el patrón *Arrange–Act–Assert*. Sobre el final aparece el caso clásico de Bloch (`Point` y `ColorPoint`) que ilustra los problemas de mantener el contrato de `equals` en jerarquías por herencia.
@@ -43,23 +36,3 @@ mvn -Dmaven.repo.local=.m2 test
 ```
 
 El flag `-Dmaven.repo.local=.m2` mantiene el repositorio Maven dentro de la carpeta del ejercicio para no contaminar `~/.m2/` del sistema.
-
-## Navegacion interna
-
-- [Ejercicio 1](./ejercicio1/)
-- [Ejercicio 2](./ejercicio2/)
-- [Ejercicio 3](./ejercicio3/)
-- [Ejercicio 4](./ejercicio4/)
-- [Ejercicio 5](./ejercicio5/)
-- [Ejercicio 6](./ejercicio6/)
-- [Ejercicio 7](./ejercicio7/)
-
-## Material PDF
-
-- [Capitulos 1 y 2 - Introduction to Software Testing.pdf](/pdfs/tp1/material/Capitulos 1 y 2 - Introduction to Software Testing.pdf)
-- [notas-00-testing-de-software.pdf](/pdfs/tp1/material/notas-00-testing-de-software.pdf)
-- [notas-01-testing-de-software.pdf](/pdfs/tp1/material/notas-01-testing-de-software.pdf)
-- [notas-02-ts.pdf](/pdfs/tp1/material/notas-02-ts.pdf)
-- [practico1.pdf](/pdfs/tp1/practico1.pdf)
-- [resolucion_practico1.pdf](/pdfs/tp1/resolucion_practico1.pdf)
-- [resumen-teorico-testing-tp1.pdf](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)

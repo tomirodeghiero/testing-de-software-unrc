@@ -13,3 +13,4 @@ description: "Contenido importado desde tp9/readme.md"
 ## Material PDF
 
 - [practico9.pdf](/pdfs/tp9/practico9.pdf)
+- [resolucion_practico9.pdf](/pdfs/tp9/resolucion_practico9.pdf)
