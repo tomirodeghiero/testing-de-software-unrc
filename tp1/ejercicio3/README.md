@@ -1,18 +1,23 @@
-# Ejercicio 3
+# Ejercicio 3 — Análisis de programas defectuosos y cadena RIPR
 
-Esta carpeta contiene una resolucion completa del ejercicio 3 con:
+## Consigna
 
-- las versiones defectuosas de los cuatro programas
-- las versiones corregidas
-- un runner por consola para ejecutar los casos del ejercicio sobre la version fallada o la version corregida
+El enunciado presenta cuatro programas defectuosos (`findLast`, `lastZero`, `countPositive`, `oddOrPos`) junto con un caso de test que produce falla en cada uno. Para cada programa hay que:
+
+- **a)** Identificar el defecto y proponer una corrección.
+- **b)** Si es posible, dar una entrada que **no ejecute** el defecto.
+- **c)** Dar una entrada que ejecute el defecto **pero no produzca falla observable**.
+- **d)** Dar una entrada que ejecute el defecto **y produzca falla**.
+
+La separación entre los puntos b, c y d sigue la cadena RIPR: alcanzar el defecto, infectar el estado, propagarlo hasta la salida.
 
 ## Archivos
 
-- `DefectivePrograms.java`: replica los cuatro programas tal como aparecen en el enunciado
-- `FixedPrograms.java`: contiene una correccion posible para cada programa
-- `Exercise3Runner.java`: ejecuta casos representativos para los puntos b), c) y d)
+- `DefectivePrograms.java` — los cuatro programas tal como aparecen en el enunciado.
+- `FixedPrograms.java` — una corrección posible para cada uno.
+- `Exercise3Runner.java` — runner por consola para correr los casos sobre la versión defectuosa o la corregida.
 
-## Comandos para compilar y ejecutar
+## Cómo compilar y ejecutar
 
 Desde esta carpeta:
 
@@ -21,19 +26,19 @@ cd tp1/ejercicio3
 javac *.java
 ```
 
-Ejecutar todos los programas en su version fallada:
+Versión defectuosa, los cuatro programas:
 
 ```bash
 java Exercise3Runner faulty all
 ```
 
-Ejecutar todos los programas en su version corregida:
+Versión corregida, los cuatro programas:
 
 ```bash
 java Exercise3Runner fixed all
 ```
 
-Ejecutar un programa puntual:
+Un programa puntual:
 
 ```bash
 java Exercise3Runner faulty findLast
@@ -46,21 +51,21 @@ java Exercise3Runner faulty oddOrPos
 java Exercise3Runner fixed oddOrPos
 ```
 
-## Resolucion
+## Resolución
 
 ### 1. `findLast(int[] x, int y)`
 
-#### a) Defecto y correccion
+#### a) Defecto y corrección
 
-El defecto esta en la condicion del `for`:
+El defecto está en la condición del `for`:
 
 ```java
 for (int i = x.length - 1; i > 0; i--)
 ```
 
-El ciclo deberia seguir mientras `i >= 0`, no mientras `i > 0`. Tal como esta escrito, nunca revisa la posicion `0` del arreglo.
+El ciclo debería seguir mientras `i >= 0`, no mientras `i > 0`. Tal como está escrito, nunca revisa la posición `0` del arreglo.
 
-Correccion:
+Corrección:
 
 ```java
 for (int i = x.length - 1; i >= 0; i--)
@@ -68,7 +73,7 @@ for (int i = x.length - 1; i >= 0; i--)
 
 #### b) Caso que no ejecute el defecto
 
-No se puede, al menos usando entradas validas. El defecto esta en la condicion del `for`, y esa condicion se evalua siempre que se llama al metodo. Lo que si puede pasar es que el defecto se ejecute pero no se note, si justo no hace falta revisar la posicion `0`.
+No se puede, al menos usando entradas válidas. El defecto está en la condición del `for`, y esa condición se evalúa siempre que se llama al método. Lo que sí puede pasar es que el defecto se ejecute pero no se note, si justo no hace falta revisar la posición `0`.
 
 #### c) Caso que ejecute el defecto y no produzca falla
 
@@ -77,7 +82,7 @@ x = [5, 2, 3], y = 2
 resultado esperado = 1
 ```
 
-El defecto se ejecuta, pero como el valor buscado no esta en la posicion `0`, el resultado sigue siendo correcto.
+El defecto se ejecuta, pero como el valor buscado no está en la posición `0`, el resultado sigue siendo correcto.
 
 #### d) Caso que ejecute el defecto y produzca falla
 
@@ -87,15 +92,15 @@ resultado esperado = 0
 resultado defectuoso = -1
 ```
 
-Falla porque el programa no revisa la posicion `0`.
+Falla porque el programa no revisa la posición `0`.
 
 ### 2. `lastZero(int[] x)`
 
-#### a) Defecto y correccion
+#### a) Defecto y corrección
 
-El defecto es conceptual: el metodo debe devolver el ultimo indice cuyo valor es `0`, pero recorre el arreglo de izquierda a derecha y retorna apenas encuentra el primer cero.
+El defecto es conceptual: el método debe devolver el último índice cuyo valor es `0`, pero recorre el arreglo de izquierda a derecha y retorna apenas encuentra el primer cero.
 
-Codigo defectuoso:
+Código defectuoso:
 
 ```java
 for (int i = 0; i < x.length; i++) {
@@ -105,7 +110,7 @@ for (int i = 0; i < x.length; i++) {
 }
 ```
 
-Una correccion simple es recorrer desde el final:
+Una corrección simple es recorrer desde el final:
 
 ```java
 for (int i = x.length - 1; i >= 0; i--) {
@@ -126,7 +131,7 @@ x = [1, 0, 2]
 resultado esperado = 1
 ```
 
-El metodo esta mal, pero como solo hay un cero, el primer cero coincide con el ultimo.
+El método está mal, pero como solo hay un cero, el primer cero coincide con el último.
 
 #### d) Caso que ejecute el defecto y produzca falla
 
@@ -136,13 +141,13 @@ resultado esperado = 2
 resultado defectuoso = 0
 ```
 
-Falla porque devuelve el primer cero, no el ultimo.
+Falla porque devuelve el primer cero, no el último.
 
 ### 3. `countPositive(int[] x)`
 
-#### a) Defecto y correccion
+#### a) Defecto y corrección
 
-El comentario indica que debe contar elementos positivos, pero el codigo cuenta elementos mayores o iguales que cero:
+El comentario indica que debe contar elementos positivos, pero el código cuenta elementos mayores o iguales que cero:
 
 ```java
 if (x[i] >= 0) {
@@ -152,7 +157,7 @@ if (x[i] >= 0) {
 
 Eso incluye al `0`, que no es positivo.
 
-Correccion:
+Corrección:
 
 ```java
 if (x[i] > 0) {
@@ -167,7 +172,7 @@ x = []
 resultado esperado = 0
 ```
 
-Como el arreglo esta vacio, no entra al cuerpo del `for` y la condicion defectuosa no se evalua.
+Como el arreglo está vacío, no entra al cuerpo del `for` y la condición defectuosa no se evalúa.
 
 #### c) Caso que ejecute el defecto y no produzca falla
 
@@ -176,7 +181,7 @@ x = [-4, 2, 2]
 resultado esperado = 2
 ```
 
-La condicion defectuosa se ejecuta, pero como no hay ceros, contar `>= 0` o `> 0` da el mismo resultado.
+La condición defectuosa se ejecuta, pero como no hay ceros, contar `>= 0` o `> 0` da el mismo resultado.
 
 #### d) Caso que ejecute el defecto y produzca falla
 
@@ -190,23 +195,23 @@ Falla porque el `0` se cuenta como positivo.
 
 ### 4. `oddOrPos(int[] x)`
 
-#### a) Defecto y correccion
+#### a) Defecto y corrección
 
-El metodo debe contar valores impares o positivos. El defecto esta en usar:
+El método debe contar valores impares o positivos. El defecto está en usar:
 
 ```java
 x[i] % 2 == 1
 ```
 
-En Java, los impares negativos no cumplen esa condicion. Por ejemplo:
+En Java, los impares negativos no cumplen esa condición. Por ejemplo:
 
 ```text
 -3 % 2 == -1
 ```
 
-Por eso los impares negativos quedan afuera aunque deberian contarse.
+Por eso los impares negativos quedan afuera aunque deberían contarse.
 
-Una correccion simple es:
+Una corrección simple es:
 
 ```java
 if (x[i] % 2 != 0 || x[i] > 0) {
@@ -240,11 +245,17 @@ resultado esperado = 3
 resultado defectuoso = 2
 ```
 
-Los valores que deberian contarse son `-3`, `1` y `4`, pero el programa defectuoso no cuenta `-3`.
+Los valores que deberían contarse son `-3`, `1` y `4`, pero el programa defectuoso no cuenta `-3`.
 
-## Resumen corto
+## Síntesis
 
-- `findLast`: no revisa el indice `0`
-- `lastZero`: devuelve el primer cero en vez del ultimo
-- `countPositive`: cuenta `0` como positivo
-- `oddOrPos`: no reconoce impares negativos
+- `findLast`: no revisa el índice `0`.
+- `lastZero`: devuelve el primer cero en vez del último.
+- `countPositive`: cuenta el `0` como positivo.
+- `oddOrPos`: no reconoce impares negativos por la semántica del operador `%` en Java.
+
+## Enlaces relacionados
+
+- Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
+- Resolución completa: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
+- Resumen teórico: [`resumen-teorico-testing-tp1.pdf`](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)

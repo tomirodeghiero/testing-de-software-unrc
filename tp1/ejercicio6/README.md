@@ -1,21 +1,28 @@
-# Ejercicio 6
+# Ejercicio 6 — Consistencia entre `equals` y `hashCode` en `Point`
 
-## Aclaración inicial
+## Consigna
 
-En el enunciado se menciona que hay tests dados en `PointTest`, pero en el material disponible que tengo en el Classroom no estaban la clase, el test, ni el package `practico1_exercises.point_set`.
+A partir de la clase `Point` y la suite `PointTest` provistas por la cátedra, el ejercicio pide:
 
-Por eso, para poder resolver el ejercicio, hice lo siguiente:
+- **a)** Agregar nuevos tests, detectar una falla y aplicar la corrección.
+- **b)** Marcar explícitamente las tres fases del patrón **Arrange–Act–Assert** en cada test.
 
-1. Cree una implementación de `Point` en el package pedido.
-2. Cree la clase `PointTest`.
-3. En base a esos tests resolví los puntos a) y b).
+### Aclaración sobre el material
+
+En el enunciado se menciona que hay tests dados en `PointTest`, pero en el material disponible en el Classroom no estaban ni la clase, ni el test, ni el paquete `practico1_exercises.point_set`.
+
+Para poder resolver el ejercicio:
+
+1. Creé una implementación propia de `Point` en el paquete pedido.
+2. Creé la clase `PointTest`.
+3. Sobre esos tests resolví los puntos a) y b).
 
 ## Archivos
 
 - `src/main/java/practico1_exercises/point_set/Point.java`
 - `src/test/java/practico1_exercises/point_set/PointTest.java`
 
-## Como ejecutar los tests
+## Cómo ejecutar los tests
 
 Desde `tp1/ejercicio6`:
 
@@ -23,20 +30,20 @@ Desde `tp1/ejercicio6`:
 mvn -Dmaven.repo.local=.m2 test
 ```
 
-## Resolucion
+## Resolución
 
-### a) Nuevos tests, deteccion de falla y correccion
+### a) Nuevos tests, detección de falla y corrección
 
-Como no estaban los tests dados, agregue estos tests nuevos:
+Como no estaban los tests dados, agregué estos tests nuevos:
 
-- igualdad entre dos puntos con las mismas coordenadas
-- desigualdad entre puntos distintos
-- comportamiento correcto dentro de un `HashSet` cuando hay dos puntos equivalentes
-- busqueda correcta en un `HashSet` usando un punto equivalente
+- igualdad entre dos puntos con las mismas coordenadas;
+- desigualdad entre puntos distintos;
+- comportamiento correcto dentro de un `HashSet` cuando hay dos puntos equivalentes;
+- búsqueda correcta en un `HashSet` usando un punto equivalente.
 
-Los dos últimos tests son importantes porque el nombre del package es `point_set`, así que tiene sentido verificar el comportamiento de `Point` dentro de un conjunto.
+Los dos últimos tests son importantes porque el nombre del paquete es `point_set`, así que tiene sentido verificar el comportamiento de `Point` dentro de un conjunto.
 
-Con esos tests, la falla que se detecta es la clasica inconsistencia entre `equals` y `hashCode`. Si `Point` redefine `equals` pero no redefine `hashCode` de manera consistente, dos puntos iguales pueden comportarse como distintos dentro de un `HashSet`.
+Con esos tests, la falla que se detecta es la clásica inconsistencia entre `equals` y `hashCode`: si `Point` redefine `equals` pero no redefine `hashCode` de manera consistente, dos puntos iguales pueden comportarse como distintos dentro de un `HashSet`, lo que rompe la promesa de `HashSet` y `HashMap`.
 
 La corrección aplicada fue agregar:
 
@@ -47,22 +54,28 @@ public int hashCode() {
 }
 ```
 
-De esa manera, dos objetos `Point` con el mismo `x` e `y` quedan iguales tanto para `equals` como para `hashCode`, y los tests de conjunto pasan.
+De esa manera, dos objetos `Point` con el mismo `x` e `y` quedan iguales tanto para `equals` como para `hashCode`, y los tests sobre conjuntos pasan.
 
-### b) Partes de cada test: arrange, act, assert
+### b) Arrange–Act–Assert
 
-En la clase `PointTest` deje marcadas claramente las tres partes en cada test con comentarios:
+En la clase `PointTest` dejé marcadas claramente las tres fases con comentarios:
 
-- `// arrange`: preparación de los objetos y datos necesarios
-- `// act`: ejecución de la operacion que se quiere probar
-- `// assert`: verificación del resultado esperado
+- `// arrange` — preparación de los objetos y datos necesarios.
+- `// act` — ejecución de la operación que se quiere probar.
+- `// assert` — verificación del resultado esperado.
 
 Por ejemplo, en el test del `HashSet`:
 
-- en `arrange` se crean el set y los puntos
-- en `act` se agregan los puntos al conjunto
-- en `assert` se verifica que el tamaño sea `1`
+- en `arrange` se crean el set y los puntos;
+- en `act` se agregan los puntos al conjunto;
+- en `assert` se verifica que el tamaño sea `1`.
 
-## Resultado final
+## Resultado
 
-La version actual de `Point` ya queda corregida para funcionar correctamente dentro de estructuras de tipo set.
+La versión actual de `Point` queda corregida para funcionar correctamente dentro de estructuras basadas en hashing.
+
+## Enlaces relacionados
+
+- Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
+- Resolución completa: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
+- Resumen teórico: [`resumen-teorico-testing-tp1.pdf`](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)

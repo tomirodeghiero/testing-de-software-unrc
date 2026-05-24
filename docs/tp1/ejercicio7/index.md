@@ -5,19 +5,25 @@ slug: "/tp1/ejercicio7/"
 description: "Contenido importado desde tp1/ejercicio7/README.md"
 ---
 
-# Ejercicio 7
+# Ejercicio 7 — `PointSet` sobre `HashSet<Point>`
 
-## Aclaración inicial
+## Consigna
+
+A partir de la clase `PointSet` y la suite `PointSetTest` provistas por la cátedra, el ejercicio pide:
+
+- Agregar tests adicionales para cubrir el comportamiento del conjunto.
+- Identificar posibles fallas y aplicar correcciones si aparecen.
+- Marcar explícitamente las tres fases del patrón **Arrange–Act–Assert** en cada test.
+
+### Aclaración sobre el material
 
 En el enunciado se habla de la clase `PointSet` y de tests dados en `PointSetTest`, pero en el material disponible para este repo **no se encuentran provistos** ni esa clase ni esos tests.
 
-Para poder resolver el ejercicio, creé yo mismo:
+Para poder resolver el ejercicio creé:
 
-- una implementación de `PointSet`
-- una clase `PointSetTest`
-- y algunos tests adicionales necesarios para verificar el comportamiento del conjunto
-
-En base a eso resolví el ejercicio.
+- una implementación de `PointSet`,
+- una clase `PointSetTest`,
+- y tests adicionales necesarios para verificar el comportamiento del conjunto.
 
 ## Archivos
 
@@ -37,23 +43,23 @@ mvn -Dmaven.repo.local=.m2 test
 
 ### Tests creados
 
-Como no estaban los tests dados, creé estos tests para poder trabajar sobre la clase:
+Como no estaban los tests dados, creé estos tests para trabajar sobre la clase:
 
-- verificar que un `PointSet` nuevo empieza vacío
-- verificar que no se agreguen duplicados si los puntos son equivalentes
-- verificar que `contains` reconozca un punto equivalente
-- verificar que `remove` elimine un punto equivalente
-- verificar que `contains` devuelva `false` si el punto no está
+- verificar que un `PointSet` nuevo empieza vacío;
+- verificar que no se agregan duplicados si los puntos son equivalentes;
+- verificar que `contains` reconozca un punto equivalente;
+- verificar que `remove` elimine un punto equivalente;
+- verificar que `contains` devuelva `false` si el punto no está.
 
 ### Resultado de los tests
 
-Con la implementación actual, los tests pasan. No encontré una falla nueva en `PointSet`.
+Con la implementación actual los tests pasan; no encontré una falla nueva en `PointSet`.
 
-Eso también tiene sentido porque la clase se apoya en un `HashSet<Point>` y en el ejercicio 6 ya se había corregido `Point` agregando un `hashCode` consistente con `equals`.
+Esto es coherente con el ejercicio anterior: `PointSet` se apoya internamente en un `HashSet<Point>`, y en el Ejercicio 6 se había corregido `Point` agregando un `hashCode` consistente con `equals`. Una vez que las dos operaciones quedan alineadas, `HashSet` se comporta correctamente y `PointSet` hereda ese buen comportamiento sin necesidad de ajustes propios.
 
-### Arrange, act, assert
+### Arrange–Act–Assert
 
-En cada test de `PointSetTest` dejé marcadas las tres partes con comentarios:
+En cada test de `PointSetTest` dejé marcadas las tres fases con comentarios:
 
 - `// arrange`
 - `// act`
@@ -61,10 +67,16 @@ En cada test de `PointSetTest` dejé marcadas las tres partes con comentarios:
 
 Por ejemplo, en el test de borrado:
 
-- en `arrange` se crea el conjunto y se agrega un punto
-- en `act` se llama a `remove`
-- en `assert` se verifica que el borrado haya dado `true` y que el tamaño final sea `0`
+- en `arrange` se crea el conjunto y se agrega un punto;
+- en `act` se llama a `remove`;
+- en `assert` se verifica que el borrado haya dado `true` y que el tamaño final sea `0`.
 
 ## Conclusión
 
-Como ni `PointSet` ni `PointSetTest` estaban provistos, creé ambos para poder resolver el ejercicio. En base a los tests creados no aparecieron fallas adicionales, y la implementación actual de `PointSet` pasa todas las verificaciones.
+`PointSet` y `PointSetTest` no estaban provistos, así que creé ambos para poder resolver el ejercicio. Sobre los tests construidos la implementación pasa todas las verificaciones, lo cual valida la corrección de `Point` aplicada en el Ejercicio 6.
+
+## Enlaces relacionados
+
+- Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
+- Resolución completa: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
+- Resumen teórico: [`resumen-teorico-testing-tp1.pdf`](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)
