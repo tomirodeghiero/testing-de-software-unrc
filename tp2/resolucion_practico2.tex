@@ -107,10 +107,10 @@ La selección de casos sigue el análisis del TP1. Para cada uno de los cuatro p
 \toprule
 Programa & Caso (c) (pasa) & Caso (d) (revela el defecto) \\
 \midrule
-\texttt{findLast}      & \texttt{[5,2,3],2 → 1}  & \texttt{[2,3,5],2 → 0}        \\
-\texttt{lastZero}      & \texttt{[1,0,2] → 1}    & \texttt{[0,1,0] → 2}          \\
-\texttt{countPositive} & \texttt{[-4,2,2] → 2}   & \texttt{[-4,2,0,2] → 2}       \\
-\texttt{oddOrPos}      & \texttt{[2,4,-2] → 2}   & \texttt{[-3,-2,0,1,4] → 3}    \\
+\texttt{findLast}      & \texttt{[5,2,3], 2 -> 1}  & \texttt{[2,3,5], 2 -> 0}      \\
+\texttt{lastZero}      & \texttt{[1,0,2] -> 1}     & \texttt{[0,1,0] -> 2}         \\
+\texttt{countPositive} & \texttt{[-4,2,2] -> 2}    & \texttt{[-4,2,0,2] -> 2}      \\
+\texttt{oddOrPos}      & \texttt{[2,4,-2] -> 2}    & \texttt{[-3,-2,0,1,4] -> 3}   \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -287,7 +287,7 @@ valores,excepcion
 "1;null;3",NullPointerException
 \end{lstlisting}
 
-\subsection{Mapeo CSV → ejecución}
+\subsection{Mapeo CSV $\rightarrow$ ejecución}
 \begin{itemize}
   \item \texttt{EMPTY} representa una lista vacía.
   \item Un token \texttt{null} dentro de la lista se traduce a un elemento nulo de la \texttt{List<Integer>}.

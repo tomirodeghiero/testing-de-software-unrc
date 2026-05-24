@@ -5,30 +5,27 @@ slug: "/tp2/"
 description: "Contenido importado desde tp2/readme.md"
 ---
 
-# Practico 2 - Testing de Software 2024
+# Práctico 2 — Testing de Software
 
-Resolucion del Practico 2 de la materia. El TP se centra en data-driven
-testing con JUnit 5 (`@ParameterizedTest`), repOK / invariantes de
-representacion sobre TADs (`StackAr` y `BoundedQueue`), y debugging guiado
-por tests parametrizados (`ZuneBug`). Se trabaja con el codigo provisto
-por la catedra en `assignment2_exercises/`, sin modificar el enunciado ni
-los PDFs.
+Resolución del segundo práctico de la materia. El TP profundiza en testing automatizado con **JUnit 5** y, en particular, en el enfoque *data-driven* a través de `@ParameterizedTest` con sus tres fuentes principales (`@CsvSource`, `@MethodSource`, `@CsvFileSource`). En paralelo, introduce la idea de **invariante de representación** y el método `repOK()` como oráculo interno sobre dos TADs clásicos: la pila acotada `StackAr` y la cola circular `BoundedQueue`. El práctico cierra con un caso real de defecto —el *Zune bug*— como excusa para practicar debugging guiado por tests.
 
-## Estructura
+## Documentos principales
 
-Las resoluciones estan organizadas por ejercicio, igual que en el TP1:
+- **Enunciado:** [`practico2.pdf`](/pdfs/tp2/practico2.pdf)
+- **Resolución (PDF):** [`resolucion_practico2.pdf`](/pdfs/tp2/resolucion_practico2.pdf)
+- **Resumen teórico (PDF):** [`resumen_teorico_tp2.pdf`](/pdfs/tp2/resumen_teorico_tp2.pdf)
+- **Fuente LaTeX:** `resolucion_practico2.tex`, `resumen_teorico_tp2.tex`
 
-- `ejercicio1/README.md` - lectura del capitulo 3 de Ammann & Offutt.
-- `ejercicio2/README.md` - tests parametrizados sobre `SimpleRoutines`.
-- `ejercicio3/README.md` - tests para `StackAr`, fixture compartido,
-  arrange / act / assert y `repOk`.
-- `ejercicio4/README.md` - tests parametrizados en CSV para `Min`.
-- `ejercicio5/README.md` - tests parametrizados y debugging del
-  *Zune bug* en `currentYear`.
-- `ejercicio6/README.md` - `repOK` y tests parametrizados para
-  `BoundedQueue`.
+## Ejercicios
 
-## Codigo base (provisto por la catedra)
+- `ejercicio1/` — lectura del capítulo 3 de *Introduction to Software Testing* (Ammann & Offutt): test requirements, criterios de cobertura, MDTD y *arrange–act–assert*.
+- `ejercicio2/` — tests parametrizados sobre `SimpleRoutines` con `@CsvSource`, `@MethodSource` y `@CsvFileSource`.
+- `ejercicio3/` — suite completa para `StackAr` con fixture compartido, AAA explícito y `repOk` con su propio juego de tests.
+- `ejercicio4/` — tests parametrizados en CSV para `Min.min`, incluyendo casos negativos.
+- `ejercicio5/` — tests parametrizados y debugging del *Zune bug* en `ZuneBug.currentYear`.
+- `ejercicio6/` — `repOK` y tests parametrizados para `BoundedQueue` con escenarios válidos e inválidos.
+
+## Código base (provisto por la cátedra)
 
 - `src/main/java/assignment2_exercises/SimpleRoutines.java`
 - `src/main/java/assignment2_exercises/Min.java`
@@ -39,72 +36,33 @@ Las resoluciones estan organizadas por ejercicio, igual que en el TP1:
 
 ## Artefactos agregados
 
-### Ejercicio 2 - `SimpleRoutines`
+- **Ej. 2**: `SimpleRoutinesParameterizedTest.java`, `odd_or_pos_cases.csv`.
+- **Ej. 3**: `StackArTest.java`, implementación de `repOk()` y ajustes en `pop()` y `push(null)` sobre `StackAr.java`.
+- **Ej. 4**: `MinCsvParameterizedTest.java`, `min_valid_cases.csv`, `min_invalid_cases.csv`.
+- **Ej. 5**: `ZuneBugParameterizedTest.java`, corrección de `currentYear` y copia de la versión original en `ejercicio5/currentYear_original.java.txt`.
+- **Ej. 6**: `BoundedQueueParameterizedTest.java`, implementación de `repOK()` en `BoundedQueue.java`.
 
-- `src/test/java/assignment2_exercises/SimpleRoutinesParameterizedTest.java`
-- `src/test/resources/assignment2_exercises/odd_or_pos_cases.csv`
+## Material de referencia
 
-Se cumple el requisito de la consigna: `@CsvSource` en `findLast`,
-`@MethodSource` en `lastZero` y `countPositive`, y `@CsvFileSource` en
-`oddOrPos`. La suite reutiliza los casos (c) y (d) del Practico 1, asi
-que sobre la version defectuosa de `SimpleRoutines` provista en este
-practico los tests fallan exactamente en los 4 casos que evidencian
-cada uno de los defectos. Esto es deseado: muestra que los tests
-parametrizados conservan la capacidad de detectar las fallas del modelo
-RIPR establecida en el TP1.
+Los apuntes y capítulos usados están en `material/`:
 
-### Ejercicio 3 - `StackAr`
+- `Capitulo 3 - Introduction to Software Testing.pdf` — Ammann & Offutt, capítulo 3.
+- `notas-03-automation.pdf` — automatización de tests.
+- `notas-04-data-driven-test.pdf` — data-driven testing.
 
-- `src/test/java/assignment2_exercises/stack/StackArTest.java`
-- implementacion completa de `repOk()` en `StackAr.java`
-- ajustes menores en `pop()` y validacion de `push(null)`.
+## Cómo ejecutar la suite
 
-### Ejercicio 4 - `Min`
-
-- `src/test/java/assignment2_exercises/MinCsvParameterizedTest.java`
-- `src/test/resources/assignment2_exercises/min_valid_cases.csv`
-- `src/test/resources/assignment2_exercises/min_invalid_cases.csv`
-
-### Ejercicio 5 - `ZuneBug`
-
-- `src/test/java/assignment2_exercises/ZuneBugParameterizedTest.java`
-- correccion del defecto en `currentYear` de
-  `src/main/java/assignment2_exercises/ZuneBug.java`
-- copia de la version original en
-  `ejercicio5/currentYear_original.java.txt`.
-
-### Ejercicio 6 - `BoundedQueue`
-
-- `src/test/java/assignment2_exercises/queue/BoundedQueueParameterizedTest.java`
-- implementacion de `repOK()` en
-  `src/main/java/assignment2_exercises/queue/BoundedQueue.java`.
-
-## Como ejecutar la suite
-
-Desde la raiz `tp2`, usando un repositorio local Maven aislado en `.m2`:
+Desde la raíz `tp2`, usando un repositorio Maven local aislado en `.m2`:
 
 ```bash
 mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
 ```
 
-El flag `-Djacoco.skip=true` se usa porque el plugin JaCoCo declarado en
-`pom.xml` (`0.8.2`) es viejo y rompe la build con JDK actuales. Para
-ejecutar la suite de un unico ejercicio basta con agregar
-`-Dtest=<NombreDeClase>`. Por ejemplo:
+El flag `-Djacoco.skip=true` se usa porque el plugin JaCoCo declarado en `pom.xml` (`0.8.2`) es viejo y rompe la build con JDK actuales. Para correr la suite de un único ejercicio basta con agregar `-Dtest=<NombreDeClase>`. Por ejemplo:
 
 ```bash
 mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test
 ```
-
-## Documentos adicionales
-
-- `resolucion_practico2.tex` y `resolucion_practico2.pdf`: resolucion
-  completa del TP en formato academico, con la misma estructura usada
-  para el TP1.
-- `resumen_teorico_tp2.tex` y `resumen_teorico_tp2.pdf`: resumen
-  teorico basado en la carpeta `material/` (capitulo 3 de Ammann &
-  Offutt, notas 03 sobre automatizacion y notas 04 sobre data-driven
-  testing).
 
 ## Navegacion interna
 
