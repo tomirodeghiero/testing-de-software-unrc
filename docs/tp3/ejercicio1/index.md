@@ -5,68 +5,72 @@ slug: "/tp3/ejercicio1/"
 description: "Contenido importado desde tp3/ejercicio1/README.md"
 ---
 
-# Ejercicio 1 - Practico 3
+# Ejercicio 1 — Lectura del capítulo 6 (*Input Space Partitioning*)
 
-## Material trabajado
+## Consigna
 
-Para este ejercicio tome como base el capitulo 6 del libro _Introduction to Software Testing_ (Ammann y Offutt, 2da edicion), usando el PDF de teoria.
+Leer el capítulo 6 de *Introduction to Software Testing* (Ammann & Offutt, 2.ª edición), titulado *Input Space Partitioning*. El ejercicio no pide entrega de código: fija el marco conceptual que se aplica en los Ejercicios 2 a 5.
 
-- `../../material/Introduction to Software Testing.pdf`
-- `/Users/tomasrodeghiero/Downloads/Introduction to Software Testing (2).pdf`
+## Material de lectura
 
-## Sintesis del capitulo 6 (Input Space Partitioning)
+- [Capítulo 6 — *Introduction to Software Testing*](/pdfs/tp3/material/Capitulo%206%20-%20Introduction%20to%20Software%20Testing.pdf)
+- [Notas 05 — Criterios de cobertura](/pdfs/tp3/material/notas-05-criterios.pdf)
+- [Notas 06 — Input Space Partitioning](/pdfs/tp3/material/notas-06-input.pdf)
 
-En este capitulo, la idea central es que no conviene elegir tests "a ojo" cuando una entrada tiene muchas combinaciones posibles. En cambio, se modela el dominio de entradas y, a partir de ese modelo, se derivan requisitos de test claros y medibles.
+## Síntesis del capítulo
 
-### 1) Modelo del dominio de entradas
+La idea central del capítulo es que no conviene elegir casos de test "a ojo" cuando una entrada admite muchas combinaciones posibles. En su lugar, se modela el dominio de entradas y, a partir de ese modelo, se derivan requisitos de test claros y medibles.
 
-Primero se identifican los parametros de entrada y luego se los describe con **caracteristicas** relevantes para testing. Cada caracteristica se divide en **bloques** (particiones) que representan clases de valores.
+### 1) Modelo del dominio de entradas (MDE)
 
-Un modelo de buena calidad deberia cumplir dos propiedades:
+Primero se identifican los parámetros de entrada y luego se los describe con **características** relevantes para testing. Cada característica se divide en **bloques** (particiones) que representan clases de valores. Un MDE de buena calidad cumple dos propiedades:
 
-- **Completitud**: toda entrada valida deberia quedar cubierta por algun bloque.
-- **Disyuncion**: una entrada no deberia caer en dos bloques de la misma caracteristica al mismo tiempo.
+- **Completitud**: toda entrada válida queda cubierta por algún bloque.
+- **Disyunción (*disjointness*)**: una entrada no cae en dos bloques de la misma característica al mismo tiempo.
 
-### 2) Criterios de cobertura sobre el modelo
+### 2) Dos enfoques para construirlo
 
-Una vez definido el modelo, el capitulo propone distintos criterios para generar requisitos de test (TR):
+- **Basado en interfaz**: una característica por parámetro, mirando la sintaxis. Rápido, pero ignora relaciones entre parámetros.
+- **Basado en funcionalidad**: las características se derivan del comportamiento esperado (precondiciones, poscondiciones, valores especiales). Más costoso, pero mucho más expresivo.
 
-- **Each Choice (EC)**: cada bloque de cada caracteristica debe aparecer al menos una vez.
-- **Pairwise Coverage (PWC)**: para cada par de caracteristicas, toda pareja de bloques debe aparecer al menos una vez en algun test.
-- **All Combinations (AC)**: cubrir todas las combinaciones posibles de bloques entre caracteristicas (muy costoso, pero maximo nivel de combinacion).
-- **Base Choice (BC)**: se elige un caso base y luego se varia una caracteristica por vez.
+### 3) Criterios de cobertura sobre el modelo
 
-La relacion costo/beneficio que destaca el capitulo es que **PWC suele dar buena deteccion de fallas con menos casos que AC**, porque muchos defectos se disparan por interaccion de a dos factores.
+- **Each Choice (ECC)**: cada bloque de cada característica aparece al menos una vez.
+- **Pair-Wise Coverage (PWC)**: para cada par de características, toda pareja de bloques aparece al menos una vez en algún test.
+- **All Combinations (AC)**: cubre todas las combinaciones posibles de bloques entre características. Máxima fuerza, también máximo costo.
+- **Base Choice (BCC)**: se elige un caso base por característica y se varía una a la vez.
 
-### 3) Restricciones e infeasibilidad
+La relación costo/beneficio que destaca el capítulo es que **PWC suele dar buena detección de fallas con muchos menos casos que AC**, porque la mayoría de los defectos se disparan por interacción de a dos factores.
 
-En la practica, no todas las combinaciones son validas. Por eso el modelo tiene que explicitar **restricciones** para eliminar combinaciones imposibles o fuera de especificacion.
+### 4) Restricciones e infactibilidad
 
-Esto es clave para no perder tiempo escribiendo tests que nunca podrian ejecutarse en escenarios reales.
+En la práctica no todas las combinaciones son válidas. El modelo debe explicitar **restricciones** para descartar combinaciones imposibles o fuera de especificación. Esto evita generar requisitos que ningún test podría satisfacer.
 
-### 4) Flujo recomendado de trabajo
+### 5) Flujo recomendado
 
-El proceso que me queda del capitulo es:
+1. Identificar los parámetros de entrada.
+2. Definir las características relevantes.
+3. Particionar cada característica en bloques.
+4. Declarar las restricciones entre bloques.
+5. Elegir el criterio de cobertura (ECC, PWC, BCC, AC).
+6. Derivar los requisitos de test y, recién al final, instanciar casos concretos.
 
-1. Identificar parametros de entrada.
-2. Definir caracteristicas relevantes.
-3. Particionar cada caracteristica en bloques.
-4. Declarar restricciones entre bloques.
-5. Elegir criterio de cobertura (EC, PWC, BC, AC).
-6. Derivar los requisitos de test y recien ahi instanciar casos concretos.
+## Aplicación al resto del práctico
 
-## Reflexion aplicada al Practico 3
+Este enfoque encaja directo con los ejercicios siguientes. Por ejemplo, para `numberOfOcurrences(List<Integer> l, Integer element)` el MDE obliga a modelar explícitamente situaciones como:
 
-Este enfoque encaja directo con el ejercicio de `numberOfOcurrences(List<Integer> l, Integer element)`, porque obliga a modelar explicitamente situaciones como:
+- `l` nula vs. no nula,
+- `element` nulo vs. no nulo,
+- lista vacía vs. no vacía,
+- elemento presente vs. ausente,
+- una ocurrencia vs. múltiples ocurrencias.
 
-- `l` nula vs no nula
-- `element` nulo vs no nulo
-- lista vacia vs no vacia
-- elemento presente vs ausente
-- una ocurrencia vs multiples ocurrencias
+Con ese modelo, cubrir por PWC deja de ser algo "intuitivo" y pasa a ser verificable: cada par de bloques entre características queda respaldado por al menos un test documentado.
 
-Con ese modelo, cubrir por PWC deja de ser algo "intuitivo" y pasa a ser verificable: cada par de bloques entre caracteristicas queda respaldado por al menos un test documentado.
+Para una versión más extensa con definiciones y ejemplos, ver el [Resumen teórico del TP3](/pdfs/tp3/resumen_teorico_practico3.pdf).
 
-## Conclusion personal
+## Enlaces relacionados
 
-Este capitulo me ordena mucho la forma de trabajar con los tests: primero modelo, despues cobertura, y recien al final implementacion. Eso evita tanto el subtesting (faltan escenarios) como el overtesting (casos redundantes sin aporte).
+- Enunciado del práctico: [`practico3.pdf`](/pdfs/tp3/practico3.pdf)
+- Resolución completa: [`resolucion_practico3.pdf`](/pdfs/tp3/resolucion_practico3.pdf)
+- Resumen teórico: [`resumen_teorico_practico3.pdf`](/pdfs/tp3/resumen_teorico_practico3.pdf)
