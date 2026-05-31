@@ -1,63 +1,52 @@
-# Practico 8
+# Práctico 8 — Testing de Software
 
-Resolucion del practico 8 de Testing de Software: generacion automatica de tests
-(**Randoop** y **EvoSuite**), **mocking** con `EasyMock` y
-**property-based testing** con `jqwik` sobre `fail2ban.Server`.
+## Documentos principales
 
-## Resoluciones por ejercicio
+- Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)
 
-Estan dentro de `assignment-8-rodeghiero/`:
+> El enunciado original (`practico8.pdf`) no se conserva en el repo. Cada ejercicio describe su consigna en el README correspondiente.
 
-- `assignment-8-rodeghiero/ejercicio1/README.md` - `NodeCachingLinkedList` con Randoop, depuracion y metricas JaCoCo/PIT.
-- `assignment-8-rodeghiero/ejercicio2/README.md` - `fileExample` con Randoop vs EvoSuite, analisis del trade-off.
-- `assignment-8-rodeghiero/ejercicio3/README.md` - mecanismos de Randoop para mejorar escenarios complejos.
-- `assignment-8-rodeghiero/ejercicio4/README.md` - tests con `EasyMock` para `IPBlacklist.login`.
-- `assignment-8-rodeghiero/ejercicio5/README.md` - `fail2ban.Server`: Randoop, EvoSuite, depuracion con `repOK()` y propiedad `jqwik` con un unico generador.
+## Ejercicios
 
-## Documentos LaTeX
+- `ejercicio1/` — `NodeCachingLinkedList` con Randoop, depuración y métricas JaCoCo/PIT.
+- `ejercicio2/` — `fileExample` con Randoop vs EvoSuite, análisis del trade-off.
+- `ejercicio3/` — mecanismos de Randoop para mejorar escenarios complejos.
+- `ejercicio4/` — tests con `EasyMock` para `IPBlacklist.login`.
+- `ejercicio5/` — `fail2ban.Server`: Randoop, EvoSuite, depuración con `repOK()` y propiedad `jqwik` con un único generador.
 
-- `resolucion_practico8.tex` / `.pdf` - resolucion integral del TP8.
-- `resumen_teorico_practico8.tex` / `.pdf` - resumen teorico basado en:
-  - `material/notas-14-mocks.pdf`
-  - `material/notas-15-evosuite.pdf`
-  - `material/notas-16-.SymExec.pdf`
+## Material de referencia
 
-## Como compilar los LaTeX
+Está todo en `material/`:
 
-```bash
-tectonic resolucion_practico8.tex
-tectonic resumen_teorico_practico8.tex
-```
+- [Notas 14 — Mocks](/pdfs/tp8/material/notas-14-mocks.pdf)
+- [Notas 15 — EvoSuite](/pdfs/tp8/material/notas-15-evosuite.pdf)
+- [Notas 16 — Symbolic execution](/pdfs/tp8/material/notas-16-.SymExec.pdf)
 
-o, alternativamente:
+## Cómo correr los tests y las herramientas
+
+El código vive en `assignment-8-rodeghiero/`. Hay que usar JDK 17 (y JDK 11 para EvoSuite). Desde la carpeta del proyecto:
 
 ```bash
-pdflatex resolucion_practico8.tex && pdflatex resolucion_practico8.tex
-pdflatex resumen_teorico_practico8.tex && pdflatex resumen_teorico_practico8.tex
-```
+cd tp8/assignment-8-rodeghiero
 
-## Como correr los tests y herramientas
-
-Desde `tp8/assignment-8-rodeghiero`:
-
-```bash
 # Compilar
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q -DskipTests compile
 
-# Randoop (clase, tiempo en segundos, outputlimit, testsperfile)
+# Tests JUnit
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q -Djacoco.skip=true test
+
+# Cobertura JaCoCo (reporte en target/site/jacoco/)
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q test
+
+# Mutation testing con PIT (reporte en target/pit-reports/)
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q org.pitest:pitest-maven:mutationCoverage
+
+# Randoop: clase, time-limit (s), output-limit, tests-per-file
 ./gen-randoop.sh assignment8_exercises.ncl.NodeCachingLinkedList 20 400 200
 
 # EvoSuite (requiere Java 11)
 JAVA_HOME=$(/usr/libexec/java_home -v 11) PATH=$JAVA_HOME/bin:$PATH \
     ./gen-evo.sh assignment8_exercises.fail2ban.Server 30
-
-# Tests
-JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q -Djacoco.skip=true test
-
-# Cobertura JaCoCo (informe en target/site/jacoco/)
-JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q test
-
-# Mutation testing con PIT
-JAVA_HOME=$(/usr/libexec/java_home -v 17) \
-    mvn -q org.pitest:pitest-maven:mutationCoverage
 ```
+
+El `-Djacoco.skip=true` se usa para correr tests sin JaCoCo (más rápido y evita choques cuando se combinan con PIT).
