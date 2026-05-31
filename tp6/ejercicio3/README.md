@@ -1,77 +1,107 @@
-# Ejercicio 3
+# Ejercicio 3 — Fuzzing: `Mutator`, `MutationFuzzer`, `RandomFuzzer` y `bc`
 
-Este ejercicio estuvo orientado a completar la parte de fuzzing del template provisto por la cátedra.
-La consigna pedía implementar las clases `Mutator`, `MutationFuzzer` y `RandomFuzzer`, y cerrar el test parametrizado que ejecuta el comando `bc` sobre entradas generadas mediante fuzzing, validando que el proceso no exhiba comportamientos inesperados o críticos.
+Completar la parte de fuzzing del template: implementar `Mutator`, `MutationFuzzer` y `RandomFuzzer`, y cerrar el test parametrizado que ejecuta `bc` sobre entradas generadas por fuzzing.
 
-## Código completado
+## 1) `Mutator`
 
-Los archivos editados son los siguientes:
+Tres operadores básicos de mutación sobre strings:
 
-- [Mutator.java](../assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/Mutator.java)
-- [MutationFuzzer.java](../assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/MutationFuzzer.java)
-- [RandomFuzzer.java](../assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/RandomFuzzer.java)
-- [LinuxCommandTest.java](../assignment-6-rodeghiero/src/test/java/assignment6_exercises/fuzzing/LinuxCommandTest.java)
+- `deleteRandomCharacter(s)` — borra un carácter en posición aleatoria.
+- `insertRandomCharacter(s)` — inserta un carácter ASCII aleatorio en una posición aleatoria.
+- `flipRandomCharacter(s)` — selecciona un carácter al azar y le da vuelta uno de los 7 bits bajos.
 
-## Detalle de la implementación
+Más el método `mutate(s)`, que elige uno de los tres con probabilidad uniforme:
 
-### 1) `Mutator`
+```java
+public static String mutate(String s) {
+    if (s == null) {
+        throw new IllegalArgumentException("Input string cannot be null");
+    }
+    int choice = RANDOM.nextInt(3);
+    switch (choice) {
+        case 0:  return deleteRandomCharacter(s);
+        case 1:  return insertRandomCharacter(s);
+        default: return flipRandomCharacter(s);
+    }
+}
+```
 
-En esta clase implementé los tres operadores de mutación básicos sobre cadenas:
+Las tres operaciones validan `null` y manejan el caso de string vacío donde corresponde (no se puede borrar ni flippear un carácter de una cadena de longitud 0).
 
-1. `deleteRandomCharacter(s)`: elimina un carácter en una posición aleatoria.
-2. `insertRandomCharacter(s)`: inserta un carácter aleatorio en una posición arbitraria.
-3. `flipRandomCharacter(s)`: reemplaza un carácter aleatorio por otro distinto.
+## 2) `MutationFuzzer`
 
-Además implementé el método `mutate(s)`, que selecciona uno de los tres operadores de manera aleatoria y lo aplica sobre la cadena recibida.
-También se incorporaron validaciones para entradas `null` y se contempló el manejo de la cadena vacía en aquellas operaciones donde aplicaba (por ejemplo, no se puede borrar ni dar vuelta un carácter de una cadena de longitud cero).
+Corregí un bug del constructor (el parámetro `max_mutations` quedaba mal asignado) y completé `fuzz()`:
 
-### 2) `MutationFuzzer`
+1. elige aleatoriamente una semilla de la población inicial,
+2. determina cuántas mutaciones aplicar entre `min_mutations` y `max_mutations`,
+3. aplica las mutaciones en cadena (cada nueva mutación sobre el resultado de la anterior) y devuelve la cadena final.
 
-Aquí corregí un bug del constructor original, en el que el parámetro `max_mutations` quedaba mal asignado. A partir de eso, completé el método `fuzz()` siguiendo estos pasos:
+```java
+public String fuzz() {
+    String candidate = population.get(random.nextInt(population.size()));
+    int mutations = min_mutations;
+    if (max_mutations > min_mutations) {
+        mutations += random.nextInt((max_mutations - min_mutations) + 1);
+    }
+    for (int i = 0; i < mutations; i++) {
+        candidate = Mutator.mutate(candidate);
+    }
+    return candidate;
+}
+```
 
-1. Selecciona aleatoriamente una semilla a partir de la población inicial de entradas.
-2. Determina cuántas mutaciones aplicar, eligiendo un valor entre `min_mutations` y `max_mutations`.
-3. Aplica las mutaciones en cadena (cada nueva mutación se hace sobre el resultado de la anterior) y devuelve la cadena final.
+Así se generan entradas progresivamente más alejadas de las semillas, lo que ayuda a explorar caminos que un fuzzer puramente aleatorio difícilmente alcanzaría.
 
-Esto permite generar entradas progresivamente más alejadas de las semillas iniciales, lo cual es útil para descubrir caminos del programa que un fuzzer puramente aleatorio difícilmente exploraría.
+## 3) `RandomFuzzer`
 
-### 3) `RandomFuzzer`
+`fuzz()` genera cadenas completamente aleatorias:
 
-Implementé el método `fuzz()` para que genere cadenas completamente aleatorias a partir de los siguientes parámetros:
+1. una longitud aleatoria entre `0` y `maxLength`,
+2. cada carácter elegido en el rango `[charStart, charStart + charRange)`.
 
-1. Una longitud aleatoria entre `0` y `maxLength`.
-2. Caracteres aleatorios dentro del rango definido por `charStart` y `charRange`.
+Sin estructura previa. Sirve como contrapunto al fuzzer por mutación.
 
-De este modo el fuzzer produce strings sin ningún tipo de estructura previa, lo que sirve como punto de comparación frente al enfoque de mutación.
+## 4) `LinuxCommandTest`
 
-### 4) `LinuxCommandTest`
+Test parametrizado que corre `bc` con cadenas generadas por el `MutationFuzzer`. La semilla inicial es `"2 + 2"` y se hacen 100 trials.
 
-Por último, completé el test parametrizado que ejecuta el comando `bc` usando como entrada las cadenas generadas por el fuzzer.
+El criterio de validación está orientado a detectar fallas **graves**, no a esperar una salida específica:
 
-El criterio de validación que adopté está orientado a detectar fallas graves en la ejecución, en lugar de exigir una salida específica:
+- el proceso no debe terminar con códigos típicos de aborto o segfault (`134`, `139`);
+- `stderr` no debe contener `segmentation fault`, `core dumped` ni `illegal instruction`.
 
-1. El proceso no debe terminar con códigos de retorno típicos de aborto o segmentation fault (`134`, `139`).
-2. La salida estándar de error (`stderr`) no debe contener mensajes asociados a fallas críticas, como:
-   - `segmentation fault`
-   - `core dumped`
-   - `illegal instruction`
+**Importante**: no se exige `exitCode == 0`. Es esperable que `bc` rechace muchas entradas fuzzed con errores sintácticos — ese comportamiento es manejo normal de entradas inválidas, no una falla del programa.
 
-Es importante destacar que **no se exige `exitCode == 0`**, ya que es perfectamente esperable que `bc` rechace muchas entradas fuzzed devolviendo errores sintácticos: ese comportamiento corresponde al manejo normal de entradas inválidas y no debería considerarse una falla del programa.
+```java
+assertNotEquals(134, exitCode); // abort
+assertNotEquals(139, exitCode); // segfault
+String stderrLower = stderr.toString().toLowerCase();
+assertFalse(stderrLower.contains("segmentation fault"));
+assertFalse(stderrLower.contains("core dumped"));
+assertFalse(stderrLower.contains("illegal instruction"));
+```
 
 ## Verificación
 
-Para validar que la implementación funciona correctamente, ejecuté la suite completa de tests con el siguiente comando:
-
 ```bash
+cd tp6/assignment-6-rodeghiero
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
 ```
 
-Resultado obtenido:
+Resultado:
 
 - `BUILD SUCCESS`
 - `LinuxCommandTest`: **100/100 OK**
 - `TriTypTest`: **15/15 OK**
 
-## Cierre
+## Archivos
 
-El ejercicio queda resuelto con las tres clases de fuzzing implementadas (`Mutator`, `MutationFuzzer` y `RandomFuzzer`) y un test parametrizado robusto que ejecuta `bc` de forma controlada frente a un volumen significativo de entradas aleatorias y mutadas, sin reportar comportamientos críticos durante la ejecución.
+- [`Mutator.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp6/assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/Mutator.java)
+- [`MutationFuzzer.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp6/assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/MutationFuzzer.java)
+- [`RandomFuzzer.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp6/assignment-6-rodeghiero/src/main/java/assignment6_exercises/fuzzing/RandomFuzzer.java)
+- [`LinuxCommandTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp6/assignment-6-rodeghiero/src/test/java/assignment6_exercises/fuzzing/LinuxCommandTest.java)
+
+## Enlaces
+
+- Enunciado: [`practico6.pdf`](/pdfs/tp6/practico6.pdf)
+- Resolución: [`resolucion_practico6.pdf`](/pdfs/tp6/resolucion_practico6.pdf)

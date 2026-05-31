@@ -18,7 +18,9 @@ titleize() {
 
 readmes_list="$(mktemp)"
 for tp in $TPS; do
-  find "$tp" -type f \( -name 'README.md' -o -name 'readme.md' \)
+  find "$tp" -type f \( -name 'README.md' -o -name 'readme.md' \) \
+      ! -path "*assignment-*-rodeghiero/*" \
+      ! -path "*assignmnet-*-rodeghiero/*"
 done | sort > "$readmes_list"
 
 rm -rf "$SITE_ROOT/docs"
