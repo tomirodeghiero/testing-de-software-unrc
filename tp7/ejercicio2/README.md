@@ -1,68 +1,113 @@
-# Ejercicio 2
+# Ejercicio 2 — `Point`: `equals`/`hashCode` y propiedad geométrica
 
-Este ejercicio trabaja sobre la clase `assignment7_exercises.point.Point`, que modela un punto en el plano con coordenadas `x` e `y` de tipo `float`.
+Trabajo sobre `assignment7_exercises.point.Point`, que modela un punto en el plano con coordenadas `x` e `y` de tipo `float`.
 
-La consigna planteaba cuatro tareas:
+La consigna pide cuatro cosas:
 
 1. explicar la relación entre `equals` y `hashCode`,
-2. implementar ambos métodos respetando el contrato de Java,
+2. implementar ambos respetando el contrato,
 3. escribir propiedades con un generador de puntos en `jqwik`,
 4. validar con una propiedad geométrica: la distancia entre dos puntos sobre una recta paralela al eje X.
 
-## Archivos relevantes
+## La relación entre `equals` y `hashCode`
 
-- Implementación de `Point`: [Point.java](../assignmnet-7-rodeghiero/src/main/java/assignment7_exercises/point/Point.java)
-- Propiedades `jqwik`: [PointPropertiesTest.java](../assignmnet-7-rodeghiero/src/test/java/assignment7_exercises/point/PointPropertiesTest.java)
+El contrato de `Object` establece dos reglas que son clave cuando una clase se va a usar en `HashMap` o `HashSet`:
 
-## Relación entre `equals` y `hashCode`
+- **Si dos objetos son iguales según `equals`, deben tener el mismo `hashCode`.** Es obligatorio. Si se rompe, las estructuras basadas en hashing dejan de funcionar (un objeto podría no encontrarse nunca porque se busca en el *bucket* equivocado).
+- **La inversa no es obligatoria.** Dos objetos con el mismo hash no tienen por qué ser iguales: eso es una *colisión*. Es esperable, el hash es un entero con rango finito.
 
-El contrato de `Object` en Java establece dos reglas que son clave cuando una clase va a usarse en estructuras como `HashMap` o `HashSet`:
+Al sobrescribir `equals` también hay que sobrescribir `hashCode` **consistentemente con esa definición**.
 
-- **Si dos objetos son iguales según `equals`, entonces deben tener el mismo `hashCode`.** Esto es obligatorio: si se rompe, las estructuras basadas en hashing dejan de funcionar correctamente (un objeto podría no encontrarse nunca porque se estaría buscando en el *bucket* equivocado).
-- **La inversa no es obligatoria.** Dos objetos con el mismo `hashCode` no tienen por qué ser iguales. Eso se conoce como *colisión* y es un comportamiento esperado: el hash es un entero con un rango finito, por lo que es inevitable que haya colisiones para objetos distintos.
+## `equals` y `hashCode`
 
-Por eso, al sobrescribir `equals` también hay que sobrescribir `hashCode` de manera **consistente con esa definición**. Si se modifica uno sin el otro, se rompe el contrato.
+```java
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+    Point other = (Point) obj;
+    return Float.compare(this.x, other.x) == 0
+        && Float.compare(this.y, other.y) == 0;
+}
 
-## Desarrollo de la resolución
-
-### 1) `equals` y `hashCode`
-
-En `Point` se agregaron ambos métodos cuidando que queden alineados entre sí:
-
-- `equals(Object)` primero cubre los dos casos rápidos (misma referencia y objeto `null` o de otra clase), y después compara las coordenadas con `Float.compare(...)`. Se usa `Float.compare` en lugar de `==` porque trata correctamente los casos especiales del IEEE 754 como `NaN` y `-0.0f` vs `+0.0f`. Con `==`, por ejemplo, `NaN == NaN` da `false`, lo cual rompería la reflexividad de `equals` si un punto tuviera una coordenada `NaN`.
-- `hashCode()` combina las dos coordenadas usando `Float.floatToIntBits(...)`, que convierte el `float` a su representación binaria como `int`. Esto garantiza que dos `float` "iguales" según `Float.compare` produzcan el mismo `int`, y por lo tanto el mismo hash. Se combinan con la fórmula clásica `31 * result + ...` para reducir colisiones.
-
-De esta manera, si dos puntos tienen las mismas coordenadas, `equals` da `true` **y** los dos hashes coinciden, cumpliendo el contrato.
-
-### 2) Generador de puntos y propiedad del contrato `equals/hashCode`
-
-Se definió un generador `@Provide` llamado `puntos` que construye instancias de `Point` a partir de dos coordenadas generadas por el provider `coordenadas`, que devuelve `float` en el rango `[-10_000, 10_000]`. El rango se acotó a propósito para evitar que aparezcan valores extremos (como `Float.NaN` o `Float.POSITIVE_INFINITY`) que podrían ser poco representativos del uso real y generar ruido en otras propiedades.
-
-Sobre ese generador se escribió la propiedad `puntosIgualesDebenTenerMismoHashCode`: genera un punto, construye manualmente una copia con las mismas coordenadas y verifica que:
-
-- `p.equals(copia)` sea `true`,
-- `p.hashCode() == copia.hashCode()`.
-
-Son 250 iteraciones (`tries = 250`), cantidad suficiente para cubrir variedad de combinaciones sin penalizar el tiempo de build.
-
-### 3) Propiedad geométrica: distancia sobre una recta paralela al eje X
-
-Cuando dos puntos comparten la ordenada `y`, están sobre una recta horizontal, y su distancia se reduce a la diferencia (en valor absoluto) de las abscisas:
-
-- `p1 = (x1, y)`
-- `p2 = (x2, y)`
-- `distance(p1, p2) == |x2 - x1|`
-
-Esta es una buena propiedad para *property-based testing* porque es independiente de los valores concretos y captura una invariante geométrica real, no un caso puntual.
-
-La propiedad `distanciaEnRectaParalelaAlEjeXEsDiferenciaDeAbscisas` genera tres coordenadas (`x1`, `x2`, `y`) con el mismo provider de antes, construye los dos puntos compartiendo `y`, y compara el resultado de `distanceTo` contra `Math.abs(x2 - x1)`. Se usa una **tolerancia numérica de `1e-6`** en el `assertEquals` porque `distanceTo` implementa la fórmula euclídea con `Math.sqrt(Math.pow(...))`, y esas operaciones introducen errores de redondeo inevitables en aritmética de punto flotante. Sin tolerancia, la propiedad fallaría por diferencias ínfimas en el último bit.
-
-## Ejecución
-
-Desde `tp7/assignmnet-7-rodeghiero`:
-
-```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
+@Override
+public int hashCode() {
+    int result = Float.floatToIntBits(x);
+    result = 31 * result + Float.floatToIntBits(y);
+    return result;
+}
 ```
 
-Resultado: las dos propiedades del ejercicio 2 pasan correctamente tras las 250 iteraciones cada una.
+Detalles:
+
+- `equals` usa `Float.compare(...)` en lugar de `==`. `==` trata mal los casos especiales de IEEE 754: `NaN == NaN` da `false` (rompería la reflexividad si un punto tuviera `NaN`); `-0.0f == +0.0f` da `true` aunque los bits son distintos. `Float.compare` resuelve los dos casos correctamente.
+- `hashCode` combina las coordenadas usando `Float.floatToIntBits(...)`, que mapea el `float` a su representación binaria como `int`. Eso garantiza que dos `float` "iguales" según `Float.compare` produzcan el mismo `int`, y por lo tanto el mismo hash. La fórmula `31 * result + ...` es la clásica para mezclar campos.
+
+## Generador y propiedad del contrato
+
+```java
+@Provide
+Arbitrary<Point> puntos() {
+    return Combinators.combine(coordenadas(), coordenadas())
+        .as(Point::new);
+}
+
+@Provide
+Arbitrary<Float> coordenadas() {
+    return Arbitraries.floats().between(-10_000f, 10_000f);
+}
+```
+
+El rango se acotó a `[-10_000, 10_000]` a propósito: evita `Float.NaN` o `Float.POSITIVE_INFINITY`, que son poco representativos del uso real y solo generarían ruido.
+
+```java
+@Property(tries = 250)
+void puntosIgualesDebenTenerMismoHashCode(@ForAll("puntos") Point punto) {
+    Point mismoPunto = new Point(punto.getX(), punto.getY());
+
+    assertTrue(punto.equals(mismoPunto));
+    assertEquals(punto.hashCode(), mismoPunto.hashCode());
+}
+```
+
+## Propiedad geométrica: distancia sobre una recta paralela al eje X
+
+Cuando dos puntos comparten la ordenada `y`, están sobre una recta horizontal y su distancia se reduce a `|x2 - x1|`. Es una buena propiedad para PBT: captura una invariante geométrica real, independiente de los valores concretos.
+
+```java
+@Property(tries = 250)
+void distanciaEnRectaParalelaAlEjeXEsDiferenciaDeAbscisas(
+    @ForAll("coordenadas") float x1,
+    @ForAll("coordenadas") float x2,
+    @ForAll("coordenadas") float y
+) {
+    Point p1 = new Point(x1, y);
+    Point p2 = new Point(x2, y);
+
+    double distanciaEsperada = Math.abs((double) (x2 - x1));
+    double distanciaReal = p1.distanceTo(p2);
+
+    assertEquals(distanciaEsperada, distanciaReal, 1.0e-6);
+}
+```
+
+Se usa una **tolerancia numérica de `1e-6`** porque `distanceTo` implementa la fórmula euclídea con `Math.sqrt(Math.pow(...))`, y esas operaciones introducen errores de redondeo inevitables en aritmética de punto flotante. Sin tolerancia, la propiedad fallaría por diferencias ínfimas en el último bit.
+
+## Cómo correr
+
+```bash
+cd tp7/assignmnet-7-rodeghiero
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true \
+    -Dtest=PointPropertiesTest test
+```
+
+Las dos propiedades pasan después de 250 iteraciones cada una.
+
+## Archivos
+
+- [`Point.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp7/assignmnet-7-rodeghiero/src/main/java/assignment7_exercises/point/Point.java) — implementación con `equals` y `hashCode`.
+- [`PointPropertiesTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp7/assignmnet-7-rodeghiero/src/test/java/assignment7_exercises/point/PointPropertiesTest.java) — propiedades + generadores.
+
+## Enlaces
+
+- Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)

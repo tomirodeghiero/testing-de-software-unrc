@@ -1,69 +1,121 @@
-# Ejercicio 3
+# Ejercicio 3 — `Date`: validación, `addDays` y propiedad
 
-Este ejercicio trabaja sobre la clase `assignment7_exercises.date.Date`, que representa una fecha de calendario (día, mes, año) a partir del año 1900. La consigna pedía:
+Trabajo sobre `assignment7_exercises.date.Date`, que representa una fecha de calendario (día, mes, año) desde el año 1900. La consigna pide:
 
-1. completar el constructor y el método `repOk()` para que rechacen fechas inválidas,
-2. implementar `addDays(Date when, int days)`, que suma una cantidad de días a una fecha dada,
+1. completar el constructor y `repOk()` para que rechacen fechas inválidas,
+2. implementar `addDays(Date when, int days)` que suma una cantidad de días a una fecha,
 3. escribir una propiedad en `jqwik` que verifique que el resultado de `addDays` siempre es una fecha válida.
 
-## Archivos relevantes
+## Constructor y `repOk()`
 
-- Implementación de `Date`: [Date.java](../assignmnet-7-rodeghiero/src/main/java/assignment7_exercises/date/Date.java)
-- Propiedad `jqwik`: [DatePropertiesTest.java](../assignmnet-7-rodeghiero/src/test/java/assignment7_exercises/date/DatePropertiesTest.java)
+El constructor toma `(d, m, y)` y antes de asignar valida la terna con `isValidDate`. Si la combinación no es legal, lanza `IllegalArgumentException("invalid date")`. Así nunca se construye un `Date` en estado inválido y el resto del código puede asumir consistencia.
 
-## Desarrollo de la resolución
+```java
+public Date(int d, int m, int y) throws IllegalArgumentException {
+    if (!isValidDate(d, m, y)) {
+        throw new IllegalArgumentException("invalid date");
+    }
+    this.day = d;
+    this.month = m;
+    this.year = y;
+    assert repOk();
+}
 
-### 1) Constructor y `repOk()`
-
-El constructor toma `(d, m, y)` y antes de asignar los campos valida la terna con `isValidDate`. Si la combinación no es legal, lanza `IllegalArgumentException("invalid date")`. De esta forma nunca se construye un `Date` en estado inválido, lo cual simplifica el resto del código: cualquier instancia existente se puede asumir consistente.
-
-`repOk()` reutiliza la misma función `isValidDate` para evitar duplicar la lógica. Las reglas del invariante son:
-
-- `year >= 1900` (la clase no modela fechas anteriores),
-- `1 <= month <= 12`,
-- `1 <= day <= daysInMonth(month, year)`,
-- los meses de 30 días (abril, junio, septiembre, noviembre) no admiten `day == 31`,
-- febrero tiene 29 días en años bisiestos y 28 en años no bisiestos.
-
-El cálculo de días por mes se centralizó en la función privada `daysInMonth(m, y)`, que usa `leap(y)` para decidir el caso de febrero. Tener un único lugar con esa lógica es importante porque `addDays` también la consume: si hubiera dos implementaciones podrían desincronizarse.
-
-### 2) `addDays(Date when, int days)`
-
-El método devuelve una **nueva** `Date` (no muta la original), sumando `days` días calendario a `when`. Se optó por un algoritmo que avanza **por bloques de mes** en lugar de día por día, porque con `days` del orden de miles (lo que permite el generador) una iteración por día sería innecesariamente lenta.
-
-El esquema general:
-
-1. **Validaciones de entrada.** Si `when` es `null`, se lanza `IllegalArgumentException`. Si `days < 0`, también. El enunciado restringe el avance a números no negativos, así que se rechaza explícitamente.
-2. **Variables de trabajo** `d`, `m`, `y` y `remainingDays` inicializadas a partir de `when` y del parámetro `days`.
-3. **Bucle principal.** En cada iteración se calcula cuántos días quedan en el mes actual (`daysLeftInMonth = daysInCurrentMonth - d`). Hay dos casos:
-   - Si los días restantes **caben** en el mes actual (`remainingDays <= daysLeftInMonth`), se suman directamente al día y se termina.
-   - Si **no caben**, se consume el resto del mes (incluyendo saltar al día 1 del mes siguiente, por eso se resta `daysLeftInMonth + 1`), se avanza un mes y, si el mes supera 12, se pasa al 1 de enero del año siguiente.
-4. **Construcción del resultado.** Se devuelve `new Date(d, m, y)`, que internamente vuelve a pasar por el constructor, por lo que si por algún error quedara en un estado inválido, la excepción lo expondría de inmediato.
-
-La clave del algoritmo es que nunca se construye una fecha intermedia inválida: el salto de mes se hace en un solo paso, sin pasar por un hipotético "32 de enero".
-
-### 3) Propiedad con generadores
-
-La propiedad `addDaysSiempreDevuelveFechaValida` captura la idea central: **para cualquier fecha válida y cualquier cantidad no negativa de días, el resultado de `addDays` es una fecha válida**. Es la propiedad natural que se espera de una operación de avance sobre un tipo con invariante.
-
-Los generadores son dos:
-
-- **`fechasValidas`**: usa `flatMap` para construir la terna `(day, month, year)` en el orden correcto. Primero se elige el año entre `1900` y `2400`, después el mes entre `1` y `12`, y por último el día entre `1` y `daysInMonth(month, year)`. El anidamiento con `flatMap` es necesario porque el rango del día **depende** del mes y del año ya elegidos (de otra forma se podrían generar cosas como `31/04/2024`, que el constructor rechazaría). Al tope del año se lo acotó en `2400` para que las fechas generadas se mantengan dentro del rango útil sin volverse extravagantes.
-- **`diasNoNegativos`**: genera enteros entre `0` y `5000`. El rango se eligió con dos criterios: que sea lo suficientemente amplio como para forzar saltos de varios años (5000 días ≈ 13 años y medio), y que no sea tan grande como para que las 250 iteraciones se vuelvan lentas.
-
-La propiedad crea una instancia *receptora* `new Date(1, 1, 1900)` solamente porque `addDays` es un método de instancia; el contenido del receptor es irrelevante porque todo el cálculo se hace sobre `when`. Luego llama a `addDays(fecha, dias)` y verifica que el resultado:
-
-- no sea `null`,
-- cumpla `repOk()`.
-
-Se ejecuta con `tries = 250`.
-
-## Ejecución
-
-Desde `tp7/assignmnet-7-rodeghiero`:
-
-```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
+public boolean repOk() {
+    return isValidDate(day, month, year);
+}
 ```
 
-Resultado: **BUILD SUCCESS** con la propiedad del ejercicio 3 en verde, junto con las del resto del TP.
+`repOk()` reutiliza `isValidDate` para no duplicar lógica. Las reglas del invariante:
+
+- `year >= 1900`,
+- `1 <= month <= 12`,
+- `1 <= day <= daysInMonth(month, year)`,
+- meses de 30 días (4, 6, 9, 11) no admiten `day == 31`,
+- febrero tiene 29 días en años bisiestos y 28 en no bisiestos.
+
+El cálculo de días por mes está centralizado en `daysInMonth(m, y)`, que usa `leap(y)` para febrero. Tener un único lugar con esa lógica es importante porque `addDays` también la consume: si hubiera dos implementaciones, podrían desincronizarse.
+
+## `addDays(Date when, int days)`
+
+Devuelve una **nueva** `Date` (no muta la original), sumando `days` días calendario a `when`. Avanza **por bloques de mes** en lugar de día por día: con `days` del orden de miles, la iteración por día sería innecesariamente lenta.
+
+```java
+public Date addDays(Date when, int days) {
+    if (when == null) throw new IllegalArgumentException("date cannot be null");
+    if (days < 0)    throw new IllegalArgumentException("days must be non-negative");
+
+    int d = when.day, m = when.month, y = when.year;
+    int remainingDays = days;
+
+    while (remainingDays > 0) {
+        int daysInCurrentMonth = daysInMonth(m, y);
+        int daysLeftInMonth = daysInCurrentMonth - d;
+
+        if (remainingDays <= daysLeftInMonth) {
+            d = d + remainingDays;
+            remainingDays = 0;
+        } else {
+            remainingDays = remainingDays - (daysLeftInMonth + 1);
+            d = 1;
+            m = m + 1;
+            if (m > 12) { m = 1; y = y + 1; }
+        }
+    }
+
+    return new Date(d, m, y);
+}
+```
+
+Esquema:
+
+1. **Validaciones**. `when` no puede ser `null`. `days` no puede ser negativo (la consigna restringe a avance).
+2. **Variables de trabajo** `d`, `m`, `y` y `remainingDays`.
+3. **Bucle**: en cada iteración se calcula `daysLeftInMonth`. Si los restantes caben en el mes actual, se suman directamente al día y se termina. Si no caben, se consume el resto del mes (incluyendo el salto al día 1 del mes siguiente, por eso se resta `daysLeftInMonth + 1`), se avanza un mes y, si supera 12, se pasa al 1 de enero del año siguiente.
+4. **Resultado**: `new Date(d, m, y)` vuelve a pasar por el constructor, así que cualquier estado intermedio inválido explotaría con `IllegalArgumentException`.
+
+La clave: nunca se construye una fecha intermedia inválida — el salto de mes se hace en un solo paso, sin pasar por un hipotético "32 de enero".
+
+## Propiedad con generadores
+
+```java
+@Property(tries = 250)
+void addDaysSiempreDevuelveFechaValida(
+    @ForAll("fechasValidas") Date fecha,
+    @ForAll("diasNoNegativos") int dias
+) {
+    Date receptor = new Date(1, 1, 1900);
+    Date resultado = receptor.addDays(fecha, dias);
+
+    assertNotNull(resultado);
+    assertTrue(resultado.repOk());
+}
+```
+
+Captura la idea central: **para cualquier fecha válida y cualquier cantidad no negativa de días, el resultado de `addDays` es una fecha válida**.
+
+Los generadores:
+
+- **`fechasValidas`** usa `flatMap` para construir la terna `(day, month, year)` en el orden correcto: primero el año (`1900..2400`), después el mes (`1..12`), y por último el día (`1..daysInMonth(month, year)`). El anidamiento es necesario porque el rango del día **depende** del mes y el año (si no, se generarían cosas como `31/04/2024` que el constructor rechazaría).
+- **`diasNoNegativos`** genera enteros entre `0` y `5000`. Suficiente para forzar saltos de varios años (5000 días ≈ 13 años y medio) sin volver lenta la suite.
+
+El receptor `new Date(1, 1, 1900)` está solo porque `addDays` es de instancia; su contenido es irrelevante porque todo se hace sobre `when`.
+
+## Cómo correr
+
+```bash
+cd tp7/assignmnet-7-rodeghiero
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true \
+    -Dtest=DatePropertiesTest test
+```
+
+Resultado: `BUILD SUCCESS` con la propiedad en verde.
+
+## Archivos
+
+- [`Date.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp7/assignmnet-7-rodeghiero/src/main/java/assignment7_exercises/date/Date.java) — constructor, `repOk`, `addDays`.
+- [`DatePropertiesTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp7/assignmnet-7-rodeghiero/src/test/java/assignment7_exercises/date/DatePropertiesTest.java) — propiedad + generadores.
+
+## Enlaces
+
+- Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)
