@@ -58,9 +58,9 @@ Introduction-to-Software-Testing-3.pdf
 Introduction-to-Software-Testing-3.txt
 solucion_practico5_ej1.md
 
-# Docusaurus / Node
-node_modules/
-build/
-.docusaurus/
-docs/
-static/pdfs/
+# Docusaurus / Node (todo dentro de web/)
+web/node_modules/
+web/build/
+web/.docusaurus/
+web/docs/
+web/static/pdfs/
