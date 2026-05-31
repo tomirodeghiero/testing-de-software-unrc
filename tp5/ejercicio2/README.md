@@ -1,16 +1,16 @@
-# Ejercicio 2
+# Ejercicio 2 — `checkIt()` vs `checkItExpand()`: CACC y Edge Coverage
 
-En este ejercicio trabajé con el predicado del método `checkIt()`:
+Trabajo sobre el predicado del método `checkIt()`:
 
-`p = a && (b || c)`
+```
+p = a && (b || c)
+```
 
-La idea fue resolver lo que pide cada inciso y, además, dejar implementadas las suites JUnit en el proyecto.
+## a) Expandir a `checkItExpand()` con instrumentación
 
-## a) Transformar `checkIt()` a `checkItExpand()` e instrumentar
+La transformación pedida busca que cada decisión del `if` use **una sola variable booleana**.
 
-La transformación pedida busca que cada decisión del `if` use exactamente una variable booleana.
-
-Versión original (conceptual):
+Versión original:
 
 ```java
 if (a && (b || c)) {
@@ -20,7 +20,7 @@ if (a && (b || c)) {
 }
 ```
 
-Versión expandida (`checkItExpand`), manteniendo la misma semántica:
+Versión expandida (`checkItExpand`), con la misma semántica:
 
 ```java
 if (a) {
@@ -38,121 +38,98 @@ if (a) {
 }
 ```
 
-Implementación en el proyecto:
+### Instrumentación
 
-- [CheckIt.java](../assignment-5-rodeghiero/src/main/java/assignment5_exercises/checkit/CheckIt.java)
+`checkItExpand()` devuelve un `ExecutionTrace` con:
 
-Instrumentación que agregué:
+1. los nodos recorridos (`getNodes()`),
+2. las aristas recorridas (`getEdges()`), armadas como pares consecutivos `N_i -> N_{i+1}`.
 
-- `checkItExpand()` devuelve un `ExecutionTrace` con:
-1. nodos recorridos (`getNodes()`)
-2. aristas recorridas (`getEdges()`), armadas como pares consecutivos `N_i -> N_{i+1}`
+Nodos definidos: `START`, `A`, `B`, `C`, `TRUE`, `FALSE`, `END`.
 
-Nodos definidos para el análisis:
+Con eso se puede verificar cobertura de aristas directamente en los tests.
 
-- `START`
-- `A` (decisión sobre `a`)
-- `B` (decisión sobre `b`)
-- `C` (decisión sobre `c`)
-- `TRUE`
-- `FALSE`
-- `END`
+## b) Derivar T1 (CACC sobre `checkIt`) y T2 (Edge Coverage sobre `checkItExpand`)
 
-Con esto se puede verificar cobertura de aristas directamente en los tests.
+### T1 para CACC
 
-## b) Derivar T1 (CACC para `checkIt`) y T2 (Edge Coverage para `checkItExpand`)
+Para CACC, cada cláusula tiene que actuar como mayor al menos una vez, con un par de casos donde al cambiarla cambia `p`.
 
-### T1 para CACC sobre `p = a && (b || c)`
-
-Para CACC, cada cláusula debe actuar como cláusula mayor al menos una vez, y tiene que existir un par de casos donde al cambiar esa cláusula cambie el valor de `p`.
-
-Suite propuesta:
+Suite:
 
 - `t1 = (T, T, F)`
 - `t2 = (F, T, F)`
 - `t3 = (T, F, F)`
 - `t4 = (T, F, T)`
 
-Justificación por cláusula mayor:
+Justificación:
 
-1. Mayor `a`:
-- Par `(t1, t2)` = `(T,T,F)` vs `(F,T,F)`
-- Cláusulas menores fijas: `b=T`, `c=F`
-- `p` cambia de `T` a `F`
+- **mayor `a`** → par `(t1, t2) = (T,T,F)` vs `(F,T,F)`. Menores `b=T`, `c=F`. `p` pasa de `T` a `F`.
+- **mayor `b`** → par `(t1, t3) = (T,T,F)` vs `(T,F,F)`. Menores `a=T`, `c=F`. `p` pasa de `T` a `F`.
+- **mayor `c`** → par `(t4, t3) = (T,F,T)` vs `(T,F,F)`. Menores `a=T`, `b=F`. `p` pasa de `T` a `F`.
 
-2. Mayor `b`:
-- Par `(t1, t3)` = `(T,T,F)` vs `(T,F,F)`
-- Cláusulas menores fijas: `a=T`, `c=F`
-- `p` cambia de `T` a `F`
+Conclusión: T1 satisface CACC.
 
-3. Mayor `c`:
-- Par `(t4, t3)` = `(T,F,T)` vs `(T,F,F)`
-- Cláusulas menores fijas: `a=T`, `b=F`
-- `p` cambia de `T` a `F`
+### T2 para Edge Coverage
 
-Conclusión: `T1` satisface CACC.
-
-### T2 para Edge Coverage sobre `checkItExpand`
-
-Suite propuesta:
+Suite:
 
 - `e1 = (F, F, F)`
 - `e2 = (T, T, F)`
 - `e3 = (T, F, T)`
 - `e4 = (T, F, F)`
 
-Aristas esperadas del CFG expandido:
+Aristas del CFG expandido:
 
-1. `START->A`
-2. `A->B`
-3. `A->FALSE`
-4. `B->TRUE`
-5. `B->C`
-6. `C->TRUE`
-7. `C->FALSE`
-8. `TRUE->END`
-9. `FALSE->END`
+1. `START -> A`
+2. `A -> B`
+3. `A -> FALSE`
+4. `B -> TRUE`
+5. `B -> C`
+6. `C -> TRUE`
+7. `C -> FALSE`
+8. `TRUE -> END`
+9. `FALSE -> END`
 
-Con `e1..e4` se cubren las 9 aristas, así que `T2` satisface Edge Coverage para `checkItExpand()`.
+`e1..e4` cubren las 9 aristas, así que T2 satisface Edge Coverage.
 
-### ¿`T2` satisface CACC sobre `checkIt`?
+### ¿T2 satisface CACC sobre `checkIt`?
 
-No.
-
-Para que `a` determine `p`, hace falta que `b || c = true`.
-En `T2` hay casos con `a=true` y `b||c=true` (`e2`, `e3`), pero no hay ningún caso con `a=false` y `b||c=true`.
-
-Por ese motivo falta el par correlacionado para cláusula mayor `a`, entonces `T2` no satisface CACC.
+**No.** Para que `a` determine `p` hace falta que `b || c = true`. En T2 hay casos con `a=true` y `b||c=true` (`e2`, `e3`), pero no hay ningún caso con `a=false` y `b||c=true`. Falta el par correlacionado para la cláusula mayor `a`, así que T2 no satisface CACC.
 
 ## c) Implementación de T1 y T2 como suites JUnit
 
-Tests implementados:
+- `CheckItT1CaccTest` valida los tres pares CACC (uno por cláusula mayor).
+- `CheckItT2EdgeCoverageTest` valida que la unión de aristas recorridas por `e1..e4` coincida con el conjunto total, y además verifica explícitamente que esa suite **no** cumple CACC para la cláusula `a`.
 
-- [CheckItT1CaccTest.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/checkit/CheckItT1CaccTest.java)
-- [CheckItT2EdgeCoverageTest.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/checkit/CheckItT2EdgeCoverageTest.java)
+Por ejemplo:
 
-Qué valida cada suite:
+```java
+@Test
+public void t1ContainsAValidCaccPairForMajorA() {
+    boolean pWhenATrue = CheckIt.checkIt(true, true, false);
+    boolean pWhenAFalse = CheckIt.checkIt(false, true, false);
+    assertTrue(pWhenATrue);
+    assertFalse(pWhenAFalse);
+}
+```
 
-1. `CheckItT1CaccTest`
-- verifica los tres pares CACC (una vez por cada cláusula mayor)
-
-2. `CheckItT2EdgeCoverageTest`
-- verifica que la unión de aristas recorridas por `e1..e4` coincide con el conjunto total esperado
-- verifica explícitamente que esa suite no cumple CACC para la cláusula `a`
-
-Ejecución:
-
-Desde `tp5/assignment-5-rodeghiero`:
+### Ejecución
 
 ```bash
+cd tp5/assignment-5-rodeghiero
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
 ```
 
-Resultado obtenido en este entorno:
+Resultado: `BUILD SUCCESS`, `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`.
 
-- `BUILD SUCCESS`
-- `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`
+## Archivos
 
-Nota:
+- [`CheckIt.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/main/java/assignment5_exercises/checkit/CheckIt.java) — implementación con `checkIt`, `checkItExpand` y `ExecutionTrace`.
+- [`CheckItT1CaccTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/checkit/CheckItT1CaccTest.java) — T1 (CACC).
+- [`CheckItT2EdgeCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/checkit/CheckItT2EdgeCoverageTest.java) — T2 (Edge Coverage).
 
-Se usa `-Djacoco.skip=true` porque el plugin JaCoCo del template (`0.8.2`) no es compatible con la JVM disponible y corta el fork de Surefire.
+## Enlaces
+
+- Enunciado: [`practico5.pdf`](/pdfs/tp5/practico5.pdf)
+- Resolución: [`resolucion_practico5.pdf`](/pdfs/tp5/resolucion_practico5.pdf)

@@ -1,18 +1,16 @@
-# Ejercicio 3
+# Ejercicio 3 — `Thermostat.turnHeaterOn()`: CC, PC y CACC
 
-En este ejercicio se piden tests para `turnHeaterOn()` de `Thermostat.java` que cumplan:
+Tests para `turnHeaterOn()` de `Thermostat.java` que cumplan:
 
-1. Cobertura de cláusulas (CC) y, si se puede, sin llegar a cobertura de predicados (PC).
-2. Cobertura de predicados (PC) y, si se puede, sin llegar a cobertura de cláusulas (CC).
+1. Cobertura de cláusulas (CC) y, si es posible, sin llegar a cobertura de predicados (PC).
+2. Cobertura de predicados (PC) y, si es posible, sin llegar a cobertura de cláusulas (CC).
 3. Cobertura correlacionada de cláusulas activas (CACC).
 
-Archivo bajo test:
+## Predicado principal
 
-- [Thermostat.java](../assignment-5-rodeghiero/src/main/java/assignment5_exercises/thermostat/Thermostat.java)
-
-Predicado principal analizado:
-
-`p = ((a || (b && c)) && d)`
+```
+p = ((a || (b && c)) && d)
+```
 
 Cláusulas:
 
@@ -21,7 +19,7 @@ Cláusulas:
 - `c`: `curTemp < overTemp - thresholdDiff`
 - `d`: `timeSinceLastRun > minLag`
 
-## Criterio que usé para diseñar los datos
+## Cómo armé los datos
 
 Para controlar `dTemp` (que es interno del objeto), en todos los tests fijé:
 
@@ -29,102 +27,65 @@ Para controlar `dTemp` (que es interno del objeto), en todos los tests fijé:
 - `setPeriod(Period.MORNING)`
 - `setDay(DayType.WEEKDAY)`
 
-Además trabajé con:
+Y trabajé con `thresholdDiff = 5` y `minLag = 10`. El setup común está en `ThermostatCoverageSupport`.
 
-- `thresholdDiff = 5`
-- `minLag = 10`
+## a) CC sin PC
 
-Soporte común implementado:
+**Sí se puede.** Suite:
 
-- [ThermostatCoverageSupport.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatCoverageSupport.java)
+- `t1 = (a=T, b=F, c=F, d=F)` → `p=F`
+- `t2 = (a=F, b=T, c=F, d=T)` → `p=F`
+- `t3 = (a=F, b=F, c=T, d=T)` → `p=F`
 
-## a) CC y, si es posible, sin PC
+CC se cumple porque cada cláusula toma `T` y `F` al menos una vez:
 
-Sí, en este caso se puede lograr CC sin alcanzar PC.
-
-Suite propuesta:
-
-- `t1 = (a=T, b=F, c=F, d=F)` -> `p=F`
-- `t2 = (a=F, b=T, c=F, d=T)` -> `p=F`
-- `t3 = (a=F, b=F, c=T, d=T)` -> `p=F`
-
-Justificación:
-
-1. CC se cumple porque cada cláusula toma `T` y `F` al menos una vez:
 - `a`: `T` en `t1`, `F` en `t2,t3`
 - `b`: `T` en `t2`, `F` en `t1,t3`
 - `c`: `T` en `t3`, `F` en `t1,t2`
 - `d`: `T` en `t2,t3`, `F` en `t1`
 
-2. PC no se cumple porque `p` siempre vale `F`.
+PC no se cumple: `p` siempre vale `F`.
 
-Implementación:
+## b) PC sin CC
 
-- [ThermostatExercise3ClauseCoverageTest.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3ClauseCoverageTest.java)
+**Sí se puede.** Suite:
 
-## b) PC y, si es posible, sin CC
+- `u1 = (a=T, b=T, c=T, d=T)` → `p=T`
+- `u2 = (a=T, b=T, c=T, d=F)` → `p=F`
 
-Sí, también se puede lograr PC sin cubrir CC.
-
-Suite propuesta:
-
-- `u1 = (a=T, b=T, c=T, d=T)` -> `p=T`
-- `u2 = (a=T, b=T, c=T, d=F)` -> `p=F`
-
-Justificación:
-
-1. PC se cumple porque `p` toma ambos valores (`T` y `F`).
-2. CC no se cumple porque:
-- `a` nunca toma `F`
-- `b` nunca toma `F`
-- `c` nunca toma `F`
-
-Implementación:
-
-- [ThermostatExercise3PredicateCoverageTest.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3PredicateCoverageTest.java)
+PC se cumple porque `p` toma ambos valores. CC no se cumple: `a`, `b` y `c` nunca toman `F`.
 
 ## c) CACC
 
-Para CACC armé pares donde cada cláusula sea mayor y efectivamente determine el resultado del predicado.
+Pares donde cada cláusula es mayor y determina el resultado del predicado:
 
-Pares usados:
+| Mayor | Par                             | `p` |
+|-------|---------------------------------|-----|
+| `a`   | `(T,F,F,T)` vs `(F,F,F,T)`      | `T → F` |
+| `b`   | `(F,T,T,T)` vs `(F,F,T,T)`      | `T → F` |
+| `c`   | `(F,T,T,T)` vs `(F,T,F,T)`      | `T → F` |
+| `d`   | `(T,F,F,T)` vs `(T,F,F,F)`      | `T → F` |
 
-1. Mayor `a`:
-- `(T,F,F,T)` vs `(F,F,F,T)` -> `p` cambia `T -> F`
+La suite final queda en 6 tests únicos porque varios casos se reutilizan entre pares.
 
-2. Mayor `b`:
-- `(F,T,T,T)` vs `(F,F,T,T)` -> `p` cambia `T -> F`
-
-3. Mayor `c`:
-- `(F,T,T,T)` vs `(F,T,F,T)` -> `p` cambia `T -> F`
-
-4. Mayor `d`:
-- `(T,F,F,T)` vs `(T,F,F,F)` -> `p` cambia `T -> F`
-
-Observación:
-
-- La suite final queda en 6 tests únicos porque varios casos se reutilizan entre pares.
-
-Implementación:
-
-- [ThermostatExercise3CaccTest.java](../assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3CaccTest.java)
-
-## Ejecución de tests
-
-Desde `tp5/assignment-5-rodeghiero`:
+## Ejecución
 
 ```bash
+cd tp5/assignment-5-rodeghiero
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
 ```
 
-Resultado en este entorno:
+Resultado: 11 tests (5 de `checkit` + 6 de `thermostat`), 0 fallas.
 
-- `BUILD SUCCESS`
-- tests de `checkit` (ejercicio 2): 5 OK
-- tests de `thermostat` (ejercicio 3): 6 OK
+## Archivos
 
-Total: 11 tests, 0 fallas.
+- [`Thermostat.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/main/java/assignment5_exercises/thermostat/Thermostat.java)
+- [`ThermostatCoverageSupport.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatCoverageSupport.java) — setup común.
+- [`ThermostatExercise3ClauseCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3ClauseCoverageTest.java) — CC sin PC.
+- [`ThermostatExercise3PredicateCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3PredicateCoverageTest.java) — PC sin CC.
+- [`ThermostatExercise3CaccTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/test/java/assignment5_exercises/thermostat/ThermostatExercise3CaccTest.java) — CACC.
 
-Nota:
+## Enlaces
 
-- Se usa `-Djacoco.skip=true` porque el plugin JaCoCo del template (`0.8.2`) no es compatible con la JVM disponible.
+- Enunciado: [`practico5.pdf`](/pdfs/tp5/practico5.pdf)
+- Resolución: [`resolucion_practico5.pdf`](/pdfs/tp5/resolucion_practico5.pdf)
