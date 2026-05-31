@@ -1,25 +1,23 @@
-# Ejercicio 3
+# Ejercicio 3 — CFG de `fmtRewrap` y suites para NC, EC, PPC
 
-Se trabaja sobre el método `fmtRewrap()` ubicado en:
+Trabajo sobre `fmtRewrap()` (en `assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/FmtRewrap.java`).
 
-- `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/FmtRewrap.java`
+## CFG por bloques
 
-### Modelo de CFG utilizado
+Para que el análisis sea manejable uso un CFG por bloques, no a nivel de instrucción individual. Los nodos:
 
-Para que el análisis sea legible y manejable, se utiliza un CFG por bloques en lugar de uno a nivel de instrucción individual. Los nodos del modelo son los siguientes:
+- `W` — condición del `while`.
+- `C` — clasificación del carácter actual (`if/else if` sobre `col`, `CR`, `' '`, `inWord`).
+- `BW` — caso `betweenWord`.
+- `LB` — caso `lineBreak`.
+- `CR?` — caso `crFound`, que internamente toma una decisión.
+- `CRh` — rama *hard-CR* (cuando `i+1 < len && next == CR`).
+- `CRs` — rama *soft-CR* (rama `else` del anterior).
+- `IW` — caso `inWord` (o `default`).
+- `INC` — incremento `i++`.
+- `EXIT` — `S = new String(SArr) + CR; return`.
 
-- `W`: condición del `while`.
-- `C`: clasificación del carácter actual (cadena de `if/else if` sobre `col`, `CR`, `' '` e `inWord`).
-- `BW`: caso `betweenWord`.
-- `LB`: caso `lineBreak`.
-- `CR?`: caso `crFound`, que internamente toma una decisión.
-- `CRh`: rama hard-CR (cuando `i+1 < len && next == CR`).
-- `CRs`: rama soft-CR (rama else del caso anterior).
-- `IW`: caso `inWord` o por defecto.
-- `INC`: incremento `i++`.
-- `EXIT`: ejecución de `S = new String(SArr) + CR; return`.
-
-El CFG resultante es:
+CFG:
 
 ```mermaid
 flowchart TD
@@ -39,25 +37,23 @@ flowchart TD
   INC --> W
 ```
 
-### (a) CFG del método
+## (a) CFG del método
 
-El CFG del método es exactamente el grafo presentado más arriba.
+El CFG del método es exactamente el grafo de arriba.
 
-### (b) Test que va del comienzo del `while` a `EXIT` sin entrar al cuerpo
+## (b) Test que sale del `while` sin entrar al cuerpo
 
-Un caso válido para esto es:
+Un caso válido:
 
 - `t = ("", 10)`
 
-Justificación: cuando `S = ""` la condición del `while` evalúa `i < S.length()` como `0 < 0`, lo cual es falso. Por lo tanto el flujo toma directamente el arco `W -> EXIT` sin pasar por ningún nodo intermedio del cuerpo del bucle.
+Con `S = ""` la condición del `while` evalúa `0 < 0` (falso), así que el flujo toma directamente `W → EXIT` sin pasar por ningún nodo intermedio.
 
-### (c) Requisitos de tests para NC, EC y PPC
+## (c) Requisitos para NC, EC y PPC
 
-**NC (cobertura de nodos):**
+**NC**: `{W, C, BW, LB, CR?, CRh, CRs, IW, INC, EXIT}`.
 
-- `{W, C, BW, LB, CR?, CRh, CRs, IW, INC, EXIT}`
-
-**EC (cobertura de arcos):**
+**EC** (14 arcos):
 
 1. `(W, C)`
 2. `(W, EXIT)`
@@ -74,7 +70,7 @@ Justificación: cuando `S = ""` la condición del `while` evalúa `i < S.length(
 13. `(IW, INC)`
 14. `(INC, W)`
 
-**PPC (caminos principales sobre el CFG reducido):** se obtienen 47 prime paths.
+**PPC**: 47 prime paths.
 
 1. `[W, C, BW, INC, W]`
 2. `[W, C, LB, INC, W]`
@@ -124,70 +120,68 @@ Justificación: cuando `S = ""` la condición del `while` evalúa `i < S.length(
 46. `[INC, W, C, CR?, CRh, INC]`
 47. `[INC, W, C, CR?, CRs, INC]`
 
-### (d) Suite para NC pero no EC
+## (d) Suite NC pero no EC
 
-La suite implementada se encuentra en:
+Suite en `FmtRewrapNodeCoverageTest.java`. Comando:
 
-- `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapNodeCoverageTest.java`
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Dtest=FmtRewrapNodeCoverageTest test
+```
 
-Comando de ejecución:
+JaCoCo sobre `fmtRewrap`: `LINE 29/29`, `BRANCH 16/16`.
 
-- `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapNodeCoverageTest test`
+**Lo que pasó:** con esta implementación particular y el nivel de modelado del CFG, una suite que cubre todos los nodos termina cubriendo también todos los arcos que mide la herramienta. No conseguí una suite que satisfaga NC sin satisfacer EC al mismo tiempo, porque varias sentencias y ramas están tan acopladas que llegar al nodo implica recorrer también su arco saliente.
 
-Resultado de JaCoCo sobre `fmtRewrap`:
+## (e) Suite EC pero no PPC
 
-- `LINE: 29/29`
-- `BRANCH: 16/16`
+Suite en `FmtRewrapEdgeButNotPrimePathCoverageTest.java`. Comando:
 
-**Observación:** con esta implementación particular del método y con el nivel de modelado utilizado, una suite que cubre todos los nodos de sentencias termina cubriendo también todos los arcos que mide la herramienta. En la práctica, no fue posible obtener una suite que cumpliera NC sin cumplir EC al mismo tiempo según la medición de JaCoCo. Esto se debe a que muchas sentencias y ramas están tan acopladas que llegar al nodo correspondiente implica recorrer también su arco saliente.
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Dtest=FmtRewrapEdgeButNotPrimePathCoverageTest test
+```
 
-### (e) Suite para EC pero no PPC
+JaCoCo: `LINE 29/29`, `BRANCH 16/16` (equivalente práctico de EC).
 
-La suite implementada se encuentra en:
+**Por qué no cumple PPC:** la suite no recorre el prime path `[BW, INC, W, C, IW]`. Cada vez que el flujo entra a `BW`, la siguiente iteración relevante del bucle pasa por `LB` en lugar de `IW`, así que esa secuencia particular no aparece nunca en los caminos ejecutados.
 
-- `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapEdgeButNotPrimePathCoverageTest.java`
+## (f) Suite PPC con *Best Effort Touring*
 
-Comando de ejecución:
+Suite en `FmtRewrapPrimePathBestEffortCoverageTest.java`. Comando:
 
-- `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapEdgeButNotPrimePathCoverageTest test`
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Dtest=FmtRewrapPrimePathBestEffortCoverageTest test
+```
 
-Resultado de JaCoCo sobre `fmtRewrap`:
+JaCoCo: `LINE 29/29`, `BRANCH 16/16`.
 
-- `LINE: 29/29`
-- `BRANCH: 16/16` (que en esta herramienta funciona como equivalente práctico de EC).
+**Análisis de prime paths sobre el CFG:**
 
-**Por qué la suite no cumple PPC** (sobre el CFG definido más arriba):
-
-- La suite no recorre el prime path `[BW, INC, W, C, IW]`. Intuitivamente, cada vez que entra a `BW`, la siguiente iteración relevante del bucle pasa por `LB` en lugar de `IW`, por lo que esa secuencia particular nunca aparece en los caminos ejecutados.
-
-### (f) Suite para PPC con Best Effort Touring
-
-La suite implementada se encuentra en:
-
-- `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapPrimePathBestEffortCoverageTest.java`
-
-Comando de ejecución:
-
-- `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=FmtRewrapPrimePathBestEffortCoverageTest test`
-
-Resultado de JaCoCo sobre `fmtRewrap`:
-
-- `LINE: 29/29`
-- `BRANCH: 16/16`
-
-Análisis de prime paths sobre el CFG definido:
-
-- Cantidad total de prime paths: `47`.
-- Prime paths cubiertos directamente por la suite: `43`.
-- Prime paths no cubiertos: `4`. Todos ellos son **infactibles** por la semántica del método:
+- Total: 47.
+- Cubiertos directamente: 43.
+- No cubiertos: 4. Todos **infactibles** por la semántica del método:
   1. `[CR?, CRh, INC, W, C, LB]`
   2. `[CR?, CRs, INC, W, C, CR?]`
   3. `[CRs, INC, W, C, CR?, CRh]`
   4. `[CRs, INC, W, C, CR?, CRs]`
 
-Justificación de la infactibilidad:
+**Por qué son infactibles:**
 
-- Después de tomar la rama `CRh`, el código fija `col = 1`. Para que en la siguiente iteración se entre directamente a `LB` sería necesario tener un `N` tan pequeño que, en la iteración previa, ya se hubiera disparado la condición `col >= N` y por lo tanto no se habría podido tomar `CRh` en primer lugar. Las dos condiciones son mutuamente excluyentes.
-- La rama `CRs` se toma precisamente cuando el siguiente carácter inmediato **no** es `CR`. Eso impide que en la iteración siguiente se vuelva a entrar al caso `CR?`, ya que ese caso requiere haber detectado un nuevo `CR` justo en esa posición.
+- Después de `CRh` el código fija `col = 1`. Para que en la siguiente iteración se entre directamente a `LB` haría falta tener un `N` tan chico que en la iteración previa ya se hubiera disparado `col >= N` — y entonces no se habría podido tomar `CRh`. Las dos condiciones son mutuamente excluyentes.
+- La rama `CRs` se toma cuando el siguiente carácter inmediato **no** es `CR`. Eso impide que en la iteración siguiente se vuelva a entrar al caso `CR?`, porque ese caso requiere detectar un nuevo `CR` justo ahí.
 
-**Conclusión:** la suite del punto (f) cumple PPC bajo el criterio de *Best Effort Touring*, ya que cubre directamente todos los prime paths factibles del CFG y los únicos cuatro que quedan fuera son demostrablemente infactibles por la lógica del método. Además, mantiene cobertura total de líneas y de ramas según JaCoCo.
+**Conclusión:** la suite cumple PPC bajo *Best Effort Touring*: cubre todos los prime paths factibles del CFG y los únicos 4 que quedan fuera son demostrablemente infactibles. Cobertura total de líneas y ramas.
+
+## Archivos
+
+- [`FmtRewrap.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/FmtRewrap.java)
+- [`FmtRewrapNodeCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapNodeCoverageTest.java) — suite (d).
+- [`FmtRewrapEdgeButNotPrimePathCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapEdgeButNotPrimePathCoverageTest.java) — suite (e).
+- [`FmtRewrapPrimePathBestEffortCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapPrimePathBestEffortCoverageTest.java) — suite (f).
+
+## Enlaces
+
+- Enunciado: [`practico4.pdf`](/pdfs/tp4/practico4.pdf)
+- Resolución: [`resolucion_practico4.pdf`](/pdfs/tp4/resolucion_practico4.pdf)

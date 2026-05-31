@@ -1,111 +1,81 @@
-# Ejercicio 1
+# Ejercicio 1 — Cobertura sobre grafo de 4 nodos (NC, EC, EPC)
 
-Se considera el siguiente grafo dirigido:
+## El grafo
+
+Grafo dirigido:
 
 - `N = {1, 2, 3, 4}`
 - `N0 = {1}` (nodo inicial)
 - `Nf = {4}` (nodo final)
 - `E = {(1,2), (2,3), (3,2), (2,4)}`
 
-Antes de analizar las coberturas conviene observar la estructura del grafo, ya que esto simplifica mucho el razonamiento posterior:
+Estructura:
 
-- Desde `1` la única salida posible es hacia `2`.
-- Desde `2` se puede ir a `3` o a `4`.
+- Desde `1` la única salida es `2`.
+- Desde `2` se va a `3` o a `4`.
 - Desde `3` la única salida es volver a `2`.
-- `4` es nodo final y no tiene aristas salientes.
+- `4` es nodo final, sin aristas salientes.
 
-Como consecuencia, todo camino de test válido (el que arranca en `1` y termina en `4`) tiene necesariamente la siguiente forma:
+Todo camino de test válido (de `1` a `4`) tiene la forma:
 
-- `1 -> 2 -> (ciclo 2 <-> 3 repetido cero o más veces) -> 4`
+- `1 → 2 → (ciclo 2 ↔ 3 repetido cero o más veces) → 4`
 
-Algunos ejemplos de caminos de test válidos son:
+Por ejemplo: `[1, 2, 4]`, `[1, 2, 3, 2, 4]`, `[1, 2, 3, 2, 3, 2, 4]`, etc.
 
-- `[1, 2, 4]`
-- `[1, 2, 3, 2, 4]`
-- `[1, 2, 3, 2, 3, 2, 4]`
-- y así sucesivamente.
-
-Para razonar las coberturas que se piden, conviene listar previamente los requisitos alcanzables en cada criterio:
+Requisitos por criterio:
 
 - **NC** (cobertura de nodos): `{1, 2, 3, 4}`
 - **EC** (cobertura de arcos): `{(1,2), (2,3), (3,2), (2,4)}`
-- **EPC** (cobertura de pares de arcos, es decir, caminos de longitud 2):
-  - `[1, 2, 3]`
-  - `[1, 2, 4]`
-  - `[2, 3, 2]`
-  - `[3, 2, 3]`
-  - `[3, 2, 4]`
+- **EPC** (cobertura de pares de arcos): `[1, 2, 3]`, `[1, 2, 4]`, `[2, 3, 2]`, `[3, 2, 3]`, `[3, 2, 4]`.
 
-### (a) Cobertura de Nodos pero no Cobertura de Arcos
+## (a) ¿NC sin EC?
 
-**No es posible** construir un conjunto de tests que satisfaga NC sin satisfacer también EC.
+**No es posible.** Cumplir NC obliga a visitar los cuatro nodos, y dada la topología cada visita fuerza un arco específico:
 
-La razón es la siguiente: cumplir NC obliga a visitar los cuatro nodos `1`, `2`, `3` y `4`, y dada la topología del grafo cada una de esas visitas fuerza el uso de un arco específico:
+1. Visitar `1` obliga a usar `(1, 2)` (única arista saliente de `1`).
+2. Visitar `3` obliga a usar `(2, 3)` (única que entra a `3`).
+3. Desde `3` solo se puede salir por `(3, 2)`.
+4. Terminar en `4` obliga a usar `(2, 4)` (única que entra a `4`).
 
-1. Visitar `1` obliga a usar `(1,2)`, ya que es la única arista saliente de `1`.
-2. Visitar `3` obliga a usar `(2,3)`, porque es la única arista que entra a `3`.
-3. Una vez en `3`, para poder seguir avanzando hacia un nodo final hay que tomar `(3,2)`, que es la única arista de salida de `3`.
-4. Para terminar en el nodo final `4` se debe usar `(2,4)`, ya que es la única arista que entra a `4`.
+Esos cuatro arcos son exactamente EC, así que cualquier suite que cumpla NC también cumple EC.
 
-Estos cuatro arcos son exactamente los elementos de EC, por lo que cualquier conjunto de tests que cumpla NC termina inevitablemente cubriendo también EC. Es decir, en este grafo no existe un conjunto que satisfaga NC y a la vez falle EC.
+## (b) ¿EC sin EPC?
 
-### (b) Cobertura de Arcos pero no Cobertura de Pares de Arcos
-
-**Sí es posible** encontrar un conjunto que cumpla EC pero no EPC.
-
-Un ejemplo concreto es:
+**Sí.** Un ejemplo concreto:
 
 - `t1 = [1, 2, 3, 2, 4]`
 
-Verificación de EC con `t1`:
+Recorre los cuatro arcos (`(1,2)`, `(2,3)`, `(3,2)`, `(2,4)`), así que EC queda cubierta con un solo test.
 
-- En el paso `1 -> 2` se recorre `(1,2)`.
-- En el paso `2 -> 3` se recorre `(2,3)`.
-- En el paso `3 -> 2` se recorre `(3,2)`.
-- En el paso `2 -> 4` se recorre `(2,4)`.
+Pares de arcos que ese camino cubre (ventana de tres nodos consecutivos):
 
-Por lo tanto, EC queda completamente satisfecha con un único test.
+- `[1, 2, 3]`, `[2, 3, 2]`, `[3, 2, 4]`
 
-Sin embargo, si se analizan los pares de arcos cubiertos (mirando ventanas deslizantes de tres nodos consecutivos en el camino), se obtiene:
+Quedan sin cubrir al menos `[1, 2, 4]` y `[3, 2, 3]`, así que EPC no se satisface.
 
-- `[1, 2, 3]`
-- `[2, 3, 2]`
-- `[3, 2, 4]`
+## (c) Conjunto mínimo que satisface EPC
 
-Quedan sin cubrir al menos los siguientes pares alcanzables:
-
-- `[1, 2, 4]`
-- `[3, 2, 3]`
-
-Esto muestra que `t1` cumple EC pero no EPC, que es justamente lo que se buscaba.
-
-### (c) Caminos para satisfacer Cobertura de Pares de Arcos
-
-Un conjunto mínimo que satisface EPC es:
+Dos tests alcanzan:
 
 - `t1 = [1, 2, 4]`
 - `t2 = [1, 2, 3, 2, 3, 2, 4]`
 
-Pares cubiertos por cada test:
+Pares cubiertos:
 
-- `t1 = [1, 2, 4]` cubre: `[1, 2, 4]`.
-- `t2 = [1, 2, 3, 2, 3, 2, 4]` cubre: `[1, 2, 3]`, `[2, 3, 2]`, `[3, 2, 3]` y `[3, 2, 4]`.
+- `t1` cubre `[1, 2, 4]`.
+- `t2` cubre `[1, 2, 3]`, `[2, 3, 2]`, `[3, 2, 3]`, `[3, 2, 4]`.
 
-Uniendo ambos tests se obtiene la siguiente cobertura:
+La unión cubre los cinco pares alcanzables, así que EPC queda satisfecha.
 
-- `[1, 2, 3]`
-- `[1, 2, 4]`
-- `[2, 3, 2]`
-- `[3, 2, 3]`
-- `[3, 2, 4]`
+**Por qué no alcanza con un solo test:**
 
-Estos son exactamente los cinco pares alcanzables que habíamos listado al principio, por lo que EPC queda satisfecha.
+- Para cubrir `[1, 2, 4]` el test tiene que ir directo de `2` a `4`.
+- Para cubrir `[1, 2, 3]` el test tiene que ir de `2` a `3`.
+- Las dos cosas son incompatibles en el mismo prefijo `1, 2`, y una vez que se llega a `4` no hay vuelta atrás.
 
-**Por qué este conjunto es mínimo (es decir, por qué no alcanza con un solo test):**
+Hacen falta como mínimo dos tests, y el conjunto propuesto usa exactamente dos.
 
-1. Para cubrir `[1, 2, 4]` el test debe pasar de `2` directamente a `4`.
-2. Para cubrir `[1, 2, 3]` el test debe pasar de `2` directamente a `3`.
-3. Ambas condiciones son incompatibles dentro del mismo prefijo, porque al estar en `1, 2` solo se puede elegir una salida (o `3` o `4`).
-4. Como cualquier test termina al llegar a `4`, una vez tomada esa rama no se puede "volver atrás" para cubrir la otra alternativa.
+## Enlaces
 
-Por lo tanto, hacen falta al menos dos tests. El conjunto propuesto utiliza exactamente dos, por lo que es mínimo.
+- Enunciado: [`practico4.pdf`](/pdfs/tp4/practico4.pdf)
+- Resolución: [`resolucion_practico4.pdf`](/pdfs/tp4/resolucion_practico4.pdf)

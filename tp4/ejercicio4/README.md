@@ -1,77 +1,78 @@
-# Ejercicio 4
+# Ejercicio 4 — Instrumentación de `patternIndex` y reporte de caminos
 
-Se trabajó sobre el método ubicado en:
+Trabajo sobre `patternIndex()` (en `assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndex.java`).
 
-- `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndex.java`
+## Instrumentación
 
-### Instrumentación agregada
+Para poder analizar los caminos ejecutados agregué instrumentación a nivel de nodos del CFG dentro del método. En cada invocación se registra la secuencia exacta de nodos por los que pasa la ejecución.
 
-Para poder analizar los caminos ejecutados, se agregó una instrumentación a nivel de nodos del CFG dentro del método `patternIndex()`. Esta instrumentación registra, en cada invocación, la secuencia exacta de nodos por la que pasa la ejecución.
+Nodos instrumentados:
 
-Los nodos instrumentados son los siguientes:
+- `S` — inicio del método.
+- `W` — condición del `while` principal.
+- `I` — `if` que compara el primer carácter del patrón.
+- `M` — bloque que se ejecuta cuando hay match inicial y se inicializan las variables.
+- `FT` — condición verdadera del `for` interno.
+- `IFM` — `if` de mismatch dentro del `for`.
+- `MIS` — bloque de mismatch seguido de `break`.
+- `FI` — paso de iteración del `for` cuando no hubo mismatch.
+- `FF` — finalización del `for` sin haber ejecutado un `break`.
+- `INC` — incremento `iSub++`.
+- `R` — `return`.
 
-- `S` (inicio del método).
-- `W` (condición del `while` principal).
-- `I` (`if` que compara el primer carácter del patrón).
-- `M` (bloque que se ejecuta cuando se detecta un match inicial y se inicializan las variables auxiliares).
-- `FT` (condición verdadera del `for` interno).
-- `IFM` (`if` de mismatch dentro del `for`).
-- `MIS` (bloque de mismatch seguido de `break`).
-- `FI` (paso de iteración del `for` cuando no hubo mismatch).
-- `FF` (finalización del `for` sin haber ejecutado un `break`).
-- `INC` (incremento `iSub++`).
-- `R` (sentencia `return`).
+El registro de los caminos se delega a `PatternIndexPathTracker`, que va anotando los nodos `hit` y al final genera una `Invocation` con `subject`, `pattern`, resultado y la lista de nodos recorridos.
 
-El registro de los caminos ejecutados se delega a una clase auxiliar creada específicamente para este ejercicio:
+## Suite
 
-- `tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndexPathTracker.java`
+Suite en `PatternIndexInstrumentationCoverageTest.java`. Ejecuta los 10 casos de la tabla del enunciado:
 
-### Suite JUnit pedida por la tabla del enunciado
+1. `("a", "bc")` → `-1`
+2. `("ab", "a")` → `0`
+3. `("ab", "ab")` → `0`
+4. `("ab", "ac")` → `-1`
+5. `("ab", "b")` → `1`
+6. `("ab", "c")` → `-1`
+7. `("abc", "abc")` → `0`
+8. `("abc", "abd")` → `-1`
+9. `("abc", "ba")` → `-1`
+10. `("abc", "bc")` → `1`
 
-La suite se implementó en:
+Después de correr la tabla, `@AfterClass` genera un reporte con:
 
-- `tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/PatternIndexInstrumentationCoverageTest.java`
-
-Esta suite ejecuta exactamente los 10 casos indicados por la tabla del enunciado, junto con su valor esperado:
-
-1. `("a", "bc")  -> -1`
-2. `("ab", "a")  ->  0`
-3. `("ab", "ab") ->  0`
-4. `("ab", "ac") -> -1`
-5. `("ab", "b")  ->  1`
-6. `("ab", "c")  -> -1`
-7. `("abc", "abc") ->  0`
-8. `("abc", "abd") -> -1`
-9. `("abc", "ba")  -> -1`
-10. `("abc", "bc")  ->  1`
-
-### Reporte de caminos ejecutados
-
-La misma suite genera automáticamente un reporte de salida que contiene:
-
-- la secuencia de nodos ejecutada por cada caso de test,
+- la secuencia de nodos por cada caso,
 - la cobertura de arcos sobre el CFG instrumentado,
-- la cobertura de caminos principales (prime paths),
-- y la lista de requisitos cubiertos y faltantes para cada criterio.
+- la cobertura de prime paths,
+- la lista de requisitos cubiertos y faltantes.
 
-Ubicación del reporte generado:
+El reporte queda en `target/patternindex-path-report.txt`.
 
-- `tp4/assignmnet-4-rodeghiero/target/patternindex-path-report.txt`
+## Cómo correr
 
-### Ejecución
+```bash
+cd tp4/assignmnet-4-rodeghiero
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Dtest=PatternIndexInstrumentationCoverageTest test
+```
 
-Comando utilizado para correr la suite:
+## Resultados
 
-- `JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Dtest=PatternIndexInstrumentationCoverageTest test`
+Sobre el CFG instrumentado de `patternIndex`:
 
-### Resultados de cobertura
+- **Cobertura de arcos**: `15 / 15` (100%).
+- **Cobertura de prime paths**: `22 / 39`.
 
-Sobre el CFG instrumentado de `patternIndex`, la suite de la tabla obtiene:
+**Interpretación:**
 
-- **Cobertura de arcos:** `15 / 15` (100%).
-- **Cobertura de caminos principales:** `22 / 39`.
+- Los 10 casos de la tabla son suficientes para ejercitar todas las decisiones del método (EC al 100%).
+- PPC no se completa, lo cual es esperable: PPC es estrictamente más fuerte que EC, así que una suite que satura EC no necesariamente cubre todos los prime paths. Los requisitos faltantes corresponden a combinaciones de iteraciones del bucle externo y del `for` interno que esos diez casos no llegan a ejercitar.
 
-**Interpretación de los resultados:**
+## Archivos
 
-- La suite alcanza cobertura completa de arcos, lo que indica que los 10 casos de la tabla son suficientes para ejercitar todas las decisiones del método.
-- En cambio, no se logra cobertura completa de caminos principales, lo cual era esperable: PPC es un criterio estrictamente más fuerte que EC, así que una suite que satura EC no necesariamente cubre todos los prime paths. Los requisitos faltantes corresponden a combinaciones de iteraciones del bucle externo y del `for` interno que esos diez casos puntuales no llegan a ejercitar.
+- [`PatternIndex.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndex.java) — método instrumentado.
+- [`PatternIndexPathTracker.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndexPathTracker.java) — registro de caminos.
+- [`PatternIndexInstrumentationCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/PatternIndexInstrumentationCoverageTest.java) — suite + reporte.
+
+## Enlaces
+
+- Enunciado: [`practico4.pdf`](/pdfs/tp4/practico4.pdf)
+- Resolución: [`resolucion_practico4.pdf`](/pdfs/tp4/resolucion_practico4.pdf)

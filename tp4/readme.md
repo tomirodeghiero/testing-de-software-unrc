@@ -1,28 +1,37 @@
-# Practico 4
+# Práctico 4 — Testing de Software
 
-Resolucion del practico 4 de Testing de Software (testing basado en grafos).
+## Documentos principales
 
-## Resoluciones por ejercicio
+- Enunciado: [`practico4.pdf`](/pdfs/tp4/practico4.pdf)
+- Resolución: [`resolucion_practico4.pdf`](/pdfs/tp4/resolucion_practico4.pdf)
 
-- `ejercicio1/README.md` - cobertura sobre grafo de 4 nodos (NC, EC, EPC).
-- `ejercicio2/README.md` - cobertura sobre grafo de 7 nodos, sidetrips y PPC.
-- `ejercicio3/README.md` - CFG de `fmtRewrap`, suites de NC/EC/PPC con Best Effort Touring.
-- `ejercicio4/README.md` - instrumentacion de `patternIndex` y reporte de caminos.
-- `assignmnet-4-rodeghiero/` - codigo Java, instrumentacion y tests (`mvn test`).
+## Ejercicios
 
-## Documentos LaTeX
+- `ejercicio1/` — cobertura sobre grafo de 4 nodos (NC, EC, EPC).
+- `ejercicio2/` — cobertura sobre grafo de 7 nodos, *sidetrips* y PPC.
+- `ejercicio3/` — CFG de `fmtRewrap` y suites para NC, EC y PPC con *Best Effort Touring*.
+- `ejercicio4/` — instrumentación de `patternIndex` y reporte de caminos ejecutados.
 
-- `resolucion_practico4.tex` / `.pdf` - resolucion integral del TP4.
-- `resumen_teorico_practico4.tex` / `.pdf` - resumen teorico basado en:
-  - `materiales/Capitulo 7 - Introduction to Software Testing.pdf`
-  - `materiales/notas-07-graph-intro.pdf`
-  - `materiales/notas-08-graph-from source-code.pdf`
+## Material de referencia
 
-## Como compilar los LaTeX
+Está todo en `materiales/`:
+
+- [Capítulo 7 — *Introduction to Software Testing*](/pdfs/tp4/materiales/Capitulo%207%20-%20Introduction%20to%20Software%20Testing.pdf)
+- [Notas 07 — Graph intro](/pdfs/tp4/materiales/notas-07-graph-intro.pdf)
+- [Notas 08 — Graph from source code](/pdfs/tp4/materiales/notas-08-graph-from%20source-code.pdf)
+
+## Cómo correr los tests
+
+El código vive en `assignmnet-4-rodeghiero/` (el typo `assignmnet` es del template de la cátedra). Hay que usar JDK 17 porque la build se apoya en JaCoCo para reportar cobertura. Desde la carpeta del proyecto:
 
 ```bash
-pdflatex resolucion_practico4.tex
-pdflatex resolucion_practico4.tex
-pdflatex resumen_teorico_practico4.tex
-pdflatex resumen_teorico_practico4.tex
+cd tp4/assignmnet-4-rodeghiero
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 test
+```
+
+Para correr una suite puntual:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
+    -Dtest=FmtRewrapNodeCoverageTest test
 ```
