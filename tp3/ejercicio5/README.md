@@ -2,37 +2,29 @@
 
 ## Consigna
 
-Aplicar *Input Space Partitioning* sobre la interfaz `java.util.Iterator` usando como implementación de referencia el iterador de `ArrayList`. La consigna entrega las cuatro características del MDE y pide derivar los requisitos, instanciar los casos en JUnit 5 y reportar fallas si las hay.
+Aplicar Input Space Partitioning sobre la interfaz `java.util.Iterator`, usando el iterador de `ArrayList` como implementación de referencia. La consigna entrega las cuatro características del MDE y pide derivar los requisitos, implementar los casos en JUnit 5 y reportar fallas si las hay.
 
-## Referencia usada
+## Especificación de referencia
 
-- Oracle Java SE 7 — `java.util.Iterator`: [docs.oracle.com](https://docs.oracle.com/javase/7/docs/api/java/util/Iterator.html)
-
-Puntos clave tomados de la especificación oficial:
+De Oracle Java SE 7, [`java.util.Iterator`](https://docs.oracle.com/javase/7/docs/api/java/util/Iterator.html):
 
 - `hasNext()` devuelve `true` si hay más elementos.
-- `next()` devuelve el siguiente elemento y lanza `NoSuchElementException` si no hay más.
-- `remove()` es operación opcional.
-- `remove()` lanza `UnsupportedOperationException` si no está soportado.
-- `remove()` lanza `IllegalStateException` si no hubo `next()` previo, o si ya se llamó `remove()` después del último `next()`.
+- `next()` devuelve el siguiente; lanza `NoSuchElementException` si no hay más.
+- `remove()` es opcional. Lanza `UnsupportedOperationException` si no está soportada. Si lo está, lanza `IllegalStateException` si no hubo `next()` previo, o si ya se llamó `remove()` después del último `next()`.
 
-## Modelo del Dominio de Entradas (según consigna)
-
-Características:
+## MDE (según consigna)
 
 - **C1**: el iterador tiene más valores `{true, false}`.
-- **C2**: `next()` retorna objeto no `null` `{true, false}`.
+- **C2**: `next()` retorna no `null` `{true, false}`.
 - **C3**: `remove()` está soportado `{true, false}`.
-- **C4**: la restricción de `remove()` se satisface `{true, false}`.
+- **C4**: la precondición de `remove()` se satisface `{true, false}`.
 
 Decisiones para instanciar los casos:
 
-- Para C3 = `true`, se usa `ArrayList.iterator()`.
-- Para C3 = `false`, se usa `Collections.unmodifiableList(new ArrayList<>(...)).iterator()`. La colección subyacente sigue siendo un `ArrayList`, pero el iterador expuesto no soporta `remove()`.
+- Para C3 = `true`, uso `ArrayList.iterator()`.
+- Para C3 = `false`, uso `Collections.unmodifiableList(new ArrayList<>(...)).iterator()`. La colección subyacente sigue siendo un `ArrayList`, pero el iterador expuesto no soporta `remove()`.
 
-## Requisitos de test (PWC)
-
-Pares relevantes y factibles:
+## Requisitos PWC
 
 - **R01**: C1 = `true` (`hasNext()` devuelve `true`).
 - **R02**: C1 = `false` (`hasNext()` devuelve `false` en iterador vacío).
@@ -50,26 +42,24 @@ Pares relevantes y factibles:
 
 ## Casos implementados
 
-Cada caso TC*i* cubre el requisito R*i* correspondiente. La suite `IteratorArrayListTest` tiene 13 tests.
+13 tests, uno por requisito (`TC1` cubre `R01`, etc.), en `IteratorArrayListTest`.
 
 ## Resultado
 
-No se encontraron fallas en la implementación de `Iterator` de Java para estos escenarios. Los tests confirman el comportamiento esperado por especificación sobre `ArrayList`, incluyendo el caso `unmodifiableList` en el que `remove()` no está soportado.
+No encontré fallas. El iterador de `ArrayList` (y la vista de `unmodifiableList` para el caso C3 = false) se comportan según la especificación en todos los escenarios.
 
-## Cómo ejecutar
-
-Desde `tp3/assignmnet-3-rodeghiero`:
+## Cómo correr
 
 ```bash
+cd tp3/assignmnet-3-rodeghiero
 mvn -Dmaven.repo.local=.m2 -Dtest=IteratorArrayListTest test
 ```
 
-## Código
+## Archivos
 
-- [`IteratorArrayListTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp3/assignmnet-3-rodeghiero/src/test/java/assignment3_exercises/IteratorArrayListTest.java) — suite con los 13 casos PWC sobre `Iterator`.
+- [`IteratorArrayListTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp3/assignmnet-3-rodeghiero/src/test/java/assignment3_exercises/IteratorArrayListTest.java) — los 13 casos PWC sobre `Iterator`.
 
-## Enlaces relacionados
+## Enlaces
 
-- Enunciado del práctico: [`practico3.pdf`](/pdfs/tp3/practico3.pdf)
-- Resolución completa: [`resolucion_practico3.pdf`](/pdfs/tp3/resolucion_practico3.pdf)
-- Resumen teórico: [`resumen_teorico_practico3.pdf`](/pdfs/tp3/resumen_teorico_practico3.pdf)
+- Enunciado: [`practico3.pdf`](/pdfs/tp3/practico3.pdf)
+- Resolución: [`resolucion_practico3.pdf`](/pdfs/tp3/resolucion_practico3.pdf)
