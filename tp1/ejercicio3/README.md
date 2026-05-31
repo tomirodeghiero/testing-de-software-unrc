@@ -1,267 +1,83 @@
-# Ejercicio 3 — Análisis de programas defectuosos y cadena RIPR
+# Ejercicio 3 — Programas defectuosos y cadena RIPR
 
 ## Consigna
 
-El enunciado presenta cuatro programas defectuosos (`findLast`, `lastZero`, `countPositive`, `oddOrPos`) junto con un caso de test que produce falla en cada uno. Para cada programa hay que:
+El enunciado da cuatro programas defectuosos (`findLast`, `lastZero`, `countPositive`, `oddOrPos`) y, para cada uno, un caso de test que produce falla. Para cada programa hay que:
 
-- **a)** Identificar el defecto y proponer una corrección.
-- **b)** Si es posible, dar una entrada que **no ejecute** el defecto.
-- **c)** Dar una entrada que ejecute el defecto **pero no produzca falla observable**.
-- **d)** Dar una entrada que ejecute el defecto **y produzca falla**.
+- a) identificar el defecto y proponer una corrección;
+- b) si es posible, dar una entrada que **no ejecute** el defecto;
+- c) dar una entrada que ejecute el defecto **pero no produzca falla**;
+- d) dar una entrada que ejecute el defecto **y sí produzca falla**.
 
-La separación entre los puntos b, c y d sigue la cadena RIPR: alcanzar el defecto, infectar el estado, propagarlo hasta la salida.
+Los puntos b, c y d se corresponden con la cadena RIPR: llegar al defecto, infectar el estado, propagarlo hasta la salida.
 
 ## Archivos
 
-- `DefectivePrograms.java` — los cuatro programas tal como aparecen en el enunciado.
-- `FixedPrograms.java` — una corrección posible para cada uno.
-- `Exercise3Runner.java` — runner por consola para correr los casos sobre la versión defectuosa o la corregida.
+- [`DefectivePrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/DefectivePrograms.java) — los cuatro programas como aparecen en el enunciado.
+- [`FixedPrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/FixedPrograms.java) — una corrección posible para cada uno.
+- [`Exercise3Runner.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/Exercise3Runner.java) — runner por consola para probar los casos.
 
-## Cómo compilar y ejecutar
-
-Desde esta carpeta:
+## Cómo compilar y correr
 
 ```bash
 cd tp1/ejercicio3
 javac *.java
-```
 
-Versión defectuosa, los cuatro programas:
-
-```bash
-java Exercise3Runner faulty all
-```
-
-Versión corregida, los cuatro programas:
-
-```bash
-java Exercise3Runner fixed all
-```
-
-Un programa puntual:
-
-```bash
-java Exercise3Runner faulty findLast
-java Exercise3Runner fixed findLast
-java Exercise3Runner faulty lastZero
-java Exercise3Runner fixed lastZero
-java Exercise3Runner faulty countPositive
-java Exercise3Runner fixed countPositive
-java Exercise3Runner faulty oddOrPos
-java Exercise3Runner fixed oddOrPos
+java Exercise3Runner faulty all     # los cuatro defectuosos
+java Exercise3Runner fixed all      # los cuatro corregidos
+java Exercise3Runner faulty findLast   # uno puntual
 ```
 
 ## Resolución
 
 ### 1. `findLast(int[] x, int y)`
 
-#### a) Defecto y corrección
+**Defecto.** El `for` itera mientras `i > 0`, así que nunca toca la posición `0`. Debería ser `i >= 0`.
 
-El defecto está en la condición del `for`:
+**b)** No hay entrada válida que evite ejecutar el defecto: la condición del `for` se evalúa siempre. Lo que sí puede pasar es que se ejecute pero no se note.
 
-```java
-for (int i = x.length - 1; i > 0; i--)
-```
+**c)** `x = [5, 2, 3]`, `y = 2`. Resultado esperado `1`. El defecto se ejecuta pero el valor buscado no está en la posición `0`, así que el resultado sale bien.
 
-El ciclo debería seguir mientras `i >= 0`, no mientras `i > 0`. Tal como está escrito, nunca revisa la posición `0` del arreglo.
-
-Corrección:
-
-```java
-for (int i = x.length - 1; i >= 0; i--)
-```
-
-#### b) Caso que no ejecute el defecto
-
-No se puede, al menos usando entradas válidas. El defecto está en la condición del `for`, y esa condición se evalúa siempre que se llama al método. Lo que sí puede pasar es que el defecto se ejecute pero no se note, si justo no hace falta revisar la posición `0`.
-
-#### c) Caso que ejecute el defecto y no produzca falla
-
-```text
-x = [5, 2, 3], y = 2
-resultado esperado = 1
-```
-
-El defecto se ejecuta, pero como el valor buscado no está en la posición `0`, el resultado sigue siendo correcto.
-
-#### d) Caso que ejecute el defecto y produzca falla
-
-```text
-x = [2, 3, 5], y = 2
-resultado esperado = 0
-resultado defectuoso = -1
-```
-
-Falla porque el programa no revisa la posición `0`.
+**d)** `x = [2, 3, 5]`, `y = 2`. Esperado `0`, devuelve `-1`. La falla aparece porque el `2` está justo en la posición que el recorrido no visita.
 
 ### 2. `lastZero(int[] x)`
 
-#### a) Defecto y corrección
+**Defecto.** Debería devolver el último índice con valor `0`, pero recorre de izquierda a derecha y retorna apenas encuentra el primero. Una corrección simple es recorrer desde el final.
 
-El defecto es conceptual: el método debe devolver el último índice cuyo valor es `0`, pero recorre el arreglo de izquierda a derecha y retorna apenas encuentra el primer cero.
+**b)** Con arreglos no nulos, no se puede evitar el recorrido defectuoso.
 
-Código defectuoso:
+**c)** `x = [1, 0, 2]`, esperado `1`. Como hay un solo cero, el primero y el último coinciden.
 
-```java
-for (int i = 0; i < x.length; i++) {
-    if (x[i] == 0) {
-        return i;
-    }
-}
-```
-
-Una corrección simple es recorrer desde el final:
-
-```java
-for (int i = x.length - 1; i >= 0; i--) {
-    if (x[i] == 0) {
-        return i;
-    }
-}
-```
-
-#### b) Caso que no ejecute el defecto
-
-Para arreglos no nulos, no es posible. La estrategia defectuosa de recorrer desde el inicio siempre se utiliza.
-
-#### c) Caso que ejecute el defecto y no produzca falla
-
-```text
-x = [1, 0, 2]
-resultado esperado = 1
-```
-
-El método está mal, pero como solo hay un cero, el primer cero coincide con el último.
-
-#### d) Caso que ejecute el defecto y produzca falla
-
-```text
-x = [0, 1, 0]
-resultado esperado = 2
-resultado defectuoso = 0
-```
-
-Falla porque devuelve el primer cero, no el último.
+**d)** `x = [0, 1, 0]`, esperado `2`, devuelve `0`.
 
 ### 3. `countPositive(int[] x)`
 
-#### a) Defecto y corrección
+**Defecto.** El comentario dice "positivos" pero el código compara `x[i] >= 0`, así que cuenta también al `0`. Corregir a `> 0`.
 
-El comentario indica que debe contar elementos positivos, pero el código cuenta elementos mayores o iguales que cero:
+**b)** `x = []`. El cuerpo del `for` no se ejecuta.
 
-```java
-if (x[i] >= 0) {
-    count++;
-}
-```
+**c)** `x = [-4, 2, 2]`, esperado `2`. La condición defectuosa se evalúa, pero como no hay ceros, contar `>= 0` o `> 0` da lo mismo.
 
-Eso incluye al `0`, que no es positivo.
-
-Corrección:
-
-```java
-if (x[i] > 0) {
-    count++;
-}
-```
-
-#### b) Caso que no ejecute el defecto
-
-```text
-x = []
-resultado esperado = 0
-```
-
-Como el arreglo está vacío, no entra al cuerpo del `for` y la condición defectuosa no se evalúa.
-
-#### c) Caso que ejecute el defecto y no produzca falla
-
-```text
-x = [-4, 2, 2]
-resultado esperado = 2
-```
-
-La condición defectuosa se ejecuta, pero como no hay ceros, contar `>= 0` o `> 0` da el mismo resultado.
-
-#### d) Caso que ejecute el defecto y produzca falla
-
-```text
-x = [-4, 2, 0, 2]
-resultado esperado = 2
-resultado defectuoso = 3
-```
-
-Falla porque el `0` se cuenta como positivo.
+**d)** `x = [-4, 2, 0, 2]`, esperado `2`, devuelve `3`. El cero se cuenta como positivo.
 
 ### 4. `oddOrPos(int[] x)`
 
-#### a) Defecto y corrección
+**Defecto.** Tiene que contar impares o positivos, y usa `x[i] % 2 == 1`. El problema es que en Java `-3 % 2 == -1`, así que los impares negativos no entran. Una corrección es `x[i] % 2 != 0 || x[i] > 0`.
 
-El método debe contar valores impares o positivos. El defecto está en usar:
+**b)** `x = []`.
 
-```java
-x[i] % 2 == 1
-```
+**c)** `x = [2, 4, -2]`, esperado `2`. Se ejecuta la condición defectuosa pero no hay impares negativos que la disparen.
 
-En Java, los impares negativos no cumplen esa condición. Por ejemplo:
-
-```text
--3 % 2 == -1
-```
-
-Por eso los impares negativos quedan afuera aunque deberían contarse.
-
-Una corrección simple es:
-
-```java
-if (x[i] % 2 != 0 || x[i] > 0) {
-    count++;
-}
-```
-
-#### b) Caso que no ejecute el defecto
-
-```text
-x = []
-resultado esperado = 0
-```
-
-El cuerpo del `for` no se ejecuta.
-
-#### c) Caso que ejecute el defecto y no produzca falla
-
-```text
-x = [2, 4, -2]
-resultado esperado = 2
-```
-
-El defecto se ejecuta, pero no hay impares negativos. Entonces el resultado coincide con el esperado.
-
-#### d) Caso que ejecute el defecto y produzca falla
-
-```text
-x = [-3, -2, 0, 1, 4]
-resultado esperado = 3
-resultado defectuoso = 2
-```
-
-Los valores que deberían contarse son `-3`, `1` y `4`, pero el programa defectuoso no cuenta `-3`.
+**d)** `x = [-3, -2, 0, 1, 4]`, esperado `3`, devuelve `2`. El `-3` no se cuenta.
 
 ## Síntesis
 
 - `findLast`: no revisa el índice `0`.
 - `lastZero`: devuelve el primer cero en vez del último.
 - `countPositive`: cuenta el `0` como positivo.
-- `oddOrPos`: no reconoce impares negativos por la semántica del operador `%` en Java.
+- `oddOrPos`: la semántica de `%` en Java deja afuera a los impares negativos.
 
-## Código
+## Enlaces
 
-- [`DefectivePrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/DefectivePrograms.java) — los cuatro programas tal como aparecen en el enunciado.
-- [`FixedPrograms.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/FixedPrograms.java) — corrección aplicada a cada programa.
-- [`Exercise3Runner.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp1/ejercicio3/Exercise3Runner.java) — runner por consola que ejecuta los casos de los puntos b, c y d sobre la versión defectuosa o la corregida.
-
-## Enlaces relacionados
-
-- Enunciado del práctico: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
-- Resolución completa: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
-- Resumen teórico: [`resumen-teorico-testing-tp1.pdf`](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)
+- Enunciado: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
+- Resolución: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)

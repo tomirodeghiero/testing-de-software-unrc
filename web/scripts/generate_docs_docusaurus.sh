@@ -139,7 +139,8 @@ for tp in $TPS; do
         mkdir -p "$SITE_ROOT/static/pdfs/$(dirname "$rel")"
         cp "$pdf" "$SITE_ROOT/static/pdfs/$rel"
         name="$(basename "$pdf")"
-        echo "- [$name](/pdfs/$rel)"
+        url="/pdfs/${rel// /%20}"
+        echo "- [$name]($url)"
       done
     } >> "$idx"
   fi
@@ -147,35 +148,27 @@ done
 
 cat > "$SITE_ROOT/docs/intro.md" <<'EOF'
 ---
-title: "Documentacion de Trabajos Practicos"
+title: "Testing de Software — UNRC"
 sidebar_position: 1
 slug: "/"
-description: "Indice principal de la documentacion de Testing de Software"
+description: "Resolución de los Trabajos prácticos de Testing de Software (UNRC)"
 ---
 
-# Documentacion de Trabajos Practicos
+# Testing de Software — UNRC
 
-Esta documentacion consolida los README de cada trabajo practico del repositorio,
-organizados por secciones para facilitar la navegacion.
+Trabajos prácticos de la materia. Cada TP tiene su enunciado, la resolución y los ejercicios con código y tests.
 
-## Practicos
+## Prácticos
 
-- [TP1](./tp1/)
-- [TP2](./tp2/)
-- [TP3](./tp3/)
-- [TP4](./tp4/)
-- [TP5](./tp5/)
-- [TP6](./tp6/)
-- [TP7](./tp7/)
-- [TP8](./tp8/)
-- [TP9](./tp9/)
-
-## Notas
-
-- El contenido fue importado desde los README originales sin eliminarlos del proyecto.
-- Se incorporo front matter basico para compatibilidad con Docusaurus.
-- Los enlaces a otros README fueron adaptados a rutas `index.md` dentro de `docs/`.
-- Los PDFs de cada practico se publican en la seccion "Material PDF" del indice.
+- [TP1 — Conceptos básicos, RIPR y JUnit AAA](./tp1/)
+- [TP2 — Data-driven testing con `@ParameterizedTest` y `repOK`](./tp2/)
+- [TP3 — Particionado del espacio de entrada (ISP)](./tp3/)
+- [TP4 — Testing basado en grafos](./tp4/)
+- [TP5 — Expresiones lógicas: CACC / RACC](./tp5/)
+- [TP6 — Mutación con Pitest y *fuzzing*](./tp6/)
+- [TP7 — Property-Based Testing con `jqwik`](./tp7/)
+- [TP8 — Randoop, EvoSuite y *mocking*](./tp8/)
+- [TP9 — Trabajo práctico final](./tp9/)
 EOF
 
 if [ ! -f "$SITE_ROOT/package.json" ]; then

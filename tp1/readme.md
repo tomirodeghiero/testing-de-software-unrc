@@ -1,38 +1,34 @@
 # Práctico 1 — Testing de Software
 
-Resolución del primer práctico de la materia. El TP introduce el vocabulario básico del testing de software (*fault*, *error* y *failure*), el modelo RIPR como criterio para razonar sobre la detectabilidad de un defecto, y arranca con las primeras pruebas en JUnit siguiendo el patrón *Arrange–Act–Assert*. Sobre el final aparece el caso clásico de Bloch (`Point` y `ColorPoint`) que ilustra los problemas de mantener el contrato de `equals` en jerarquías por herencia.
-
 ## Documentos principales
 
-- **Enunciado:** [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
-- **Resolución (PDF):** [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
-- **Resumen teórico (PDF):** [`resumen-teorico-testing-tp1.pdf`](/pdfs/tp1/resumen-teorico-testing-tp1.pdf)
-- **Fuente LaTeX:** `resolucion_practico1.tex`, `resumen-teorico-testing-tp1.tex`
+- Enunciado: [`practico1.pdf`](/pdfs/tp1/practico1.pdf)
+- Resolución: [`resolucion_practico1.pdf`](/pdfs/tp1/resolucion_practico1.pdf)
 
 ## Ejercicios
 
 - `ejercicio1/` — lectura de los capítulos 1 y 2 de *Introduction to Software Testing* (Ammann & Offutt).
-- `ejercicio2/` — diferencia entre *fault* y *failure*, y el rol del *error* como estado interno intermedio.
-- `ejercicio3/` — cuatro programas defectuosos: identificación del defecto, reparación y casos según RIPR.
-- `ejercicio4/` — traslado de las pruebas del Ejercicio 3 a JUnit y análisis con el modelo RIPR.
-- `ejercicio5/` — análisis del ejemplo de Bloch: `Point`, `ColorPoint` y el contrato de `equals`.
-- `ejercicio6/` — reconstrucción de `Point` y `PointTest`, consistencia entre `equals` y `hashCode`.
-- `ejercicio7/` — `PointSet` apoyado en `HashSet<Point>`, tests con el patrón Arrange–Act–Assert.
+- `ejercicio2/` — diferencia entre *fault* y *failure*, y el rol del *error* como estado interno.
+- `ejercicio3/` — cuatro programas defectuosos: defecto, reparación y casos según RIPR.
+- `ejercicio4/` — los tests del ejercicio 3 trasladados a JUnit y analizados con RIPR.
+- `ejercicio5/` — análisis del ejemplo de Bloch: `Point`, `ColorPoint` y `equals`.
+- `ejercicio6/` — `Point` y `PointTest`: consistencia entre `equals` y `hashCode`.
+- `ejercicio7/` — `PointSet` apoyado en `HashSet<Point>` y tests con AAA.
 
 ## Material de referencia
 
-Los apuntes y capítulos usados están en `material/`:
+Está todo en `material/`:
 
-- `Capitulos 1 y 2 - Introduction to Software Testing.pdf` — Ammann & Offutt, capítulos 1 y 2.
-- `notas-00-testing-de-software.pdf`, `notas-01-testing-de-software.pdf`, `notas-02-ts.pdf` — notas de la cátedra para las primeras unidades.
+- [Capítulos 1 y 2 — *Introduction to Software Testing*](/pdfs/tp1/material/Capitulos%201%20y%202%20-%20Introduction%20to%20Software%20Testing.pdf)
+- [Notas 00](/pdfs/tp1/material/notas-00-testing-de-software.pdf), [Notas 01](/pdfs/tp1/material/notas-01-testing-de-software.pdf), [Notas 02](/pdfs/tp1/material/notas-02-ts.pdf) — apuntes de cátedra.
 
-## Cómo ejecutar la suite
+## Cómo correr los tests
 
-Los ejercicios con código (3 al 7) viven dentro de proyectos Maven autocontenidos. Para correrlos:
+Los ejercicios con código (3 al 7) son proyectos Maven autocontenidos. Para correr cualquiera:
 
 ```bash
-cd ejercicio4         # o el ejercicio que corresponda
+cd ejercicio4   # o el ejercicio que corresponda
 mvn -Dmaven.repo.local=.m2 test
 ```
 
-El flag `-Dmaven.repo.local=.m2` mantiene el repositorio Maven dentro de la carpeta del ejercicio para no contaminar `~/.m2/` del sistema.
+El `-Dmaven.repo.local=.m2` mantiene el repo de Maven dentro de la carpeta del ejercicio.
