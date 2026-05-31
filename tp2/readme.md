@@ -1,57 +1,37 @@
 # Práctico 2 — Testing de Software
 
-Resolución del segundo práctico de la materia. El TP profundiza en testing automatizado con **JUnit 5** y, en particular, en el enfoque *data-driven* a través de `@ParameterizedTest` con sus tres fuentes principales (`@CsvSource`, `@MethodSource`, `@CsvFileSource`). En paralelo, introduce la idea de **invariante de representación** y el método `repOK()` como oráculo interno sobre dos TADs clásicos: la pila acotada `StackAr` y la cola circular `BoundedQueue`. El práctico cierra con un caso real de defecto —el *Zune bug*— como excusa para practicar debugging guiado por tests.
-
 ## Documentos principales
 
-- **Enunciado:** [`practico2.pdf`](/pdfs/tp2/practico2.pdf)
-- **Resolución (PDF):** [`resolucion_practico2.pdf`](/pdfs/tp2/resolucion_practico2.pdf)
-- **Resumen teórico (PDF):** [`resumen_teorico_tp2.pdf`](/pdfs/tp2/resumen_teorico_tp2.pdf)
-- **Fuente LaTeX:** `resolucion_practico2.tex`, `resumen_teorico_tp2.tex`
+- Enunciado: [`practico2.pdf`](/pdfs/tp2/practico2.pdf)
+- Resolución: [`resolucion_practico2.pdf`](/pdfs/tp2/resolucion_practico2.pdf)
 
 ## Ejercicios
 
-- `ejercicio1/` — lectura del capítulo 3 de *Introduction to Software Testing* (Ammann & Offutt): test requirements, criterios de cobertura, MDTD y *arrange–act–assert*.
+- `ejercicio1/` — lectura del capítulo 3 de *Introduction to Software Testing* (Ammann & Offutt): TRs, criterios de cobertura, MDTD y AAA.
 - `ejercicio2/` — tests parametrizados sobre `SimpleRoutines` con `@CsvSource`, `@MethodSource` y `@CsvFileSource`.
-- `ejercicio3/` — suite completa para `StackAr` con fixture compartido, AAA explícito y `repOk` con su propio juego de tests.
-- `ejercicio4/` — tests parametrizados en CSV para `Min.min`, incluyendo casos negativos.
+- `ejercicio3/` — suite completa para `StackAr` con fixture compartido, AAA explícito y `repOk` (más reflexión para los casos negativos).
+- `ejercicio4/` — tests parametrizados en CSV para `Min.min`, con casos negativos para las tres excepciones.
 - `ejercicio5/` — tests parametrizados y debugging del *Zune bug* en `ZuneBug.currentYear`.
-- `ejercicio6/` — `repOK` y tests parametrizados para `BoundedQueue` con escenarios válidos e inválidos.
-
-## Código base (provisto por la cátedra)
-
-- `src/main/java/assignment2_exercises/SimpleRoutines.java`
-- `src/main/java/assignment2_exercises/Min.java`
-- `src/main/java/assignment2_exercises/ZuneBug.java`
-- `src/main/java/assignment2_exercises/stack/Stack.java`
-- `src/main/java/assignment2_exercises/stack/StackAr.java`
-- `src/main/java/assignment2_exercises/queue/BoundedQueue.java`
-
-## Artefactos agregados
-
-- **Ej. 2**: `SimpleRoutinesParameterizedTest.java`, `odd_or_pos_cases.csv`.
-- **Ej. 3**: `StackArTest.java`, implementación de `repOk()` y ajustes en `pop()` y `push(null)` sobre `StackAr.java`.
-- **Ej. 4**: `MinCsvParameterizedTest.java`, `min_valid_cases.csv`, `min_invalid_cases.csv`.
-- **Ej. 5**: `ZuneBugParameterizedTest.java`, corrección de `currentYear` y copia de la versión original en `ejercicio5/currentYear_original.java.txt`.
-- **Ej. 6**: `BoundedQueueParameterizedTest.java`, implementación de `repOK()` en `BoundedQueue.java`.
+- `ejercicio6/` — `repOK` y tests parametrizados para `BoundedQueue` (escenarios válidos e inválidos con un mini-DSL).
 
 ## Material de referencia
 
-Los apuntes y capítulos usados están en `material/`:
+Está todo en `material/`:
 
-- `Capitulo 3 - Introduction to Software Testing.pdf` — Ammann & Offutt, capítulo 3.
-- `notas-03-automation.pdf` — automatización de tests.
-- `notas-04-data-driven-test.pdf` — data-driven testing.
+- [Capítulo 3 — *Introduction to Software Testing*](/pdfs/tp2/material/Capitulo%203%20-%20Introduction%20to%20Software%20Testing.pdf)
+- [Notas 03 — Automation](/pdfs/tp2/material/notas-03-automation.pdf)
+- [Notas 04 — Data-driven testing](/pdfs/tp2/material/notas-04-data-driven-test.pdf)
 
-## Cómo ejecutar la suite
+## Cómo correr los tests
 
-Desde la raíz `tp2`, usando un repositorio Maven local aislado en `.m2`:
+A diferencia del TP1, todos los ejercicios del TP2 viven en **un único proyecto Maven** en la raíz del TP. Para correr toda la suite:
 
 ```bash
+cd tp2
 mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true test
 ```
 
-El flag `-Djacoco.skip=true` se usa porque el plugin JaCoCo declarado en `pom.xml` (`0.8.2`) es viejo y rompe la build con JDK actuales. Para correr la suite de un único ejercicio basta con agregar `-Dtest=<NombreDeClase>`. Por ejemplo:
+El `-Djacoco.skip=true` evita que se cuelgue por el plugin JaCoCo `0.8.2` del template (no compatibiliza con JDK >= 11). Para correr solo un ejercicio:
 
 ```bash
 mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test
