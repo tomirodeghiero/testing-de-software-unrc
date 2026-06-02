@@ -15,15 +15,13 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Capítulo 6 — *Introduction to Software Testing*](/pdfs/tp3/material/Capitulo%206%20-%20Introduction%20to%20Software%20Testing.pdf)
 - [Notas 05 — Criterios de cobertura](/pdfs/tp3/material/notas-05-criterios.pdf)
 - [Notas 06 — Input Space Partitioning](/pdfs/tp3/material/notas-06-input.pdf)
 
 ## Cómo correr los tests
 
-El código y los tests viven en `assignmnet-3-rodeghiero/` (el typo del nombre viene del template de la cátedra; lo dejé igual). Desde ahí:
+El código y los tests viven en `assignmnet-3-rodeghiero/`. Desde ahí:
 
 ```bash
 cd tp3/assignmnet-3-rodeghiero

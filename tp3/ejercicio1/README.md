@@ -2,7 +2,7 @@
 
 ## Consigna
 
-Lectura el capítulo 6 de *Introduction to Software Testing* (Ammann & Offutt, 2.ª edición), *Input Space Partitioning*. No hay entrega de código: es el marco que se aplica en los ejercicios 2 a 5.
+Lectura el capítulo 6 de *Introduction to Software Testing* (Ammann & Offutt, 2.ª edición), *Input Space Partitioning*.
 
 ## Material
 
