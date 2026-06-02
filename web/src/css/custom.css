@@ -269,29 +269,74 @@ body {
   display: table;
   width: 100%;
   border-collapse: collapse;
-  margin: 1.1rem 0 1.55rem;
-  overflow: hidden;
-  border: 1px solid #cfd5dd;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 12px 22px rgba(15, 25, 38, 0.06);
+  margin: 1.4rem 0 1.85rem;
+  background: transparent;
+  font-size: 0.96rem;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  border-top: 1.5px solid #1a2c43;
+  border-bottom: 1.5px solid #1a2c43;
+}
+
+.theme-doc-markdown table thead {
+  border-bottom: 1px solid #1a2c43;
 }
 
 .theme-doc-markdown table th,
 .theme-doc-markdown table td {
-  border: 1px solid #d7dde5;
-  padding: 0.62rem 0.68rem;
+  border: none;
+  padding: 0.82rem 1.05rem;
   vertical-align: top;
+  text-align: left;
 }
 
 .theme-doc-markdown table th {
-  background: #e7edf6;
-  color: #1a2b40;
+  background: transparent;
+  color: #14233a;
+  font-family: var(--ifm-heading-font-family);
   font-weight: 600;
+  font-size: 0.84rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
 }
 
-.theme-doc-markdown table tr:nth-child(even) td {
-  background: #f8fafc;
+.theme-doc-markdown table tbody tr {
+  border-bottom: 1px solid #e1e4ea;
+  transition: background 140ms ease;
+}
+
+.theme-doc-markdown table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.theme-doc-markdown table tbody tr:hover {
+  background: rgba(21, 58, 99, 0.035);
+}
+
+.theme-doc-markdown table tbody tr:nth-child(even) td {
+  background: transparent;
+}
+
+.theme-doc-markdown table td:first-child,
+.theme-doc-markdown table th:first-child {
+  padding-left: 0.4rem;
+}
+
+.theme-doc-markdown table td:last-child,
+.theme-doc-markdown table th:last-child {
+  padding-right: 0.4rem;
+}
+
+.theme-doc-markdown table td p:first-child {
+  margin-top: 0;
+}
+
+.theme-doc-markdown table td p:last-child {
+  margin-bottom: 0;
 }
 
 .alert {
