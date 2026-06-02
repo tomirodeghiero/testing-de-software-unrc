@@ -66,7 +66,6 @@ mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=BoundedQueueParameterizedTe
 
 - La clave del invariante es `back == (front + size) % capacity`: con esa cláusula basta saber `front` y `size` para reconstruir cualquier índice de la cola; sin ella, la representación sería ambigua.
 - El chequeo de "zona libre limpia" no es estrictamente necesario para que la cola funcione (los métodos solo miran las celdas ocupadas), pero atrapa fugas: si por algún bug `deQueue` olvidara setear `elements[front] = null`, el test lo detectaría.
-- Separar escenarios válidos e inválidos + chequear `repOK` paso a paso es la práctica recomendada del capítulo 3 para clases con estado.
 
 ## Archivos
 

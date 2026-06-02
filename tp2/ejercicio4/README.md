@@ -55,7 +55,7 @@ mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=MinCsvParameterizedTest tes
 ## Notas
 
 - `Min.min` es genérico (`<T extends Comparable<? super T>>`). En los tests uso `List<Integer>` porque ya ejercita todas las ramas. Para el caso de elementos incomparables hay que romper la tipicidad con un *raw type*: es la forma de emular en tiempo de ejecución la situación para la que existe `ClassCastException`.
-- Separar casos válidos e inválidos en dos CSV es la versión más simple del patrón *data-driven testing* de las notas 04.
+- Separar casos válidos e inválidos en dos CSV es la versión más simple del patrón *data-driven testing*.
 
 ## Archivos
 

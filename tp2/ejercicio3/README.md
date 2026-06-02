@@ -54,8 +54,8 @@ mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true -Dtest=StackArTest test
 
 ## Inconvenientes que aparecieron
 
-- **No se puede romper el invariante desde la API pública.** Para probar los caminos negativos de `repOk` (huecos en zona activa, basura en zona inactiva, `sp` fuera de rango) hizo falta reflexión. Es un punto del capítulo 3: cuando el código bajo prueba esconde su estado, o se agregan *test hooks*, o se usa reflexión como acá.
-- **La versión inicial de `pop` no era LIFO.** Recién apareció cuando implementé `repOk`: el método dejaba la celda con su valor anterior y devolvía el nuevo tope en lugar del removido. El test `popDebeRetornarUltimoElementoYReducirSize` lo detectó. Ilustra una idea importante: agregar el invariante como oráculo amplifica el poder de detección.
+- **No se puede romper el invariante desde la API pública.** Para probar los caminos negativos de `repOk` (huecos en zona activa, basura en zona inactiva, `sp` fuera de rango) hizo falta reflexión.
+- **La versión inicial de `pop` no era LIFO.** Recién apareció cuando implementé `repOk`: el método dejaba la celda con su valor anterior y devolvía el nuevo tope en lugar del removido. El test `popDebeRetornarUltimoElementoYReducirSize` lo detectó. Ilustra un concepto importante que es el de agregar el invariante como oráculo amplifica el poder de detección.
 - **`hashCode` depende de toda la longitud de `elems`**, no solo de los elementos válidos. Dos pilas con misma estructura lógica pero capacidades distintas no son iguales para `equals`. No lo considero un defecto (la clase define igualdad por estructura), pero conviene tenerlo presente al diseñar tests.
 
 ## Archivos
