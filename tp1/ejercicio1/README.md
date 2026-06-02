@@ -11,9 +11,7 @@ Lectura de los capítulos 1 y 2 del libro *Introduction to Software Testing* (Am
 
 ## Resumen
 
-Los capítulos fijan el vocabulario que aparece en los ejercicios siguientes. Lo importante para mí:
-
-- *Por qué testear*: el testing no es un control final, es una actividad de ingeniería. Los casos clásicos (Therac-25, Ariane 5, Mars Climate Orbiter, Pentium FDIV, Zune) muestran el costo real de un defecto.
+- *Por qué testear*: el testing no es un control final, es una actividad de ingeniería.
 - *Fault / error / failure*: el **fault** es el defecto estático en el código; el **error** es el estado interno incorrecto que se produce al ejecutarlo; la **failure** es el comportamiento externo observable. La cadena `fault → error → failure` se aplica directo en el ejercicio 2.
 - *Modelo RIPR* (Reachability, Infection, Propagation, Revealability): las cuatro condiciones que un test tiene que cumplir para revelar un defecto. Es la herramienta que se usa en los ejercicios 3 y 4.
 - *Criterios de cobertura*: un criterio define qué hay que cubrir; los tests son los artefactos que cumplen esos requerimientos. Se profundiza desde el TP3 en adelante.

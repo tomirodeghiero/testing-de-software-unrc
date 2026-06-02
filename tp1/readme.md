@@ -17,10 +17,8 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Capítulos 1 y 2 — *Introduction to Software Testing*](/pdfs/tp1/material/Capitulos%201%20y%202%20-%20Introduction%20to%20Software%20Testing.pdf)
-- [Notas 00](/pdfs/tp1/material/notas-00-testing-de-software.pdf), [Notas 01](/pdfs/tp1/material/notas-01-testing-de-software.pdf), [Notas 02](/pdfs/tp1/material/notas-02-ts.pdf) — apuntes de cátedra.
+- [Notas 00](/pdfs/tp1/material/notas-00-testing-de-software.pdf), [Notas 01](/pdfs/tp1/material/notas-01-testing-de-software.pdf), [Notas 02](/pdfs/tp1/material/notas-02-ts.pdf) — slides de la materia.
 
 ## Cómo correr los tests
 
