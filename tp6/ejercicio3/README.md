@@ -1,7 +1,5 @@
 # Ejercicio 3 — Fuzzing: `Mutator`, `MutationFuzzer`, `RandomFuzzer` y `bc`
 
-Completar la parte de fuzzing del template: implementar `Mutator`, `MutationFuzzer` y `RandomFuzzer`, y cerrar el test parametrizado que ejecuta `bc` sobre entradas generadas por fuzzing.
-
 ## 1) `Mutator`
 
 Tres operadores básicos de mutación sobre strings:

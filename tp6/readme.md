@@ -13,8 +13,6 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Capítulo 9 — *Introduction to Software Testing*](/pdfs/tp6/material/Capitulo%209%20-%20Introduction%20to%20Software%20Testing.pdf)
 - [Notas 10 — Overview de syntax-based testing](/pdfs/tp6/material/notas-10-overviewSyntax.pdf)
 - [Notas 11 — Mutación](/pdfs/tp6/material/notas-11-mutation.pdf)

@@ -1,7 +1,5 @@
 # Ejercicio 1 — Mutación sobre `Palindrome.capicua` con Pitest
 
-Testing de mutación con PIT sobre `Palindrome.capicua`. La consigna pide generar mutantes, escribir una suite JUnit que los mate, y responder cuatro preguntas (cantidad de mutantes, tests, mutation score y mutantes equivalentes).
-
 ## El método
 
 `Palindrome.capicua(char[])` recibe un arreglo de `char` y determina si es capicúa recorriéndolo desde los extremos hacia el centro mientras los caracteres coincidan:

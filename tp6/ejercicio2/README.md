@@ -1,7 +1,5 @@
 # Ejercicio 2 — Mutación sobre `TriTyp.triang` con Pitest
 
-Testing de mutación con PIT sobre `TriTyp.triang`, que clasifica un triángulo como equilátero, isósceles, escaleno o no-triángulo a partir de tres lados. El objetivo es una suite JUnit que mate todos los mutantes generados.
-
 ## Ejecución de PIT
 
 El `pom.xml` apunta a `Palindrome` por defecto, así que para correr Pitest sobre `TriTyp` hay que sobrescribir `targetClasses` y `targetTests` desde la línea de comandos:
@@ -35,7 +33,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.sk
 - Línea base inicial (1 test): 23% (9/39).
 - Suite final (15 tests): 100% (39/39).
 
-**(d) Mutantes equivalentes.** **0 equivalentes observados.** El reporte final de PIT terminó sin sobrevivientes (`KILLED 39 / GENERATED 39`), así que no quedó ningún mutante vivo para analizar. Podrían existir equivalentes en teoría, pero en esta corrida no fue necesario buscarlos.
+**(d) Mutantes equivalentes.** **0 equivalentes observados.** El reporte final de PIT terminó sin sobrevivientes (`KILLED 39 / GENERATED 39`), así que no quedó ningún mutante vivo para analizar.
 
 ## Cierre
 
