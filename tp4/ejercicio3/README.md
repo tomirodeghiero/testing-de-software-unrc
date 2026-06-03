@@ -1,7 +1,5 @@
 # Ejercicio 3 — CFG de `fmtRewrap` y suites para NC, EC, PPC
 
-Trabajo sobre `fmtRewrap()` (en `assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/FmtRewrap.java`).
-
 ## CFG por bloques
 
 Para que el análisis sea manejable uso un CFG por bloques, no a nivel de instrucción individual. Los nodos:
@@ -122,7 +120,7 @@ Con `S = ""` la condición del `while` evalúa `0 < 0` (falso), así que el fluj
 
 ## (d) Suite NC pero no EC
 
-Suite en `FmtRewrapNodeCoverageTest.java`. Comando:
+Suite en [`FmtRewrapNodeCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapNodeCoverageTest.java). Comando:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
@@ -135,20 +133,20 @@ JaCoCo sobre `fmtRewrap`: `LINE 29/29`, `BRANCH 16/16`.
 
 ## (e) Suite EC pero no PPC
 
-Suite en `FmtRewrapEdgeButNotPrimePathCoverageTest.java`. Comando:
+Suite en [`FmtRewrapEdgeButNotPrimePathCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapEdgeButNotPrimePathCoverageTest.java). Comando:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \
     -Dtest=FmtRewrapEdgeButNotPrimePathCoverageTest test
 ```
 
-JaCoCo: `LINE 29/29`, `BRANCH 16/16` (equivalente práctico de EC).
+JaCoCo: `LINE 29/29`, `BRANCH 16/16`.
 
 **Por qué no cumple PPC:** la suite no recorre el prime path `[BW, INC, W, C, IW]`. Cada vez que el flujo entra a `BW`, la siguiente iteración relevante del bucle pasa por `LB` en lugar de `IW`, así que esa secuencia particular no aparece nunca en los caminos ejecutados.
 
 ## (f) Suite PPC con *Best Effort Touring*
 
-Suite en `FmtRewrapPrimePathBestEffortCoverageTest.java`. Comando:
+Suite en [`FmtRewrapPrimePathBestEffortCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/FmtRewrapPrimePathBestEffortCoverageTest.java). Comando:
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 \

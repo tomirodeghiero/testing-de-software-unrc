@@ -1,7 +1,5 @@
 # Ejercicio 4 — Instrumentación de `patternIndex` y reporte de caminos
 
-Trabajo sobre `patternIndex()` (en `assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndex.java`).
-
 ## Instrumentación
 
 Para poder analizar los caminos ejecutados agregué instrumentación a nivel de nodos del CFG dentro del método. En cada invocación se registra la secuencia exacta de nodos por los que pasa la ejecución.
@@ -20,11 +18,11 @@ Nodos instrumentados:
 - `INC` — incremento `iSub++`.
 - `R` — `return`.
 
-El registro de los caminos se delega a `PatternIndexPathTracker`, que va anotando los nodos `hit` y al final genera una `Invocation` con `subject`, `pattern`, resultado y la lista de nodos recorridos.
+El registro de los caminos se delega a [`PatternIndexPathTracker`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/main/java/assignment4_exercises/PatternIndexPathTracker.java), que va anotando los nodos `hit` y al final genera una `Invocation` con `subject`, `pattern`, resultado y la lista de nodos recorridos.
 
 ## Suite
 
-Suite en `PatternIndexInstrumentationCoverageTest.java`. Ejecuta los 10 casos de la tabla del enunciado:
+Suite en [`PatternIndexInstrumentationCoverageTest.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp4/assignmnet-4-rodeghiero/src/test/java/assignment4_exercises/PatternIndexInstrumentationCoverageTest.java). Ejecuta los 10 casos de la tabla del enunciado:
 
 1. `("a", "bc")` → `-1`
 2. `("ab", "a")` → `0`
