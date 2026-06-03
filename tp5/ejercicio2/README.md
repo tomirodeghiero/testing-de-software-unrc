@@ -1,6 +1,6 @@
 # Ejercicio 2 — `checkIt()` vs `checkItExpand()`: CACC y Edge Coverage
 
-Trabajo sobre el predicado del método `checkIt()`:
+El predicado del método `checkIt()` es el siguiente:
 
 ```
 p = a && (b || c)
@@ -43,7 +43,7 @@ if (a) {
 `checkItExpand()` devuelve un `ExecutionTrace` con:
 
 1. los nodos recorridos (`getNodes()`),
-2. las aristas recorridas (`getEdges()`), armadas como pares consecutivos `N_i -> N_{i+1}`.
+2. las aristas recorridas (`getEdges()`), armadas como pares consecutivos *Nᵢ* → *Nᵢ₊₁*.
 
 Nodos definidos: `START`, `A`, `B`, `C`, `TRUE`, `FALSE`, `END`.
 

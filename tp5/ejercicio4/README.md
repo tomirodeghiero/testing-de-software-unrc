@@ -1,7 +1,5 @@
 # Ejercicio 4 — `TriTyp.triang()` con CACC
 
-Tests JUnit para `TriTyp.triang()` que satisfacen cobertura correlacionada de cláusulas activas (CACC).
-
 ## Predicados considerados
 
 Dentro de `triang()` tomé estos predicados:

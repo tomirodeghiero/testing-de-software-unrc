@@ -1,6 +1,6 @@
 # Ejercicio 3 — `Thermostat.turnHeaterOn()`: CC, PC y CACC
 
-Tests para `turnHeaterOn()` de `Thermostat.java` que cumplan:
+Tests para `turnHeaterOn()` de [`Thermostat.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp5/assignment-5-rodeghiero/src/main/java/assignment5_exercises/thermostat/Thermostat.java) que cumplan:
 
 1. Cobertura de cláusulas (CC) y, si es posible, sin llegar a cobertura de predicados (PC).
 2. Cobertura de predicados (PC) y, si es posible, sin llegar a cobertura de cláusulas (CC).

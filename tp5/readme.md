@@ -14,8 +14,6 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Capítulo 8 — *Introduction to Software Testing*](/pdfs/tp5/material/Capitulo%208%20-%20Introduction%20to%20Software%20Testing.pdf)
 - [Notas 09 — Logic expressions](/pdfs/tp5/material/notas-09-logicExpr.pdf)
 - [Notas 09 — Logic expressions (parte 2)](/pdfs/tp5/material/notas-09-logicExpr-02.pdf)

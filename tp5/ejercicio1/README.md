@@ -10,11 +10,6 @@ Predicados:
 4. `p = a ⊕ b`
 5. `p = a ∨ b ∨ (c ∧ d)`
 
-Convención en todas las tablas:
-
-- Las filas están numeradas en orden lexicográfico con `T` antes que `F`.
-- En `e)` y `f)`, los pares se listan como `(fila_i, fila_j)`.
-
 ## 1) `p = a ∨ (b ∧ c)`
 
 a) Cláusulas: `a`, `b`, `c`.
