@@ -1,4 +1,5 @@
 // @ts-check
+// Web Docusaurus: espejo navegable de los READMEs de cada TP.
 const { themes } = require('prism-react-renderer');
 
 const currentYear = new Date().getFullYear();
