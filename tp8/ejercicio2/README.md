@@ -1,8 +1,6 @@
 # Ejercicio 2 — `fileExample` con Randoop y EvoSuite
 
-## La clase
-
-`assignment8_exercises.fileContents.fileExample` expone una sola operación (`checkContent`) con varias dependencias fuertes con el entorno de ejecución:
+La clase [`fileExample`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/fileContents/fileExample.java) expone una sola operación (`checkContent`) con varias dependencias fuertes con el entorno de ejecución:
 
 1. Lee un nombre de archivo desde `System.in`.
 2. Cierra el `Scanner` asociado a consola — lo que también cierra `System.in`.
@@ -84,7 +82,7 @@ Los tests se generan correctamente, pero fallan al inicializar el runner de EvoS
 | Cobertura | baja | branch 60 %, line 53 % |
 | Entorno requerido | JDK 17, simple | JDK 11 (runtime histórico) |
 
-Ninguno reemplaza al otro: cada uno muestra un trade-off distinto entre profundidad de exploración y facilidad de integración. Para `fileExample`, EvoSuite fue más expresivo en la generación, mientras que Randoop fue más práctico de ejecutar.
+Ninguno reemplaza al otro ya que cada uno muestra un trade-off distinto entre profundidad de exploración y facilidad de integración. Para `fileExample`, EvoSuite fue más expresivo en la generación, mientras que Randoop fue más práctico de ejecutar.
 
 ## Archivos
 
@@ -95,4 +93,5 @@ Ninguno reemplaza al otro: cada uno muestra un trade-off distinto entre profundi
 
 ## Enlaces
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)

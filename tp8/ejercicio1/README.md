@@ -1,20 +1,8 @@
 # Ejercicio 1 — `NodeCachingLinkedList` con Randoop
 
-## Objetivo
-
-Aplicar testing automático con **Randoop** sobre `assignment8_exercises.ncl.NodeCachingLinkedList`. A partir de la suite generada se analizan los defectos que aparecen, se corrigen en el código y se reportan las métricas de cobertura de ramas y mutación.
-
-## Flujo de trabajo
-
-1. Compilar el proyecto y generar la suite inicial con Randoop.
-2. Analizar las fallas detectadas para identificar defectos reales.
-3. Corregir los defectos e incorporar el contrato `repOK()`.
-4. Regenerar la suite, dejándola como tests de regresión.
-5. Ejecutar JaCoCo (cobertura) y PIT (mutación) para sacar métricas.
-
 ## Defectos corregidos
 
-Randoop detectó dos problemas concretos en `NodeCachingLinkedList`:
+Randoop detectó dos problemas concretos en [`NodeCachingLinkedList`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/ncl/NodeCachingLinkedList.java):
 
 1. **`maximumCacheSize` no se inicializaba en el constructor**: quedaba en `0` y deshabilitaba el cache (si `cacheSize >= maximumCacheSize` siempre es cierto, nunca se cachean nodos).
 2. **`repOK()` no estaba implementado**: devolvía `false` siempre, invalidando cualquier instancia desde el punto de vista del invariante.
@@ -90,4 +78,5 @@ Y ajusté `gen-randoop.sh` para acotar la salida y obtener una suite manejable.
 
 ## Enlaces
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)

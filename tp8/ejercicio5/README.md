@@ -1,16 +1,8 @@
 # Ejercicio 5 — `fail2ban.Server` con Randoop, EvoSuite y jqwik
 
-Este ejercicio integra varias técnicas vistas en la materia sobre `assignment8_exercises.fail2ban.Server`. Las tareas:
-
-1. implementar `repOK()`,
-2. generar tests con Randoop (30 s), analizar las salidas y depurar,
-3. generar tests con EvoSuite (30 s), analizar y comparar con Randoop,
-4. explicar cómo aprovechar `repOK()` para depurar con EvoSuite,
-5. escribir una propiedad jqwik para `update` usando un único generador.
-
 ## (a) `repOK()`
 
-El invariante que implementé en `Server.java` chequea:
+El invariante que implementé en [`Server.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/fail2ban/Server.java) chequea:
 
 - `expirationTime` no nulo y estrictamente mayor a 0.
 - `time` no nulo.
@@ -71,15 +63,15 @@ java -classpath target/classes:libs/randoop-all-3.0.8.jar randoop.main.Main gent
     --no-regression-assertions=true --ignore-flaky-tests=true
 ```
 
-Resultado: `failing inputs=0`, sin `ErrorTest`, `RegressionTest` con 174 tests en verde.
+Resultado: `failing inputs=0`, sin `ErrorTest`, `RegressionTest` con 174 tests correctos.
 
 ### Defectos corregidos durante la depuración
 
 Archivos modificados:
 
-- `Server.java`
-- `SinglyLinkedList.java`
-- `StrictlySortedSinglyLinkedList.java`
+- [`Server.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/fail2ban/Server.java)
+- [`SinglyLinkedList.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/fail2ban/SinglyLinkedList.java)
+- [`StrictlySortedSinglyLinkedList.java`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/fail2ban/StrictlySortedSinglyLinkedList.java)
 
 Cambios principales:
 
@@ -191,15 +183,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q -Djacoco.skip=true \
     -Dtest=assignment8_exercises.fail2ban.ServerPropertyTest test
 ```
 
-Resultado: la propiedad pasa en todas las ejecuciones.
-
-## Resumen
-
-- `repOK()` quedó implementado e integrado al flujo de testing automático.
-- Durante la depuración con Randoop corrigí defectos funcionales y de robustez en `Server` y las listas auxiliares.
-- Randoop detectó problemas pero alcanzó baja cobertura y mutation score pobre en esta clase.
-- EvoSuite logró una exploración de ramas y un mutation score claramente superior.
-- La parte de PBT se completó con la propiedad jqwik para `update` usando un único generador.
+Cabe destacar que la propiedad pasa en todas las ejecuciones.
 
 ## Archivos
 
@@ -212,4 +196,5 @@ Resultado: la propiedad pasa en todas las ejecuciones.
 
 ## Enlaces
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)

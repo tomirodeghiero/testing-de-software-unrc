@@ -2,9 +2,8 @@
 
 ## Documentos principales
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)
-
-> El enunciado original (`practico8.pdf`) no se conserva en el repo. Cada ejercicio describe su consigna en el README correspondiente.
 
 ## Ejercicios
 
@@ -16,15 +15,13 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Notas 14 — Mocks](/pdfs/tp8/material/notas-14-mocks.pdf)
 - [Notas 15 — EvoSuite](/pdfs/tp8/material/notas-15-evosuite.pdf)
 - [Notas 16 — Symbolic execution](/pdfs/tp8/material/notas-16-.SymExec.pdf)
 
 ## Cómo correr los tests y las herramientas
 
-El código vive en `assignment-8-rodeghiero/`. Hay que usar JDK 17 (y JDK 11 para EvoSuite). Desde la carpeta del proyecto:
+El código se encuentra en `assignment-8-rodeghiero/`. Recomiendo usar JDK 17 (y JDK 11 para EvoSuite). Desde la carpeta del proyecto:
 
 ```bash
 cd tp8/assignment-8-rodeghiero
@@ -48,5 +45,3 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -q org.pitest:pitest-maven:mutatio
 JAVA_HOME=$(/usr/libexec/java_home -v 11) PATH=$JAVA_HOME/bin:$PATH \
     ./gen-evo.sh assignment8_exercises.fail2ban.Server 30
 ```
-
-El `-Djacoco.skip=true` se usa para correr tests sin JaCoCo (más rápido y evita choques cuando se combinan con PIT).

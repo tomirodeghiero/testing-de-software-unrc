@@ -1,8 +1,6 @@
 # Ejercicio 4 — `IPBlacklist.login` con EasyMock
 
-## Consigna
-
-`IPBlacklist` tiene que cumplir tres responsabilidades:
+[`IPBlacklist`](https://github.com/tomirodeghiero/testing-de-software-unrc/blob/main/tp8/assignment-8-rodeghiero/src/main/java/assignment8_exercises/logging/IPBlacklist.java) tiene que cumplir tres responsabilidades:
 
 1. registrar el último IP que intentó loguearse,
 2. contar los intentos fallidos consecutivos provenientes de ese IP,
@@ -13,7 +11,7 @@ Sobre eso se piden dos verificaciones puntuales:
 - Después de 3 intentos fallidos del mismo IP, el IP queda en blacklist.
 - Si los intentos fallidos son menos de 3, el IP no queda en blacklist.
 
-## Por qué usar mocks
+## Por qué uso mocks
 
 `IPBlacklist.login(...)` depende internamente de un `LoginService.login(ip, user, passwordHash)` que típicamente consulta un sistema externo. Para los tests no queremos depender de ese servicio real: lo que queremos es **controlar** qué devuelve y verificar la lógica de blacklisting que está adentro de `IPBlacklist`.
 
@@ -73,7 +71,7 @@ cd tp8/assignment-8-rodeghiero
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Djacoco.skip=true -Dtest=IPBlacklistTest test
 ```
 
-Resultado: los dos tests pasan.
+El resultado es que los dos tests pasan exitosamente.
 
 ## Archivos
 
@@ -83,4 +81,5 @@ Resultado: los dos tests pasan.
 
 ## Enlaces
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)

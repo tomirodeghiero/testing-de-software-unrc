@@ -1,7 +1,5 @@
 # Ejercicio 3 — Mecanismos de Randoop para escenarios como el del ejercicio 2
 
-## El problema
-
 En `fileExample.checkContent()` hay varias dependencias externas que dificultan la generación automática de tests significativos:
 
 1. Entrada por `System.in`.
@@ -24,7 +22,7 @@ Randoop tiene un conjunto de opciones pensadas justamente para estas dificultade
 --junit-after-all
 ```
 
-Uso recomendado acá: recrear `System.in`, crear un archivo temporal controlado, cargar el contenido esperado, y limpiar el estado al finalizar cada test.
+Recrea `System.in`, crear un archivo temporal controlado, cargar el contenido esperado, y limpiar el estado al finalizar cada test.
 
 ### 2) Fijar propiedades del sistema (reproducibilidad)
 
@@ -98,7 +96,7 @@ Reduce el ruido cuando el código bajo prueba imprime por `stdout` / `stderr`.
 @randoop.CheckRep
 ```
 
-Randoop evalúa el método anotado como invariante durante la generación y reporta violaciones. Especialmente útil en estructuras con estado interno.
+Randoop evalúa el método anotado como invariante durante la generación de tests.
 
 ## Aplicación práctica a `fileExample`
 
@@ -110,7 +108,7 @@ Para este caso, la estrategia recomendada:
 4. Acotar la suite con `--small-tests`, `--maxsize` y `--outputlimit`.
 5. Configurar un `--timeout` por test para cortar bloqueos derivados de la lectura de `stdin`.
 
-Comando ejemplo:
+Comando:
 
 ```bash
 java -classpath target/classes:libs/randoop-all-3.0.8.jar randoop.main.Main gentests \
@@ -131,10 +129,9 @@ java -classpath target/classes:libs/randoop-all-3.0.8.jar randoop.main.Main gent
   --timeout=2000
 ```
 
-## Conclusión
-
 Con la configuración por defecto, Randoop no rinde bien sobre código fuertemente acoplado al entorno. Combinando hooks de setup/teardown, fijación de propiedades del sistema y control del presupuesto, la utilidad y la estabilidad de los tests generados mejoran de forma clara y se aprovecha mucho mejor el tiempo de exploración.
 
 ## Enlaces
 
+- Enunciado: [`practico8.pdf`](/pdfs/tp8/practico8.pdf)
 - Resolución: [`resolucion_practico8.pdf`](/pdfs/tp8/resolucion_practico8.pdf)
