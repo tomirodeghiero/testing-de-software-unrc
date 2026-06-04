@@ -90,7 +90,5 @@ web/docs/
 web/static/pdfs/
 tp9/resolucion_practico9.tex
 
-# Cuestionario general (solo en local)
 book/cuestionario_general.*
-
 book/Introduction*to*Software*Testing.pdf
