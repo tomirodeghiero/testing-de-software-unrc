@@ -24,7 +24,7 @@ Repositorio de la resolución de los trabajos prácticos de la materia **Testing
 
 ```
 .
-├─ material/   recursos transversales (libro, cuestionario)
+├─ book/       libro principal de la catedra (Ammann & Offutt)
 ├─ tpN/        un práctico por carpeta
 └─ web/        sitio Docusaurus (espejo navegable de los README)
 ```
