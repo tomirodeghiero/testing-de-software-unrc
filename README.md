@@ -24,24 +24,10 @@ Repositorio de la resolución de los trabajos prácticos de la materia **Testing
 
 ```
 .
-├─ book/       libro principal de la catedra (Ammann & Offutt)
-├─ tpN/        un práctico por carpeta
-└─ web/        sitio Docusaurus (espejo navegable de los README)
+├─ tpN/          un práctico por carpeta
+├─ web/          sitio Docusaurus (espejo navegable de los README)
+├─ vercel.json   configuración del deploy de la web en Vercel
+└─ README.md
 ```
 
-Cada `tpN/` contiene el enunciado en PDF, la resolución (`.tex` + `.pdf`), el material de cátedra usado y los ejercicios con su código y tests.
-
-## Sitio web
-
-El sitio se genera a partir de los `README.md` del repo. Para correrlo en local:
-
-```bash
-cd web
-yarn install                # solo la primera vez
-yarn run docs:generate      # lleva README y PDFs a docs/ y static/pdfs/
-yarn start                  # http://localhost:3000
-```
-
-## Estado de la entrega
-
-Los nueve prácticos están resueltos, con la resolución completa publicada en PDF y en la web.
+Cada `tpN/` contiene el enunciado en PDF, la resolución, el material utilizado y los ejercicios con sus códigos y tests.
