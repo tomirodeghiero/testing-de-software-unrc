@@ -1,11 +1,5 @@
 # Ejercicio 3 — `Date`: validación, `addDays` y propiedad
 
-Trabajo sobre `assignment7_exercises.date.Date`, que representa una fecha de calendario (día, mes, año) desde el año 1900. La consigna pide:
-
-1. completar el constructor y `repOk()` para que rechacen fechas inválidas,
-2. implementar `addDays(Date when, int days)` que suma una cantidad de días a una fecha,
-3. escribir una propiedad en `jqwik` que verifique que el resultado de `addDays` siempre es una fecha válida.
-
 ## Constructor y `repOk()`
 
 El constructor toma `(d, m, y)` y antes de asignar valida la terna con `isValidDate`. Si la combinación no es legal, lanza `IllegalArgumentException("invalid date")`. Así nunca se construye un `Date` en estado inválido y el resto del código puede asumir consistencia.
@@ -74,7 +68,7 @@ Esquema:
 3. **Bucle**: en cada iteración se calcula `daysLeftInMonth`. Si los restantes caben en el mes actual, se suman directamente al día y se termina. Si no caben, se consume el resto del mes (incluyendo el salto al día 1 del mes siguiente, por eso se resta `daysLeftInMonth + 1`), se avanza un mes y, si supera 12, se pasa al 1 de enero del año siguiente.
 4. **Resultado**: `new Date(d, m, y)` vuelve a pasar por el constructor, así que cualquier estado intermedio inválido explotaría con `IllegalArgumentException`.
 
-La clave: nunca se construye una fecha intermedia inválida — el salto de mes se hace en un solo paso, sin pasar por un hipotético "32 de enero".
+La clave es que nunca se construye una fecha intermedia inválida, ya que el salto de mes se hace en un solo paso, sin pasar por un hipotético "32 de enero".
 
 ## Propiedad con generadores
 
@@ -92,12 +86,12 @@ void addDaysSiempreDevuelveFechaValida(
 }
 ```
 
-Captura la idea central: **para cualquier fecha válida y cualquier cantidad no negativa de días, el resultado de `addDays` es una fecha válida**.
+La idea central es que **para cualquier fecha válida y cualquier cantidad no negativa de días, el resultado de `addDays` es una fecha válida**.
 
-Los generadores:
+Los generadores son:
 
-- **`fechasValidas`** usa `flatMap` para construir la terna `(day, month, year)` en el orden correcto: primero el año (`1900..2400`), después el mes (`1..12`), y por último el día (`1..daysInMonth(month, year)`). El anidamiento es necesario porque el rango del día **depende** del mes y el año (si no, se generarían cosas como `31/04/2024` que el constructor rechazaría).
-- **`diasNoNegativos`** genera enteros entre `0` y `5000`. Suficiente para forzar saltos de varios años (5000 días ≈ 13 años y medio) sin volver lenta la suite.
+- **`fechasValidas`** que usa `flatMap` para construir la terna `(day, month, year)` en el orden correcto: primero el año (`1900..2400`), después el mes (`1..12`), y por último el día (`1..daysInMonth(month, year)`). El anidamiento es necesario porque el rango del día **depende** del mes y el año (si no, se generarían cosas como `31/04/2024` que el constructor rechazaría).
+- **`diasNoNegativos`** que genera enteros entre `0` y `5000`. Suficiente para forzar saltos de varios años (5000 días ≈ 13 años y medio) sin volver lenta la suite.
 
 El receptor `new Date(1, 1, 1900)` está solo porque `addDays` es de instancia; su contenido es irrelevante porque todo se hace sobre `when`.
 
@@ -109,7 +103,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.sk
     -Dtest=DatePropertiesTest test
 ```
 
-Resultado: `BUILD SUCCESS` con la propiedad en verde.
+El resultado es `BUILD SUCCESS`.
 
 ## Archivos
 
@@ -118,4 +112,5 @@ Resultado: `BUILD SUCCESS` con la propiedad en verde.
 
 ## Enlaces
 
+- Enunciado: [`practico7.pdf`](/pdfs/tp7/practico7.pdf)
 - Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)

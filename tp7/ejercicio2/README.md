@@ -1,19 +1,10 @@
 # Ejercicio 2 — `Point`: `equals`/`hashCode` y propiedad geométrica
 
-Trabajo sobre `assignment7_exercises.point.Point`, que modela un punto en el plano con coordenadas `x` e `y` de tipo `float`.
-
-La consigna pide cuatro cosas:
-
-1. explicar la relación entre `equals` y `hashCode`,
-2. implementar ambos respetando el contrato,
-3. escribir propiedades con un generador de puntos en `jqwik`,
-4. validar con una propiedad geométrica: la distancia entre dos puntos sobre una recta paralela al eje X.
-
 ## La relación entre `equals` y `hashCode`
 
 El contrato de `Object` establece dos reglas que son clave cuando una clase se va a usar en `HashMap` o `HashSet`:
 
-- **Si dos objetos son iguales según `equals`, deben tener el mismo `hashCode`.** Es obligatorio. Si se rompe, las estructuras basadas en hashing dejan de funcionar (un objeto podría no encontrarse nunca porque se busca en el *bucket* equivocado).
+- **Si dos objetos son iguales según `equals`, deben tener el mismo `hashCode`.** Si se rompe, las estructuras basadas en hashing dejan de funcionar.
 - **La inversa no es obligatoria.** Dos objetos con el mismo hash no tienen por qué ser iguales: eso es una *colisión*. Es esperable, el hash es un entero con rango finito.
 
 Al sobrescribir `equals` también hay que sobrescribir `hashCode` **consistentemente con esa definición**.
@@ -58,7 +49,7 @@ Arbitrary<Float> coordenadas() {
 }
 ```
 
-El rango se acotó a `[-10_000, 10_000]` a propósito: evita `Float.NaN` o `Float.POSITIVE_INFINITY`, que son poco representativos del uso real y solo generarían ruido.
+El rango se acotó a `[-10_000, 10_000]` a propósito: evita `Float.NaN` o `Float.POSITIVE_INFINITY`.
 
 ```java
 @Property(tries = 250)
@@ -72,7 +63,7 @@ void puntosIgualesDebenTenerMismoHashCode(@ForAll("puntos") Point punto) {
 
 ## Propiedad geométrica: distancia sobre una recta paralela al eje X
 
-Cuando dos puntos comparten la ordenada `y`, están sobre una recta horizontal y su distancia se reduce a `|x2 - x1|`. Es una buena propiedad para PBT: captura una invariante geométrica real, independiente de los valores concretos.
+Cuando dos puntos comparten la ordenada `y`, están sobre una recta horizontal y su distancia se reduce a `|x2 - x1|`.
 
 ```java
 @Property(tries = 250)
@@ -91,8 +82,6 @@ void distanciaEnRectaParalelaAlEjeXEsDiferenciaDeAbscisas(
 }
 ```
 
-Se usa una **tolerancia numérica de `1e-6`** porque `distanceTo` implementa la fórmula euclídea con `Math.sqrt(Math.pow(...))`, y esas operaciones introducen errores de redondeo inevitables en aritmética de punto flotante. Sin tolerancia, la propiedad fallaría por diferencias ínfimas en el último bit.
-
 ## Cómo correr
 
 ```bash
@@ -110,4 +99,5 @@ Las dos propiedades pasan después de 250 iteraciones cada una.
 
 ## Enlaces
 
+- Enunciado: [`practico7.pdf`](/pdfs/tp7/practico7.pdf)
 - Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)

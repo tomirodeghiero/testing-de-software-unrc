@@ -1,13 +1,5 @@
 # Ejercicio 1 — `NodeCachingLinkedList`: `repOK()` y propiedades
 
-Trabajo sobre `NodeCachingLinkedList` (paquete `assignment7_exercises.ncl`): una lista doblemente enlazada y circular, con un *pool* interno de nodos reutilizables (la *cache*) para evitar crear y descartar objetos todo el tiempo.
-
-La consigna pide:
-
-1. leer la implementación para entender cómo conviven la lista principal y la cache,
-2. completar `repOK()` con los invariantes de representación,
-3. escribir tres propiedades con `jqwik` (con sus generadores) que validen el comportamiento.
-
 ## `repOK()`
 
 La estructura tiene dos "mitades" con reglas distintas: la **lista principal** (circular, doblemente enlazada, con centinela `header`) y la **cache** (lista simplemente enlazada de nodos reutilizables). El chequeo arranca por las condiciones baratas y avanza hacia las más costosas:
@@ -91,4 +83,5 @@ Resultado: `BUILD SUCCESS` con las tres propiedades en verde.
 
 ## Enlaces
 
+- Enunciado: [`practico7.pdf`](/pdfs/tp7/practico7.pdf)
 - Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)

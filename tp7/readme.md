@@ -2,9 +2,8 @@
 
 ## Documentos principales
 
+- Enunciado: [`practico7.pdf`](/pdfs/tp7/practico7.pdf)
 - Resolución: [`resolucion_practico7.pdf`](/pdfs/tp7/resolucion_practico7.pdf)
-
-> El enunciado original (`practico7.pdf`) no se conserva en el repo. Cada ejercicio describe su consigna en el README correspondiente.
 
 ## Ejercicios
 
@@ -14,14 +13,12 @@
 
 ## Material de referencia
 
-Está todo en `material/`:
-
 - [Notas 12 — Property-Based Testing](/pdfs/tp7/material/notas-12-pbt.pdf)
 - [Notas 13 — Generación aleatoria](/pdfs/tp7/material/notas-13-generacion-aleatoria.pdf)
 
 ## Cómo correr los tests
 
-El código vive en `assignmnet-7-rodeghiero/` (el typo `assignmnet` es del template de la cátedra). Hay que usar JDK 17. Desde la carpeta del proyecto:
+El código se encuentra en `assignmnet-7-rodeghiero/`. Hay que usar JDK 17. Desde la carpeta del proyecto:
 
 ```bash
 cd tp7/assignmnet-7-rodeghiero
@@ -34,5 +31,3 @@ Para una suite puntual:
 JAVA_HOME=$(/usr/libexec/java_home -v 17) mvn -Dmaven.repo.local=.m2 -Djacoco.skip=true \
     -Dtest=DatePropertiesTest test
 ```
-
-El `-Djacoco.skip=true` evita el problema con el plugin JaCoCo `0.8.2` del template (incompatible con JDK >= 17).
